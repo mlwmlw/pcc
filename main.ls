@@ -1,8 +1,10 @@
-require! <[ ./pcc mongodb q]>
+require! <[ ./pcc mongodb q progress moment]>
+
 client = mongodb.MongoClient
 client = client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
 	collection = db.collection 'pcc'
-	today = pcc.getToday!.then (res) ->
+	#.subtract 'days', 3
+	today = pcc.getDocsByDate moment process.argv[2] .then (res) ->
 		#collection.remove (err, result) ->
 		#	console.log 'clear pcc collection'
 		rows = []
@@ -11,16 +13,18 @@ client = client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc"
 
 		promises = []
 		i = 0
+		bar = new progress 'updating [:bar] :percent :elapsed', { total: rows.length, width: 40 }
 		for key, row of rows
-			row._id = row.id
+			row._id = row.key
 			deferred = q.defer!
 			let deferred 
-				collection.update {_id: row.id}, row, {upsert: true}, (err, docs) -> 
-					#console.log "%d/%d %d", i, rows.length, docs
+				collection.update {_id: row.key}, row, {upsert: true}, (err, docs) -> 
+					#i++
+					#console.log "%d", (i/rows.length * 100).toFixed(1)
+					bar.tick!
 					deferred.resolve docs	
 			promises.push deferred.promise
 		q.all promises .done (res) ->
-			console.log 'done ' + res.length
 			db.close!
 
 #total = today.getTotal!
