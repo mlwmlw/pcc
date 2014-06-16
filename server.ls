@@ -10,9 +10,12 @@ app.configure ! ->
 
 deferred = q.defer!
 client = mongodb.MongoClient
-client = client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
+connectDB = (cb) ->
+	client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
+		cb db
+connectDB (db) ->
 	collection = db.collection 'pcc'
-	collection.find {} .limit 1000 .toArray (err, docs) ->
+	collection.find {} .limit 3000 .toArray (err, docs) ->
 		console.log 'data ready'
 		deferred.resolve docs
 		db.close!
@@ -21,10 +24,13 @@ app.get '/page/:page', (req, res) ->
 	deferred.promise.then (pcc) ->
 		page = req.params.page
 		perPage = 30
-		res.send pcc.slice page * perPage, (page+1) * perPage
-		console.log \ready
-		#res.send pcc
+		res.send pcc.slice page * perPage, (+page+1) * perPage
 
-
+app.get '/keyword/:keyword', (req, res) ->
+	connectDB (db) ->
+		db.collection 'pcc' .find {name: new RegExp ".*" + req.params.keyword + ".*"} .toArray (err, docs) ->
+			res.send docs
+			db.close!
+			
 http.createServer app .listen (app.get 'port'), ->
 	console.log 'Express server listening on port ' + app.get 'port'
