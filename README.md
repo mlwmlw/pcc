@@ -16,4 +16,5 @@ run http server at port 8888
 rest api 
 ===
 get http://127.0.0.1:8888/page/:page
+
 get http://127.0.0.1:8888/keyword/:keyword
