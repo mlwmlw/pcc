@@ -18,3 +18,9 @@ rest api
 get http://127.0.0.1:8888/page/:page
 
 get http://127.0.0.1:8888/keyword/:keyword
+
+get http://127.0.0.1:8888/categories
+
+get http://127.0.0.1:8888/category/:category
+
+get http://127.0.0.1:8888/date/:date
