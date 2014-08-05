@@ -1,0 +1,27 @@
+{% extends 'template.html' %}
+{% block content %}
+<script>
+	app.controller('page', function($scope, $http) {
+		$http.get('/api/units').then(function(res) {
+			$scope.units = res.data;
+		});
+		$scope.loadUnit = function(unit) {
+			$http.get('/api/unit/' + unit).then(function(res) {
+				$scope.items = res.data;
+			});
+		};
+	});
+</script>
+<div class="starter-template">
+	<h1>中華民國政府標案檢索</h1>
+	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
+	發佈單位：
+	<span ng-show="!units">資料載入中..</span>
+	<select ng-change="loadUnit(unit)" ng-model="unit" ng-options="u for u in units">
+		<option value="">請選擇</option>
+	</select>
+	<div ng-repeat="item in items">
+		[[item.name]] [[item.publish]]
+	</div>
+</div>
+{% endblock %}

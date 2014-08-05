@@ -1,5 +1,5 @@
 require! <[ fs express http mongodb q ]>
-
+_ = require 'lodash'
 app = express!
 ## app.engine 'haml' (require 'hamljs').render
 app.configure ! ->
@@ -52,10 +52,15 @@ app.get '/date/:date', (req, res) ->
 		db.collection 'pcc' .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
 			res.send docs
 
+app.get '/dates', (req, res) ->
+	connectDB (db) ->
+		db.collection 'pcc' .aggregate { $group: { _id: '$publish'}}, (err, docs) ->
+			res.send _.pluck docs, '_id'
+
 app.get '/categories', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .aggregate { $group: { _id: '$category'}}, (err, docs) ->
-			res.send docs
+			res.send _.pluck docs, '_id'
 
 app.get '/category/:category', (req, res) ->
 	console.log req.params.category
@@ -63,9 +68,14 @@ app.get '/category/:category', (req, res) ->
 		db.collection 'pcc' .find { category: req.params.category } .toArray (err, docs) ->
 			res.send docs
 
-app.get '/types', (req, res) ->
+app.get '/units', (req, res) ->
 	connectDB (db) ->
-		db.collection 'pcc' .aggregate { $group: { _id: '$type'}}, (err, docs) ->
+		db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}, (err, docs) ->
+			res.send _.pluck docs, '_id'
+
+app.get '/unit/:unit', (req, res) ->
+	connectDB (db) ->
+		db.collection 'pcc' .find { unit: new RegExp req.params.unit } .toArray (err, docs) ->
 			res.send docs
 
 http.createServer app .listen (app.get 'port'), ->
