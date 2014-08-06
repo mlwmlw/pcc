@@ -31,12 +31,15 @@ getAll = !->
 	deferred.promise
 
 getAll!
-
+cache = {}
 app.use (req, res, next) ->
-	console.log req.url
+	if cache[req.url]
+		return res.send cache[req.url]
+	send = res.send
+	res.send = (data) ->
+		cache[req.url] = data
+		send.call res, data
 	next!
-	console.log 123
-	console.log res.body
 
 app.get '/page/:page', (req, res) ->
 	getAll!.then (pcc) ->
