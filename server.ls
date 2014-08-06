@@ -31,6 +31,13 @@ getAll = !->
 	deferred.promise
 
 getAll!
+
+app.use (req, res, next) ->
+	console.log req.url
+	next!
+	console.log 123
+	console.log res.body
+
 app.get '/page/:page', (req, res) ->
 	getAll!.then (pcc) ->
 		page = req.params.page
@@ -77,6 +84,7 @@ app.get '/unit/:unit', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .find { unit: new RegExp req.params.unit } .toArray (err, docs) ->
 			res.send docs
+
 
 http.createServer app .listen (app.get 'port'), ->
 	console.log 'Express server listening on port ' + app.get 'port'
