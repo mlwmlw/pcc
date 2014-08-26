@@ -2,10 +2,11 @@
 <html ng-app="myapp">
   <head>
     <meta charset="utf-8">
+		<title>中華民國 政府標案查詢 gXv</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content="非官方政府標案查詢">
+    <meta name="author" content="mlwmlw">
     <link rel="icon" href="../../favicon.ico">
 
     <title>pcc.gXv.tw</title>
@@ -14,26 +15,16 @@
 		<script src="/assets/lib/angular/angular.min.js"></script>
 		<script src="/assets/lib/bootstrap/dist/js/bootstrap.min.js"></script>
 		<script src="/assets/lib/angular-bootstrap/ui-bootstrap.min.js"></script>
+		<script src="/assets/app.js"></script>
 
 		<style>
 			body {
 				padding-top: 40px;
 			}
 		</style>
-		<script>
-			var app = angular.module('myapp', ['ui.bootstrap']);	
-			app.config(function($interpolateProvider) {
-				$interpolateProvider.startSymbol('[[');
-				$interpolateProvider.endSymbol(']]');
-			});
-			app.run(function($rootScope, $http) {
-				$http.get('/api/categories').then(function(res) {
-					$rootScope.categories = res.data;
-				});
-			});
-		</script>	
-    <!-- Bootstrap core CSS -->
+		<!-- Bootstrap core CSS -->
     <link href="/assets/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+		<link href="/assets/main.css" rel="stylesheet">
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
@@ -65,8 +56,14 @@
 							</ul>
 						</li>
             <li><a href="/units">單位</a></li>
-            <li><a href="#about">About</a></li>
+            <li><a href="/about">About</a></li>
           </ul>
+					<form class="navbar-form navbar-right" ng-submit="search(keyword)">
+						<input type="text" class="form-control" ng-model="keyword" placeholder="Search...">
+						<button type="button" class="btn btn-primary">
+							<span class="glyphicon glyphicon-search"></span>
+						</button>
+					</form>
         </div><!--/.nav-collapse -->
       </div>
     </div>
@@ -74,7 +71,11 @@
     <div class="container">
 			{% block content %}{% endblock %}
     </div><!-- /.container -->
-
+		<div class="footer">
+			<div class="container">
+				@2014 by <a target="_blank" href="//mlwmlw.org">mlwmlw</a>
+			</div>
+		</div>
 
   </body>
 </html>

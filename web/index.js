@@ -16,6 +16,9 @@ app.use(route.get('/', function *(next) {
 app.use(route.get('/units', function *(next) {
 	this.body = yield render('units')
 }));
+app.use(route.get('/about', function *(next) {
+	this.body = yield render('about')
+}));
 
 app.use(mount('/assets', serve('assets')));
 app.listen(8889);

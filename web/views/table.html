@@ -1,0 +1,34 @@
+{% extends 'template.html' %}
+{% block content %}
+<script>
+	app.controller('page', function($scope, $http) {
+});
+</script>
+<div class="starter-template">
+	<h1>中華民國政府標案檢索</h1>
+	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
+	發佈單位：
+	<span ng-show="!units">資料載入中..</span>
+	<select ng-change="loadUnit(unit)" ng-model="unit" ng-options="u for u in units">
+		<option value="">請選擇</option>
+	</select>
+	<table class="table table-striped">
+		<tr>
+			<th>單位</th>
+			<th>標案名稱</th>
+			<th>方式</th>
+			<th>類型</th>
+			<th>發佈日期</th>
+			<th>招標日期</th>
+		</tr>
+		<tr ng-repeat="item in items">
+			<td>[[item.unit]]</td>
+			<td><a ng-href="//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey=[[item.key]]" target="_blank">[[item.name]]</a></td>
+			<td>[[item.type]]</td>
+			<td>[[item.category]]</td>
+			<td>[[item.publish]]</td>
+			<td>[[item.end_date]]</td>
+		</tr>
+	</table>
+</div>
+{% endblock %}

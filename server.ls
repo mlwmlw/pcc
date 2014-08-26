@@ -81,7 +81,9 @@ app.get '/category/:category', (req, res) ->
 app.get '/units', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}, (err, docs) ->
-			res.send _.pluck docs, '_id'
+			units = _.pluck docs, '_id'
+			units.sort!
+			res.send units
 
 app.get '/unit/:unit', (req, res) ->
 	connectDB (db) ->
