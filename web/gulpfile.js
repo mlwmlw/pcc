@@ -6,7 +6,12 @@ gulp.task('watch', ['serve'], function() {
 var p;
 gulp.task('serve', function() {
 	if(!p || p.killed) {
-		p = spawn('/home/mlwmlw/.nvm/v0.11.13/bin/node', ['--harmony', 'index.js']);
+		if(process.platform == 'darwin') {
+			p = spawn('/Users/user/.nvm/v0.11.13/bin/node', ['--harmony', 'index.js']);
+		}
+		else {
+			p = spawn('/home/mlwmlw/.nvm/v0.11.13/bin/node', ['--harmony', 'index.js']);
+		}
 		console.log('spawn ' + p.pid);
 	}
 	else {
