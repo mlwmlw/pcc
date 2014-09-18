@@ -18,6 +18,9 @@
   },
   "homepage": "https://github.com/mlwmlw/pcc",
   "dependencies": {
-    "koa": "~0.8.1"
+    "koa": "~0.8.1",
+    "consolidate": "~0.10.0",
+    "lodash": "~2.4.1",
+    "nunjucks": "~1.0.7"
   }
 }
