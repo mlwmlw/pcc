@@ -1,0 +1,23 @@
+{
+  "name": "pcc",
+  "version": "0.0.1",
+  "description": "pcc.gov.tw === example: http://pcc.mlwmlw.org/page/0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mlwmlw/pcc.git"
+  },
+  "author": "mlwmlw",
+  "license": "GPL",
+  "bugs": {
+    "url": "https://github.com/mlwmlw/pcc/issues"
+  },
+  "homepage": "https://github.com/mlwmlw/pcc",
+  "dependencies": {
+    "koa": "~0.8.1"
+  }
+}
