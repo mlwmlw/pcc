@@ -1,4 +1,4 @@
-{% extends 'template.html' %}
+{% extends './views/template.html' %}
 {% block content %}
 <script>
 	app.controller('page', function($scope, $http) {
@@ -9,16 +9,32 @@
 			}
 			dates = dates.sort().reverse();
 		});
+		$scope.loadByDate = function() {
+			$http.get('/api/date/' + $scope.date).then(function(res) {
+				$scope.items = res.data;
+			});
+		};
+	
 	});
 </script>
 
 <div class="starter-template">
 	<h1>中華民國政府標案檢索</h1>
 	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
-	發佈日期：
+	<div class="form-group">
+		<div class="col-md-8">
+			<div class="form-group row">
+				<label for="inputKey" class="col-md-2 control-label">發佈日期</label>
+				<div class="col-md-4">
+					<select class="form-control" ng-change="loadByDate()" ng-model="date" ng-options="d for d in dates" >
+		<option value="">請選擇</option>
+	</select>
+				</div>
+			</div>
+		</div>
+	</div>
 	<span ng-show="!dates">資料載入中..</span>
-	<ul>
-		<li ng-repeat="date in dates"><a href="/api/date/[[date]]">[[date]]</a></li>
-	</ul>
+	
+	{% include './views/items.html' %}
 </div>
 {% endblock %}

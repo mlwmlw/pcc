@@ -1,4 +1,4 @@
-{% extends 'template.html' %}
+{% extends './views/template.html' %}
 {% block content %}
 <script>
 	app.controller('page', function($scope, $http) {
@@ -12,23 +12,6 @@
 	<select ng-change="loadUnit(unit)" ng-model="unit" ng-options="u for u in units">
 		<option value="">請選擇</option>
 	</select>
-	<table class="table table-striped">
-		<tr>
-			<th>單位</th>
-			<th>標案名稱</th>
-			<th>方式</th>
-			<th>類型</th>
-			<th>發佈日期</th>
-			<th>招標日期</th>
-		</tr>
-		<tr ng-repeat="item in items">
-			<td>[[item.unit]]</td>
-			<td><a ng-href="//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey=[[item.key]]" target="_blank">[[item.name]]</a></td>
-			<td>[[item.type]]</td>
-			<td>[[item.category]]</td>
-			<td>[[item.publish]]</td>
-			<td>[[item.end_date]]</td>
-		</tr>
-	</table>
+	{% include './views/items.html' %}
 </div>
 {% endblock %}

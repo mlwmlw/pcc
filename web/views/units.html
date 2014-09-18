@@ -1,4 +1,4 @@
-{% extends 'template.html' %}
+{% extends './views/template.html' %}
 {% block content %}
 <script>
 	app.controller('page', function($scope, $http) {
@@ -32,29 +32,7 @@
 			</div>
 		</div>
 	</div>
-	
-	<table class="table table-striped">
-		<tr>
-			<th>單位</th>
-			<th>標案名稱</th>
-			<th>金額</th>
-			<th>方式</th>
-			<th>類型</th>
-			<th>發佈日期</th>
-			<th>招標日期</th>
-		</tr>
-		<tr ng-show="!items">
-			<td colspan="7" style="Text-align:center;"> no data </td>
-		</tr>
-		<tr ng-repeat="item in items">
-			<td>[[item.unit]]</td>
-			<td><a ng-href="//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey=[[item.key]]" target="_blank">[[item.name]]</a></td>
-			<td>[[item.price | currency | money]]</td>
-			<td>[[item.type]]</td>
-			<td>[[item.category]]</td>
-			<td>[[item.publish | date]]</td>
-			<td>[[item.end_date | date]]</td>
-		</tr>
-	</table>
+
+	{% include './views/items.html' %}
 </div>
 {% endblock %}
