@@ -17,22 +17,10 @@ run http server at port 8888
 
 restful api 
 ===
-get http://127.0.0.1:8888/page/:page
-  
-EX: http://pcc.mlwmlw.org/api/page/1
-
-get http://127.0.0.1:8888/keyword/:keyword
-
-EX: http://pcc.mlwmlw.org/api/keyword/陸軍
-
-get http://127.0.0.1:8888/categories
-
-EX: http://pcc.mlwmlw.org/api/categories
-
-get http://127.0.0.1:8888/category/:category
-
-EX: http://pcc.mlwmlw.org/api/category/工程類
-
-get http://127.0.0.1:8888/date/:date
-
-EX: http://pcc.mlwmlw.org/api/date/2014-08-05
+* GET /page/:page http://pcc.mlwmlw.org/api/page/1
+* GET /keyword/:keyword http://pcc.mlwmlw.org/api/keyword/陸軍 
+* GET /categories http://pcc.mlwmlw.org/api/categories
+* GET /category/:category http://pcc.mlwmlw.org/api/category/工程類
+* GET /units http://pcc.mlwmlw.org/api/units
+* GET /unit/:unit http://pcc.mlwmlw.org/api/unit/總統府
+* GET /date/:date http://pcc.mlwmlw.org/api/date/2014-08-05
