@@ -2,11 +2,10 @@ require! <[ fs express http mongodb q ]>
 _ = require 'lodash'
 app = express!
 ## app.engine 'haml' (require 'hamljs').render
-app.configure ! ->
-	express.static __dirname + '/public' |> app.use
-	app.set 'views', __dirname+'/views'
-	app.set 'view engine' 'jade'
-	app.set 'port' (process.env.PORT or 8888)
+express.static __dirname + '/public' |> app.use
+app.set 'views', __dirname+'/views'
+app.set 'view engine' 'jade'
+app.set 'port' (process.env.PORT or 8888)
 
 client = mongodb.MongoClient
 connectDB = (cb) ->
