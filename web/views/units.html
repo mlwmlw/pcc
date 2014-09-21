@@ -3,7 +3,13 @@
 <script>
 	app.controller('page', function($scope, $http) {
 		$http.get('/api/units').then(function(res) {
-			$scope.units = res.data;
+			var units = $scope.units = res.data;
+			for(var i in units) {
+				if(units[i] == '{{unit}}') {
+					$scope.unit = units[i];
+					return;
+				}
+			}
 		});
 		$scope.loadUnit = function(unit) {
 			$http.get('/api/unit/' + unit).then(function(res) {

@@ -1,7 +1,7 @@
 var gulp = require('gulp');
 var spawn = require('child_process').spawn;
 gulp.task('watch', ['serve'], function() {
-	gulp.watch('./views/*.html', ['serve']);
+	gulp.watch(['./views/*.html', '*.js'], ['serve']);
 });
 var p;
 gulp.task('serve', function() {
