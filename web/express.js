@@ -1,15 +1,9 @@
-require('nodetime').profile({
-	accountKey: '72f6a662ad4d3027a6b8bf66297e78bb79a6e63c', 
-	appName: 'pcc'
-});
 var express = require('express');
 var cons = require('consolidate');
 var app = express();
-/*app.get('/', function(req, res) {
-	res.send('Hello world');
-});*/
-app.engine('html', cons.nunjucks);
-app.set('view engine', 'html');
+
+app.engine('ect', cons.ect);
+app.set('view engine', 'ect');
 app.set('views', __dirname + '/views');
 app.use('/assets', express.static('assets'));
 app.get('/', function(req, res) {

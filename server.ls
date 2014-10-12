@@ -2,17 +2,15 @@ require! <[ fs express http mongodb q ]>
 _ = require 'lodash'
 app = express!
 ## app.engine 'haml' (require 'hamljs').render
-app.configure ! ->
-	express.static __dirname + '/public' |> app.use
-	app.set 'views', __dirname+'/views'
-	app.set 'view engine' 'jade'
-	app.set 'port' (process.env.PORT or 8888)
+express.static __dirname + '/public' |> app.use
+app.set 'views', __dirname+'/views'
+app.set 'view engine' 'jade'
+app.set 'port' (process.env.PORT or 8888)
 
 client = mongodb.MongoClient
 connectDB = (cb) ->
 	client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
 		cb db
-
 deferred = null
 getAll = !->
 	if deferred
@@ -26,7 +24,8 @@ getAll = !->
 			setTimeout !->
 				deferred := null
 				getAll!
-			, 12 * 3600 * 1000
+				cache = {}
+			, 1 * 3600 * 1000
 			deferred.resolve docs
 	deferred.promise
 
@@ -34,7 +33,10 @@ getAll!
 cache = {}
 app.use (req, res, next) ->
 	if cache[req.url]
+		console.log 'cache hit: ' + req.url
 		return res.send cache[req.url]
+	else
+		console.log 'cache miss: ' + req.url
 	send = res.send
 	res.send = (data) ->
 		cache[req.url] = data

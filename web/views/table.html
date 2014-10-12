@@ -1,5 +1,4 @@
-{% extends './views/template.html' %}
-{% block content %}
+<% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http) {
 });
@@ -12,6 +11,5 @@
 	<select ng-change="loadUnit(unit)" ng-model="unit" ng-options="u for u in units">
 		<option value="">請選擇</option>
 	</select>
-	{% include './views/items.html' %}
+	<% include './views/items.html' %>
 </div>
-{% endblock %}

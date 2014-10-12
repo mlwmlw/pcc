@@ -1,5 +1,4 @@
-{% extends './views/template.html' %}
-{% block content %}
+<% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http) {
 		$http.get('/api/units').then(function(res) {
@@ -7,6 +6,7 @@
 			for(var i in units) {
 				if(units[i] == '{{unit}}') {
 					$scope.unit = units[i];
+					$scope.loadUnit($scope.unit);
 					return;
 				}
 			}
@@ -39,6 +39,5 @@
 		</div>
 	</div>
 
-	{% include './views/items.html' %}
+	<% include './views/items.html' %>
 </div>
-{% endblock %}

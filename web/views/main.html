@@ -1,5 +1,4 @@
-{% extends './views/template.html' %}
-{% block content %}
+<% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http) {
 		$http.get('/api/dates').then(function(res) {
@@ -47,6 +46,5 @@
 			</div>
 		</div>
 	</div>
-	{% include './views/items.html' %}
+	<% include './views/items.html' %>
 </div>
-{% endblock %}
