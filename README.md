@@ -22,5 +22,7 @@ restful api
 * GET /categories http://pcc.mlwmlw.org/api/categories
 * GET /category/:category http://pcc.mlwmlw.org/api/category/工程類
 * GET /units http://pcc.mlwmlw.org/api/units
+* GET /units/:id http://pcc.mlwmlw.org/api/units/0 
+  * http://pcc.mlwmlw.org/api/units/0  
 * GET /unit/:unit http://pcc.mlwmlw.org/api/unit/總統府
 * GET /date/:date http://pcc.mlwmlw.org/api/date/2014-08-05
