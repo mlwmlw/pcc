@@ -4,7 +4,7 @@
 		$http.get('/api/units').then(function(res) {
 			var units = $scope.units = res.data;
 			for(var i in units) {
-				if(units[i] == '{{unit}}') {
+				if(units[i] == '<%- @unit %>') {
 					$scope.unit = units[i];
 					$scope.loadUnit($scope.unit);
 					return;

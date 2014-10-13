@@ -1,4 +1,4 @@
-require! <[ fs express http mongodb q ]>
+require! <[ fs express http mongodb q moment ]>
 _ = require 'lodash'
 app = express!
 ## app.engine 'haml' (require 'hamljs').render
@@ -59,15 +59,21 @@ app.get '/keyword/:keyword', (req, res) ->
 app.get '/date/:date', (req, res) ->
 	connectDB (db) ->
 		date = new Date req.params.date
+		date.setDate date.getDate! - 1
 		tomorrow = new Date req.params.date
 		tomorrow.setDate date.getDate! + 1
+		console.log date
 		db.collection 'pcc' .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
 			res.send docs
 
 app.get '/dates', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .aggregate { $group: { _id: '$publish'}}, (err, docs) ->
-			res.send _.pluck docs, '_id'
+			dates = _.pluck docs, '_id'
+			dates = dates.map (val) ->
+				moment val .zone '+0800' .format!
+			dates.sort!
+			res.send dates
 
 app.get '/categories', (req, res) ->
 	connectDB (db) ->
@@ -80,12 +86,23 @@ app.get '/category/:category', (req, res) ->
 		db.collection 'pcc' .find { category: req.params.category } .toArray (err, docs) ->
 			res.send docs
 
-app.get '/units', (req, res) ->
-	connectDB (db) ->
-		db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}, (err, docs) ->
-			units = _.pluck docs, '_id'
-			units.sort!
-			res.send units
+app.get '/units/:id?', (req, res) ->
+	db <- connectDB
+	if req.params.id
+		if req.params.id == '0'
+			parent = null
+		else
+			parent = req.params.id
+
+		err, units <- db.collection 'unit' .find { parent: parent } .toArray
+		units.sort (a, b) ->
+			a._id.replace('.', '') - b._id.replace('.', '')
+		res.send units
+	else
+		err, docs <- db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}
+		units = _.pluck docs, '_id'
+		units.sort!
+		res.send units
 
 app.get '/unit/:unit', (req, res) ->
 	connectDB (db) ->
