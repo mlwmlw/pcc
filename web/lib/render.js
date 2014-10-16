@@ -8,5 +8,5 @@ var views = require('co-views');
 // to the swig template engine
 
 module.exports = views(__dirname + '/../views', {
-  map: { html: 'nunjucks' }
+  map: { html: 'ect' }
 });

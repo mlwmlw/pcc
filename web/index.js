@@ -7,11 +7,6 @@ var mount = require('koa-mount');
 var koa = require('koa');
 var app = koa();
 
-require('nodetime').profile({
-	accountKey: '72f6a662ad4d3027a6b8bf66297e78bb79a6e63c', 
-	appName: 'pcc'
-});
-
 app.use(logger());
 // logger
 
