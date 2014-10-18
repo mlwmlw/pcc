@@ -7,14 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="非官方政府標案查詢">
     <meta name="author" content="mlwmlw">
+    <base href="/">
     <link rel="icon" href="../../favicon.ico">
 
     <title>pcc.gXv.tw</title>
 
 		<script src="/assets/lib/jquery/dist/jquery.min.js"></script>
 		<script src="/assets/lib/angular/angular.min.js"></script>
+		<script src="/assets/lib/angular-route/angular-route.min.js"></script>
 		<script src="/assets/lib/bootstrap/dist/js/bootstrap.min.js"></script>
-		<script src="/assets/lib/angular-bootstrap/ui-bootstrap.min.js"></script>
+		<script src="/assets/lib/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
 		<script src="/assets/app.js"></script>
 
 		<style>
@@ -55,7 +57,8 @@
 								</li>
 							</ul>
 						</li>
-            <li><a href="/units">單位</a></li>
+            <li><a href="/units">單位分類</a></li>
+            <li><a href="/unit">所有單位</a></li>
             <li><a href="/about">About</a></li>
           </ul>
 					<form class="navbar-form navbar-right" ng-submit="search(keyword)">

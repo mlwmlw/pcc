@@ -1,6 +1,6 @@
 require! <[http querystring request cheerio q string moment mongodb]>
 
-url = \http://web.pcc.gov.tw/tps/main/pss/pblm/tender/basic/search/mainListCommon.jsp
+base = \http://web.pcc.gov.tw/tps/main/pss/pblm/tender/basic/search/mainListCommon.jsp
 
 
 client = mongodb.MongoClient
@@ -23,36 +23,70 @@ postUnit = (dn, orgid, 	orgname, cb) ->
 		orgName: orgname
 	}
 	err, res <- request.post \http://web.pcc.gov.tw/tps/main/pss/pblm/tender/basic/search/orgListCommon.jsp {form: post}
+	if err
+		console.log err
+		console.log res
 	cb(cheerio.load res.body)
 
-err, res <- request.get url
-$ = cheerio.load res.body
-$ 'u' .parent 'a' .each (i) ->
-	$item = $(this)
-	parentId = $item.text!.replace /^[^(]+\(|\)/g, ''
-	href = url.replace(/[^\/]+$/, '') + $item.attr 'href'
-	err, subres <- request.get href
-	$sub = cheerio.load subres.body
-	$sub 'u' .parent 'a' .each (j) ->
-		subhref = url.replace(/[^\/]+$/, '') + $sub(this).attr 'href'
-		subUnit = $sub(this).text!.replace /\s*/g, ''
-		if subUnit in ['招標公告', '決標公告']
-			return
-		res = subhref.match(/'(.+)'/)
-		if res 
-			split = res[1].split(/', *'/)
-			$subsub <- postUnit split[0], split[1], split[2]
-			if split[1] != ''
-				p = split[1]
-			else
-				p = parentId
-			parse $item.text! + ' - ' + subUnit, p, $subsub
-		else
-			err, subsubres <- request.get subhref
-			$subsub = cheerio.load subsubres;
-			parse $item.text! + ' - ' + subUnit, parentId, $subsub
-	parse $item.text!, parentId, $sub
+getUnit = (url, cb)->
+	err, res <- request.get url
+	cb(cheerio.load res.body)	
 
+main = (url, link, parentId) ->
+	handler = ($) ->
+		$ 'u' .parent 'a' .each (i) ->
+			$item = $(this)
+			href = base.replace(/[^\/]+$/, '') + $item.attr 'href'
+			name = $item.text!.replace /\s*|\(.*\)/g, ''
+			if name in ['招標公告', '決標公告']
+				return
+			id = $item.text!.replace /^[^(]+\(|\)|\s*/g, ''
+			res = href.match /'(.+)'/
+			if res
+				split = res[1].split(/', *'/)
+				$sub <- postUnit split[0], split[1], split[2]
+				if split[1] != ''
+					p = split[1]
+				else
+					p = parentId
+				if split[2] != ''
+					name = split[2]
+				main $sub, name, p
+				#parse link, p, $subsub
+			else
+				main href, link, id
+		if link
+			parse link, parentId, $
+	if typeof url is \string
+		$ <- getUnit url
+		handler $
+	else
+		$ = url
+		handler $
+
+		#err, subres <- request.get href
+		#$sub = cheerio.load subres.body
+		#$sub 'u' .parent 'a' .each (j) ->
+	#		subhref = url.replace(/[^\/]+$/, '') + $sub(this).attr 'href'
+#			subUnit = $sub(this).text!.replace /\s*/g, ''
+#			if subUnit in ['招標公告', '決標公告']
+#				return
+#			res = subhref.match(/'(.+)'/)
+#			if res 
+#				split = res[1].split(/', *'/)
+#				$subsub <- postUnit split[0], split[1], split[2]
+#				if split[1] != ''
+#					p = split[1]
+#				else
+#					p = parentId
+#				parse $item.text! + ' - ' + subUnit, p, $subsub
+#			else
+#				err, subsubres <- request.get subhref
+#				$subsub = cheerio.load subsubres;
+#				parse $item.text! + ' - ' + subUnit, parentId, $subsub
+#		parse $item.text!, parentId, $sub
+
+main base
 
 parse = (name, parentId, $) ->
 	rows = []

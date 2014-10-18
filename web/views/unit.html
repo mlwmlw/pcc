@@ -1,0 +1,43 @@
+<% extend './views/template.html' %>
+<script>
+	app.controller('page', function($scope, $http) {
+		$http.get('/api/units/all').then(function(res) {
+			var units = $scope.units = res.data;
+			for(var i in units) {
+				if(units[i] == '<%- @unit %>') {
+					$scope.unit = units[i];
+					$scope.loadUnit($scope.unit);
+					return;
+				}
+			}
+		});
+		$scope.loadUnit = function(unit) {
+			$http.get('/api/unit/' + unit).then(function(res) {
+				$scope.items = res.data;
+			});
+		};
+	});
+</script>
+<div class="starter-template">
+	<h1>中華民國政府標案檢索</h1>
+	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
+	發佈單位：
+	<span ng-show="!units">資料載入中..</span>
+	<div class="row">
+		<div class="col-xs-7">
+			<select class="form-control" ng-change="loadUnit(unit)" ng-model="unit" ng-options="u for u in units | filter: keyword">
+				<option value="">請選擇</option>
+			</select>
+		</div>
+		<div class="col-xs-5">
+			<div class="input-group">
+				<input type="text" class="form-control" ng-model="keyword_buffer" placeholder="filter" />
+				<span class="input-group-btn">
+					<button class="btn btn-default" ng-click="keyword = keyword_buffer" type="button">serach</button>
+				</span>
+			</div>
+		</div>
+	</div>
+
+	<% include './views/items.html' %>
+</div>

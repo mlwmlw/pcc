@@ -20,7 +20,7 @@ getAll = !->
 		collection = db.collection 'pcc'
 		collection.find {} .sort {publish: -1} .toArray (err, docs) ->
 			console.log 'data ready all : '
-			console.log docs.length
+			#console.log docs.length
 			setTimeout !->
 				deferred := null
 				getAll!
@@ -88,20 +88,16 @@ app.get '/category/:category', (req, res) ->
 
 app.get '/units/:id?', (req, res) ->
 	db <- connectDB
-	if req.params.id
-		if req.params.id == '0'
-			parent = null
-		else
-			parent = req.params.id
-
-		err, units <- db.collection 'unit' .find { parent: parent } .toArray
-		units.sort (a, b) ->
-			a._id.replace('.', '') - b._id.replace('.', '')
-		res.send units
-	else
+	if req.params.id == 'all'
 		err, docs <- db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}
 		units = _.pluck docs, '_id'
 		units.sort!
+		res.send units	
+	else
+		parent = req.params.id
+		err, units <- db.collection 'unit' .find { parent: parent } .toArray
+		units.sort (a, b) ->
+			a._id.replace('.', '') - b._id.replace('.', '')
 		res.send units
 
 app.get '/unit/:unit', (req, res) ->
