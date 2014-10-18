@@ -30,6 +30,8 @@
     "koa-static": "~1.4.7",
     "lodash": "~2.4.1",
     "nodetime": "^0.8.15",
-    "nunjucks": "~1.0.7"
+    "nunjucks": "~1.0.7",
+    "mongodb": "~1.4.19",
+    "q": "~1.0.1"
   }
 }
