@@ -3,6 +3,13 @@ pcc.gXv.tw
 demo: http://pcc.mlwmlw.org/
 api: http://pcc.mlwmlw.org/api
 
+Installation
+===
+Please go to pcc folder, then input
+```
+npm install
+```
+
 usage
 ===
 get and parse pcc data
