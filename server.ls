@@ -12,6 +12,7 @@ connectDB = (cb) ->
 	client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
 		cb db
 deferred = null
+cache = {}
 getAll = !->
 	if deferred
 		return deferred.promise
@@ -21,16 +22,16 @@ getAll = !->
 		collection.find {} .sort {publish: -1} .toArray (err, docs) ->
 			console.log 'data ready all : '
 			#console.log docs.length
-			setTimeout !->
-				deferred := null
-				getAll!
-				cache = {}
-			, 1 * 3600 * 1000
+			
 			deferred.resolve docs
 	deferred.promise
 
+setInterval !->
+	deferred := null
+	cache := {}
+	console.log "clear cache"
+, 3600 * 1000
 getAll!
-cache = {}
 app.use (req, res, next) ->
 	if cache[req.url]
 		console.log 'cache hit: ' + req.url
