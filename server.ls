@@ -58,14 +58,14 @@ app.get '/keyword/:keyword', (req, res) ->
 			res.send docs
 
 app.get '/date/:date', (req, res) ->
-	connectDB (db) ->
-		date = new Date req.params.date
-		date.setDate date.getDate! - 1
-		tomorrow = new Date req.params.date
-		tomorrow.setDate date.getDate! + 1
-		console.log date
-		db.collection 'pcc' .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
-			res.send docs
+	db <- connectDB 
+	date = new Date req.params.date
+	date.setDate date.getDate! - 1
+	tomorrow = new Date req.params.date
+	tomorrow.setDate date.getDate! + 1
+	console.log date
+	db.collection 'pcc' .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
+		res.send docs
 
 app.get '/dates', (req, res) ->
 	connectDB (db) ->
@@ -105,7 +105,66 @@ app.get '/unit/:unit', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .find { unit: new RegExp req.params.unit } .toArray (err, docs) ->
 			res.send docs
+app.get '/units_stats', (req, res) ->
+	db <- connectDB
+	mapper = !->
+		emit this.unit, {count: 1, price: this.price}
+	reducer = (key, values) ->
+		price = 0
+		count = 0
+		for value in values
+			count += value.count
+			price += +value.price
+		return {count: count, price: price, unit: value.unit}
+	pcc = db.collection('pcc')
+	pcc.mapReduce mapper, reducer, {
+		query: {publish: new Date(2014, 11, 1)},
+		out: { inline: 1 }
+	}, (err, result) ->
+		if err
+			console.log err
+		res.send result
 
+app.get '/units_count', (req, res) ->
+	db <- connectDB
+	mapper = !->
+		emit this.parent, {count: 1,unit: this.name}
+	reducer = (key, values) ->
+		count = 0
+		price = 0
+		for value in values
+			count += value.count
+			price += value.count
+		return {count: count, unit: value.unit}
+	pcc = db.collection('unit')
+	pcc.mapReduce mapper, reducer, {
+		query: {},
+		out: { inline: 1 }
+	}, (err, result) ->
+		if err
+			console.log err
+		res.send result
+app.get '/month/:month', (req, res) ->
+	db <- connectDB 
+	start = new Date req.params.month + "-1"
+	end = new Date req.params.month + "-1"
+	end.setMonth end.getMonth!+1 
+	mapper = !->
+		emit this.unit, this.price
+	reducer = (key, values) ->
+		sum = 0
+		for value in values
+			sum += +value
+		sum
+	pcc = db.collection('pcc')
+	pcc.mapReduce mapper, reducer, {
+		query: {end_date: { $gte: start, $lt: end }},
+		out: { inline: 1 }
+	}, (err, result) ->
+		if err
+			console.log 'err'
+			console.log err
+		res.send result
 
 http.createServer app .listen (app.get 'port'), ->
 	console.log 'Express server listening on port ' + app.get 'port'

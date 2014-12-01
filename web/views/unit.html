@@ -1,6 +1,7 @@
 <% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http) {
+		$scope.items = null;
 		$http.get('/api/units/all').then(function(res) {
 			var units = $scope.units = res.data;
 			for(var i in units) {
@@ -12,6 +13,7 @@
 			}
 		});
 		$scope.loadUnit = function(unit) {
+			$scope.items = false;
 			$http.get('/api/unit/' + unit).then(function(res) {
 				$scope.items = res.data;
 			});

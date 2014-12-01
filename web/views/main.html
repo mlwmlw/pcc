@@ -1,26 +1,23 @@
 <% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http, $timeout) {
+		$scope.items = null;
 		$http.get('/api/dates').then(function(res) {
 			var dates = $scope.dates = res.data;
 			for(var i in dates) {
 				dates[i] = dates[i].replace(/T.+$/, '');
 			}
 			$scope.dates = dates = dates.sort().reverse();
-			var date = $scope.date;
-			$scope.date = "";
-			$timeout(function() {
-				$scope.date = date;
-			});
+			$scope.date = dates[0];
+			$scope.loadByDate();	
 		});
 		$scope.loadByDate = function() {
+			$scope.items = false;
 			$http.get('/api/date/' + $scope.date).then(function(res) {
 				$scope.items = res.data;
 			});
 		};
-		var d = new Date();
-		$scope.date = d.getFullYear() + "-" + (+d.getMonth()+1) + "-" + d.getDate();
-		$scope.loadByDate();	
+
 	});
 </script>
 

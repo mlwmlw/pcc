@@ -6,14 +6,20 @@
         <th style="width:5em">類型</th>
         <th>發佈日期</th>
 </tr>
-<tr ng-show="!items">
-        <td colspan="7" style="Text-align:center;"> no data </td>
+<tr ng-show="items === null">
+	<td colspan="7" style="Text-align:center;"> 請選擇條件 </td>
+</tr>
+<tr ng-show="items === false">
+	<td colspan="7" style="Text-align:center;"> 資料載入中 </td>
+</tr>
+<tr ng-show="items && items.length === 0">
+	<td colspan="7" style="Text-align:center;"> 查無資料 </td>
 </tr>
 <tr ng-repeat="item in items | filter: keyword">
-        <td><a ng-href="/unit/[[item.unit]]">[[item.unit]]</a></td>
-        <td><a ng-href="//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey=[[item.key]]" target="_blank">[[item.name]]</a></td>
-        <td>[[item.price | currency | money]]</td>
-        <td>[[item.category]]</td>
-        <td>[[item.publish | date]]</td>
+	<td><a ng-href="/unit/[[item.unit]]">[[item.unit]]</a></td>
+	<td><a ng-href="//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey=[[item.key]]" target="_blank">[[item.name]]</a></td>
+	<td>[[item.price | currency | money]]</td>
+	<td>[[item.category]]</td>
+	<td>[[item.publish | date]]</td>
 </tr>
 </table>
