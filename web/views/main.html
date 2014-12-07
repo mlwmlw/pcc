@@ -1,54 +1,114 @@
 <% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http, $timeout) {
-		$scope.items = null;
-		$http.get('/api/dates').then(function(res) {
-			var dates = $scope.dates = res.data;
-			for(var i in dates) {
-				dates[i] = dates[i].replace(/T.+$/, '');
-			}
-			$scope.dates = dates = dates.sort().reverse();
-			$scope.date = dates[0];
-			$scope.loadByDate();	
-		});
-		$scope.loadByDate = function() {
-			$scope.items = false;
-			$http.get('/api/date/' + $scope.date).then(function(res) {
-				$scope.items = res.data;
+		$.get('/api/month').then(function(res) {
+			res = res.sort(function(b, a) {
+				if (a.year != b.year) {
+					if (+a.year < +b.year) return -1;
+					if (+a.year > +b.year) return 1;
+					return 0;
+				}
+				if (+a.month < +b.month) return -1;
+				if (+a.month > +b.month) return 1;
+				return 0;
 			});
-		};
+			$scope.month = res[0]
+			$scope.monthes = res;
+			$scope.stats()
+		});
+		$scope.stats = function() {
+			var year = $scope.month.year,
+				month = $scope.month.month;
+			$.get('/api/units_stats/' + year + '-' + month + '-01').then(function(res) {
+				if(typeof(res) == 'string')
+					res = JSON.parse(res);
+				console.log(res);
+				var stats = {};
+				for(var i in res) {
+					stats[res[i].parent] = stats[res[i].parent] ? stats[res[i].parent] + +res[i].price : +res[i].price
+				}
+				var data = [];
+				for(var i in stats) {
+					if(i == '')	continue;
+					data.push({
+						label: i,
+						value: stats[i]
+					});
+				}
+				data.sort(function(b, a) {
+					return a.value - b.value;
+				});
+				nv.addGraph(function() {
+						var chart = nv.models.pieChart()
+							.x(function(d) { return d.label })
+							.y(function(d) { return d.value })
+							.showLabels(true)
+							.pieLabelsOutside(true)
+							.donut(true)
+							.donutRatio(0.25);
 
+						d3.select("#chart svg#main")
+							.datum(data)
+							.transition().duration(350)
+							.call(chart);
+						d3.selectAll(".nv-series")
+							.attr("transform", function(obj, x, y) {
+								return 'translate(' + 0 +',' + (x * 20 + 30) + ')';
+							});
+						d3.selectAll(".nv-slice")
+							.on('click', function(obj) {
+								detail(res, obj.data.label);
+							});
+						nv.utils.windowResize(chart.update);
+
+						return chart;
+				});
+			});
+			function detail(units, unit) {
+				units = units.filter(function(row) {
+					return row.parent == unit;
+				});
+				var stats = {}, data = [];
+				for(var i in units) {
+					var u = units[i];
+					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u.price : +u.price;
+				}
+				for(var i in stats) {
+					data.push({
+						label: i,
+						value: stats[i]
+					});
+				}
+				nv.addGraph(function() {
+						var chart = nv.models.pieChart()
+							.x(function(d) { return d.label })
+							.y(function(d) { return d.value })
+							.showLabels(true)
+							.pieLabelsOutside(true)
+							.donut(true)
+							.donutRatio(0.25);
+
+						d3.select("#chart svg#detail")
+							.datum(data)
+							.transition().duration(350)
+							.call(chart);
+			
+						nv.utils.windowResize(chart.update);
+						return chart;
+				});
+
+			}
+		}
 	});
 </script>
 
 <div class="starter-template">
 	<h1>中華民國政府標案檢索</h1>
 	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
-	<div class="form-group">
-		<div class="col-md-8">
-			<div class="form-group row">
-				<label for="inputKey" class="col-md-2 control-label">發佈日期</label>
-				<div class="col-md-4">
-					<select class="form-control" ng-change="loadByDate()" ng-model="date" ng-options="d for d in dates" >
-		<option value="">請選擇</option>
-	</select>
-				</div>
-			</div>
-		</div>
+	<h2>各月招標資料統計</h2>
+	<select ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
+	<div class="row" id="chart">
+		<svg id="main" style="height: 730px;width: 50%"></svg>
+		<svg id="detail" style=";width: 50%"></svg>
 	</div>
-	<span ng-show="!dates">資料載入中..</span>
-	<div class="row">
-		<div class="col-xs-7">
-			
-		</div>
-		<div class="col-xs-5">
-			<div class="input-group">
-				<input type="text" class="form-control" ng-model="keyword_buffer" placeholder="filter" />
-				<span class="input-group-btn">
-					<button class="btn btn-default" ng-click="keyword = keyword_buffer" type="button">serach</button>
-				</span>
-			</div>
-		</div>
-	</div>
-	<% include './views/items.html' %>
 </div>

@@ -1,7 +1,9 @@
 <?php
-for($i=0; $i< 7; $i++) {
+$PATH = getenv('PATH');
+#putenv("PATH={$PATH}:/usr/local/bin/");
+for($i=0; $i< 10; $i++) {
 	$date = date('Y-m-d', strtotime("-{$i}days"));
 	echo $date;
 	echo "\n";
-	exec('lsc main ' . $date);
+	exec("export PATH={$PATH}:/usr/local/bin/;lsc /home/mlwmlw/node/pcc/main " . $date);
 }

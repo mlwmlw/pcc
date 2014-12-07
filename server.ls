@@ -38,6 +38,7 @@ app.use (req, res, next) ->
 		return res.send cache[req.url]
 	else
 		console.log 'cache miss: ' + req.url
+	res.setHeader 'Content-Type', 'application/json';
 	send = res.send
 	res.send = (data) ->
 		cache[req.url] = data
@@ -66,6 +67,15 @@ app.get '/date/:date', (req, res) ->
 	console.log date
 	db.collection 'pcc' .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
 		res.send docs
+app.get '/month', (req, res) ->
+	db <- connectDB
+	collection = db.collection 'pcc'
+	collection.aggregate { $group: { _id: { year: { $year: '$publish'}, month: { $month: '$publish'} } } }, (err, docs) ->
+		monthes = _.pluck docs, '_id'
+		monthes = monthes.map (val) ->
+			val.name = val.year + ' 年 ' + val.month + ' 月'
+			return val
+		res.send monthes
 
 app.get '/dates', (req, res) ->
 	connectDB (db) ->
@@ -105,10 +115,30 @@ app.get '/unit/:unit', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .find { unit: new RegExp req.params.unit } .toArray (err, docs) ->
 			res.send docs
-app.get '/units_stats', (req, res) ->
+app.get '/units_stats/:date?/:days?', (req, res) ->
 	db <- connectDB
+	deferred = q.defer!
+	db.collection 'unit' .find {} .toArray (err, units) ->
+		#units.sort (a, b) ->
+		#	a._id.replace('.', '') - b._id.replace('.', '')
+		units = units.reduce (res, unit, key) ->
+			res[unit.name] = unit
+			res[unit._id] = unit
+			return res
+		, {}
+		deferred.resolve units
+
+	
+	start = moment req.params.date .zone '+0800' 
+
+	if req.params.days
+		end = moment start .add {days: req.params.days}
+	else
+		end = moment start .add {months: 1}
+
 	mapper = !->
-		emit this.unit, {count: 1, price: this.price}
+		emit this.unit, {count: 1, price: +this.price}
+
 	reducer = (key, values) ->
 		price = 0
 		count = 0
@@ -116,14 +146,37 @@ app.get '/units_stats', (req, res) ->
 			count += value.count
 			price += +value.price
 		return {count: count, price: price, unit: value.unit}
+	
 	pcc = db.collection('pcc')
 	pcc.mapReduce mapper, reducer, {
-		query: {publish: new Date(2014, 11, 1)},
+		query: {publish: {
+			$gte: start.toDate!,
+			$lte: end.toDate!
+		}},
 		out: { inline: 1 }
 	}, (err, result) ->
 		if err
 			console.log err
-		res.send result
+		deferred.promise.then (units) ->
+			findParent = (id, unit)->
+				if units[id] && units[id].parent == null
+					return units[id].name
+				else if units[id] && units[id].parent != null
+					return findParent units[id].parent, units[id]
+				else if unit
+					return unit.name
+				else
+					return ''
+			result := result.map (row) ->
+				name = row._id.replace(/\s+/, '')
+				unit = findParent name
+				return { 
+					parent: unit
+					unit: name
+					count: row.value.count,
+					price: row.value.price
+				}
+			res.send result
 
 app.get '/units_count', (req, res) ->
 	db <- connectDB
