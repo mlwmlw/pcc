@@ -1,7 +1,7 @@
 <% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http, $timeout) {
-		$.get('/api/month').then(function(res) {
+		$http.get('/api/month').success(function(res) {
 			res = res.sort(function(b, a) {
 				if (a.year != b.year) {
 					if (+a.year < +b.year) return -1;
@@ -19,84 +19,72 @@
 		$scope.stats = function() {
 			var year = $scope.month.year,
 				month = $scope.month.month;
-			$.get('/api/units_stats/' + year + '-' + month + '-01').then(function(res) {
-				if(typeof(res) == 'string')
-					res = JSON.parse(res);
-				console.log(res);
-				var stats = {};
-				for(var i in res) {
-					stats[res[i].parent] = stats[res[i].parent] ? stats[res[i].parent] + +res[i].price : +res[i].price
-				}
-				var data = [];
-				for(var i in stats) {
-					if(i == '')	continue;
-					data.push({
-						label: i,
-						value: stats[i]
-					});
-				}
-				data.sort(function(b, a) {
-					return a.value - b.value;
-				});
-				nv.addGraph(function() {
-						var chart = nv.models.pieChart()
-							.x(function(d) { return d.label })
-							.y(function(d) { return d.value })
-							.showLabels(true)
-							.pieLabelsOutside(true)
-							.donut(true)
-							.donutRatio(0.25);
-
-						d3.select("#chart svg#main")
-							.datum(data)
-							.transition().duration(350)
-							.call(chart);
-						d3.selectAll(".nv-series")
-							.attr("transform", function(obj, x, y) {
-								return 'translate(' + 0 +',' + (x * 20 + 30) + ')';
-							});
-						d3.selectAll(".nv-slice")
-							.on('click', function(obj) {
-								detail(res, obj.data.label);
-							});
-						nv.utils.windowResize(chart.update);
-
-						return chart;
-				});
+			$http.get('/api/units_stats/' + year + '-' + month + '-01', {cache: true}).success(function(res) {
+				$scope.data = res;
+				$scope.breadcrumb = [];
+				setUnit();
 			});
-			function detail(units, unit) {
-				units = units.filter(function(row) {
-					return row.parent == unit;
-				});
-				var stats = {}, data = [];
-				for(var i in units) {
-					var u = units[i];
-					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u.price : +u.price;
-				}
-				for(var i in stats) {
-					data.push({
-						label: i,
-						value: stats[i]
+		}
+		var setUnit = $scope.setUnit = function(unit) {
+			if(/\d+/.test(unit)) {
+				$scope.breadcrumb = $scope.breadcrumb.slice(0, unit + 1);
+				unit = $scope.breadcrumb[$scope.breadcrumb.length - 1];
+				if(unit == '全部')
+					unit = null;
+			}
+			else {
+				$scope.breadcrumb.push(unit || '全部');
+			}
+			var units = $scope.data;
+			var stats = {};
+			var data = [];
+			for(var i in units) {
+				var u = units[i];
+				if(unit == undefined)
+					stats[u.parent] = stats[u.parent] ? stats[u.parent] + +u.price : +u.price;
+				else if(unit == u.parent)
+					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u.price: +u.price;
+				else if(unit == u.unit)
+					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u.price: +u.price;
+			}
+			for(var i in stats) {
+				if(i == '')	continue;
+				data.push([i, stats[i]]);
+			}
+			data.sort(function(b, a) {
+				return a[1] - b[1];
+			});
+			data = data.slice(0, 20);
+			chart(data);
+		}
+		function chart(data) {
+			if($scope.chart) {
+				$scope.chart.unload();
+				setTimeout(function() {
+					$scope.chart.load({
+						columns: data
 					});
-				}
-				nv.addGraph(function() {
-						var chart = nv.models.pieChart()
-							.x(function(d) { return d.label })
-							.y(function(d) { return d.value })
-							.showLabels(true)
-							.pieLabelsOutside(true)
-							.donut(true)
-							.donutRatio(0.25);
-
-						d3.select("#chart svg#detail")
-							.datum(data)
-							.transition().duration(350)
-							.call(chart);
-			
-						nv.utils.windowResize(chart.update);
-						return chart;
+				}, 600)
+			}
+			else {
+				$scope.chart = c3.generate({
+					bindto: '#chart',
+					size: {
+						height: 800
+					},
+					legend: {
+							position: 'right'
+					},
+					data: {
+						columns: data,
+						type : 'pie',
+						onclick: function (d, i) { 
+							$scope.$apply(function() {
+								setUnit(d.id); 
+							});
+						}
+					}
 				});
-
 			}
 		}
 	});
@@ -106,9 +94,13 @@
 	<h1>中華民國政府標案檢索</h1>
 	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
 	<h2>各月招標資料統計</h2>
+	<div>
+		<a ng-click="setUnit(key)" href="javascript:void(0)" ng-repeat="(key, bread) in breadcrumb">
+			<span ng-if="!$first">&gt;</span>
+			[[bread]]
+		</a>
+	</div>
 	<select ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
 	<div class="row" id="chart">
-		<svg id="main" style="height: 730px;width: 50%"></svg>
-		<svg id="detail" style=";width: 50%"></svg>
 	</div>
 </div>

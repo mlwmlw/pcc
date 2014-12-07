@@ -27,7 +27,7 @@ getAll = !->
 	deferred.promise
 
 setInterval !->
-	deferred := null
+	#deferred := null
 	cache := {}
 	console.log "clear cache"
 , 3600 * 1000
@@ -176,6 +176,7 @@ app.get '/units_stats/:date?/:days?', (req, res) ->
 					count: row.value.count,
 					price: row.value.price
 				}
+			units = null
 			res.send result
 
 app.get '/units_count', (req, res) ->
