@@ -13,6 +13,10 @@ app.use(logger());
 app.use(route.get('/', function *(next) {
 	this.body = yield render('main')
 }));
+app.use(route.get('/date', function *(next) {
+	this.body = yield render('date')
+}));
+
 app.use(route.get('/unit/:unit?', function *(unit, next) {
 	this.body = yield render('unit', {unit: unit})
 }));

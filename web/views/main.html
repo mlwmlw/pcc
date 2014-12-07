@@ -1,4 +1,11 @@
 <% extend './views/template.html' %>
+<style>
+	.active a {
+		pointer-events: none;
+		cursor: default;
+		color: #777;
+	}
+</style>
 <script>
 	app.controller('page', function($scope, $http, $timeout) {
 		$http.get('/api/month').success(function(res) {
@@ -54,7 +61,7 @@
 			data.sort(function(b, a) {
 				return a[1] - b[1];
 			});
-			data = data.slice(0, 20);
+			data = data.slice(0, 30);
 			chart(data);
 		}
 		function chart(data) {
@@ -70,7 +77,7 @@
 				$scope.chart = c3.generate({
 					bindto: '#chart',
 					size: {
-						height: 800
+						height: 700
 					},
 					legend: {
 							position: 'right'
@@ -79,9 +86,14 @@
 						columns: data,
 						type : 'pie',
 						onclick: function (d, i) { 
-							$scope.$apply(function() {
-								setUnit(d.id); 
-							});
+							if($scope.breadcrumb.length >= 2) {
+								location.href = '/unit/' + d.id;
+							}
+							else {
+								$scope.$apply(function() {
+									setUnit(d.id); 
+								});
+							}
 						}
 					}
 				});
@@ -94,13 +106,17 @@
 	<h1>中華民國政府標案檢索</h1>
 	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
 	<h2>各月招標資料統計</h2>
-	<div>
-		<a ng-click="setUnit(key)" href="javascript:void(0)" ng-repeat="(key, bread) in breadcrumb">
-			<span ng-if="!$first">&gt;</span>
+	<div class="row form-inline">
+			請選擇月份：<select class="form-control" ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
+	</div>	
+	<ol class="breadcrumb">
+	  <li ng-repeat="(key, bread) in breadcrumb" ng-class="{active: $last}">
+			<a ng-click="setUnit(key)" href="javascript:void(0)">
 			[[bread]]
-		</a>
-	</div>
-	<select ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
+			</a>
+		</li>
+	</ol>
+	
 	<div class="row" id="chart">
 	</div>
 </div>
