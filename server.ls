@@ -9,7 +9,9 @@ app.set 'port' (process.env.PORT or 8888)
 
 client = mongodb.MongoClient
 connectDB = (cb) ->
-	client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
+	#client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
+	#client.connect "mongodb://node:1qazxsw2@localhost:27017/pcc", (err, db) ->
+	client.connect "mongodb://user:1qazxsw2!@ds052827.mongolab.com:52827/pcc", (err, db) ->
 		cb db
 deferred = null
 cache = {}
@@ -31,17 +33,18 @@ setInterval !->
 	cache := {}
 	console.log "clear cache"
 , 3600 * 1000
-getAll!
+#getAll!
 app.use (req, res, next) ->
 	if cache[req.url]
 		console.log 'cache hit: ' + req.url
 		return res.send cache[req.url]
-	else
-		console.log 'cache miss: ' + req.url
+	#else
+	#	console.log 'cache miss: ' + req.url
 	res.setHeader 'Content-Type', 'application/json';
 	send = res.send
 	res.send = (data) ->
-		cache[req.url] = data
+		if /units_stats/.test(req.url) || /month/.test(req.url) || /dates/.test(req.url)
+			cache[req.url] = data
 		send.call res, data
 	next!
 
@@ -114,6 +117,8 @@ app.get '/units/:id?', (req, res) ->
 app.get '/unit/:unit', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .find { unit: new RegExp req.params.unit } .toArray (err, docs) ->
+			docs.sort (a, b) ->
+				return b.publish - a.publish
 			res.send docs
 app.get '/units_stats/:date?/:days?', (req, res) ->
 	db <- connectDB

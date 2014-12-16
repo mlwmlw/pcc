@@ -7,6 +7,15 @@
 	}
 </style>
 <script>
+	app.filter('range', function() {
+		  return function(input, min, max) {
+				min = parseInt(min); //Make string input int
+				max = parseInt(max);
+				for (var i = min; i <= max; i++)
+					input.push(i);
+				return input;
+			};
+	});
 	app.controller('page', function($scope, $http, $timeout) {
 		$http.get('/api/month').success(function(res) {
 			res = res.sort(function(b, a) {
@@ -48,11 +57,11 @@
 			for(var i in units) {
 				var u = units[i];
 				if(unit == undefined)
-					stats[u.parent] = stats[u.parent] ? stats[u.parent] + +u.price : +u.price;
+					stats[u.parent] = stats[u.parent] ? stats[u.parent] + +u[$scope.type] : +u[$scope.type];
 				else if(unit == u.parent)
-					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u.price: +u.price;
+					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u[$scope.type]: +u[$scope.type];
 				else if(unit == u.unit)
-					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u.price: +u.price;
+					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u[$scope.type]: +u[$scope.type];
 			}
 			for(var i in stats) {
 				if(i == '')	continue;
@@ -61,7 +70,7 @@
 			data.sort(function(b, a) {
 				return a[1] - b[1];
 			});
-			data = data.slice(0, 30);
+			data = data.slice(0, $scope.limit);
 			chart(data);
 		}
 		function chart(data) {
@@ -71,7 +80,7 @@
 					$scope.chart.load({
 						columns: data
 					});
-				}, 600)
+				}, 300)
 			}
 			else {
 				$scope.chart = c3.generate({
@@ -81,6 +90,21 @@
 					},
 					legend: {
 							position: 'right'
+					},
+					pie: {
+						label: {
+							format: function (value, ratio, id) {
+								return id;// ($scope.type == 'price' ? '$' +  d3.format(',')(value): d3.format(',')(value));
+							}
+						}
+					},
+					tooltip: {
+						format: {
+							title: function (d) { return d; },
+							value: function (value, ratio, id) {
+								return $scope.type == 'price' ? '$' + d3.format(',')(value): d3.format(',')(value);
+							}
+						}
 					},
 					data: {
 						columns: data,
@@ -95,6 +119,7 @@
 								});
 							}
 						}
+						
 					}
 				});
 			}
@@ -103,12 +128,32 @@
 </script>
 
 <div class="starter-template">
-	<h1>中華民國政府標案檢索</h1>
-	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
 	<h2>各月招標資料統計</h2>
-	<div class="row form-inline">
+	<p>此功能用來大致分析每個單位所得到的資源數量，各單位可以再點擊進去看詳細。</p>
+	<p>目前相同標案流標後會被重複計算，很多標案也沒有發標金額，所以可以參考標案數量來比較。</p>
+	<div >
+		<form class="form-inline">
+			<div class="form-group">
 			請選擇月份：<select class="form-control" ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
+			</div>
+
+			<div class="form-group">
+			統計類型：<select class="form-control" ng-change="stats()" ng-model="type" ng-init="type = 'price'">
+				<option value="price">金額</option>
+				<option value="count">標案數量</option>
+			</select>
+			</div>
+
+			<div class="form-group">
+			顯示單位數量（依照金額排序）：
+			<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 30" ng-options="n for n in [] | range:1:50">
+			</select>
+			</div>
+		</form>
 	</div>	
+	<div>
+	</div>
+	<div>
 	<ol class="breadcrumb">
 	  <li ng-repeat="(key, bread) in breadcrumb" ng-class="{active: $last}">
 			<a ng-click="setUnit(key)" href="javascript:void(0)">
@@ -116,7 +161,7 @@
 			</a>
 		</li>
 	</ol>
-	
+	</div>	
 	<div class="row" id="chart">
 	</div>
 </div>
