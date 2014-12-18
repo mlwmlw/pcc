@@ -35,7 +35,7 @@
 		$scope.stats = function() {
 			var year = $scope.month.year,
 				month = $scope.month.month;
-			$http.get('/api/units_stats/' + year + '-' + month + '-01', {cache: true}).success(function(res) {
+			$http.get('/api/units_stats/' + year + '-' + (month < 10 ? '0' + month: month) + '-01', {cache: true}).success(function(res) {
 				$scope.data = res;
 				$scope.breadcrumb = [];
 				setUnit();
@@ -83,6 +83,7 @@
 				}, 300)
 			}
 			else {
+				$scope.item = null;
 				$scope.chart = c3.generate({
 					bindto: '#chart',
 					size: {
@@ -111,7 +112,13 @@
 						type : 'pie',
 						onclick: function (d, i) { 
 							if($scope.breadcrumb.length >= 2) {
-								location.href = '/unit/' + d.id;
+								var year = $scope.month.year,
+								month = $scope.month.month;
+								month = year + '-' + (month < 10 ? '0' + month: month);
+								$http.get('/api/unit/' + d.id + '/' + month).success(function(res) {
+									$scope.items = res;
+								});
+								//location.href = '/unit/' + d.id;
 							}
 							else {
 								$scope.$apply(function() {
@@ -164,4 +171,5 @@
 	</div>	
 	<div class="row" id="chart">
 	</div>
+	<% include './views/items.html' %>
 </div>

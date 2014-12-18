@@ -1,7 +1,7 @@
 require! <[ ./pcc mongodb q progress moment]>
-
+uri = require \./database
 client = mongodb.MongoClient
-client = client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
+client = client.connect uri, (err, db) ->
 	collection = db.collection 'pcc'
 	#.subtract 'days', 3
 	today = pcc.getDocsByDate moment process.argv[2] .then (res) ->

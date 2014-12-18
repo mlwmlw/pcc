@@ -1,9 +1,9 @@
 require! <[ fs express http mongodb q moment ]>
 _ = require 'lodash'
-
+uri = require \./database
 start_ts = +new Date! 
 client = mongodb.MongoClient
-err, db <-client.connect "mongodb://user:1qazxsw2!@ds052827.mongolab.com:52827/pcc"
+err, db <-client.connect uri
 console.log 'connected', +new Date! - start_ts
 deferred = q.defer!
 db.collection 'unit' .find {} .toArray (err, units) ->
