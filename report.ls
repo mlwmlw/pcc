@@ -18,22 +18,30 @@ start = moment process.argv[2] .zone '+0800'
 end = moment start .add {months: 1}
 
 mapper = !->
-	emit this.unit, {count: 1, price: +this.price}
+	emit this.unit, {ids: [this.id], id: this.id, count: 1, price: +this.price, repeat: 0}
 
 reducer = (key, values) ->
 	price = 0
 	count = 0
+	repeat = 0
+	ids = []
 	for value in values
+		if ids.indexOf(value.id) < 0
+			ids = ids.concat value.ids
+			price += +value.price
+		else
+			repeat += value.repeat + 1
 		count += value.count
-		price += +value.price
-	return {count: count, price: price, unit: value.unit}
+	return {ids: ids, count: count, price: price, unit: value.unit, repeat: repeat}
 
 pcc = db.collection('pcc')
 pcc.mapReduce mapper, reducer, {
-	query: {publish: {
-		$gte: start.toDate!,
-		$lte: end.toDate!
-	}},
+	query: {
+		publish: {
+			$gte: start.toDate!,
+			$lte: end.toDate!
+		}
+	},
 	out: { inline: 1 }
 }, (err, result) ->
 	if err
@@ -51,17 +59,24 @@ pcc.mapReduce mapper, reducer, {
 		result := result.map (row) ->
 			name = row._id.replace(/\s+/, '')
 			unit = findParent name
+			#console.log unit
+			#console.log name
+			#console.log row.value
 			return { 
+				#ids: row.value.ids
+				#repeat: row.value.repeat
 				parent: unit
 				unit: name
-				count: row.value.count,
+				count: row.value.count
 				price: row.value.price
 			}
 		#console.log result
-		db.collection \report .insert {
+		db.collection \report .update {
+			_id: process.argv[2]
+		}, {
 			_id: process.argv[2],
 			res: result
-		}, (err, res) ->
+		}, {upsert: true}, (err, res) ->
 			console.log err
 			console.log res
 			process.exit!
