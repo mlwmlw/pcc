@@ -1,4 +1,4 @@
-var app = angular.module('myapp', ['ui.bootstrap', 'ngRoute']);	
+var app = angular.module('myapp', ['ui.bootstrap', 'ngRoute', 'ngReactGrid']);	
 app.config(function($interpolateProvider) {
 	$interpolateProvider.startSymbol('[[');
 	$interpolateProvider.endSymbol(']]');
@@ -14,16 +14,45 @@ app.run(function($rootScope, $http, $window) {
 app.filter('money', function() {
 	return function(input) {
 		input = input.replace('.00', '');
-		if(input.slice(-4) == ',000')
+		if(input.slice(-8) == ',000,000')
+			return input.substr(0, input.length -8) + 'm';
+		else if(input.slice(-4) == ',000')
 			return input.substr(0, input.length -4) + 'k';
+
 		else 
 			return input;
 	};
 });
 app.filter('date', function() {
 	return function(input) {
-		return input.replace(/T.+$/, '');	
+		var time = input.match(/([^Z]+)(Z(\d+))?/);
+		var input = Date.parse(time[1]);
+		if(time[3])
+			input += time3 * 1000;
+		else
+			input += 28800000;
+		return (new Date(input)).toISOString().replace(/T.+$/, '');
 	};
+});
+app.service('grid', function($filter) {
+	var grid = {
+			data: [], 
+			height: 800,
+			columnDefs: [
+				{ field: "unit", displayName: "單位", render: function(row) {
+					return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
+				}},
+				{ field: "category", displayName: "分類"},
+				{ field: "name", displayName: "標案名稱"},
+				{ field: "price", displayName: "金額", render: function(row) {
+					return $filter('money')($filter('currency')(row.price));
+				}},
+				{ field: "type", displayName: "類型"},
+				{ field: "publish", displayName: "發佈日期", render: function(row) {
+					return $filter('date')(row.publish);
+				}},
+		]};
+		return grid;
 });
 app.filter('option', function () {
 	return function (items, value) {

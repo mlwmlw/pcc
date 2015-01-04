@@ -1,11 +1,13 @@
 <% extend './views/template.html' %>
 <script>
-	app.controller('page', function($scope, $http) {
+	app.controller('page', function($scope, $http, grid) {
 		$scope.items = null;
+		$scope.grid = grid;
 		$http.get('/api/units/all').then(function(res) {
 			var units = $scope.units = res.data;
 			for(var i in units) {
-				if(/<%- @unit %>/.test(units[i])) {
+				var reg = new RegExp("<%- @unit %>" || null);
+				if(reg.test(units[i])) {
 					$scope.unit = units[i];
 					$scope.loadUnit($scope.unit);
 					return;
@@ -15,7 +17,41 @@
 		$scope.loadUnit = function(unit) {
 			$scope.items = false;
 			$http.get('/api/unit/' + unit).then(function(res) {
-				$scope.items = res.data;
+				var items = $scope.grid.data = res.data;
+				var dates = {};
+				for(var i in items) {
+					var date = items[i].publish.replace(/T.+$/, '');
+					if(dates[date])
+						dates[date].price += +items[i].price;
+					else
+						dates[date] = {date: date, price: +items[i].price};
+				}
+				dates = $.map(dates, function(value) {
+					return value;
+				});
+				var chart = c3.generate({
+					data: {
+						json: dates,
+						//types: {
+						//	price: 'spline'
+						//},
+						keys: {
+							x: 'date',
+							value: ['price']
+						}
+					},
+					zoom: {
+						  enabled: true
+					},
+					axis: {
+						x: {
+							type: 'timeseries',
+							tick: {
+								format: '%Y-%m-%d'
+							}
+						}
+					}
+				});
 			});
 		};
 	});
@@ -32,14 +68,17 @@
 			</select>
 		</div>
 		<div class="col-xs-5">
-			<div class="input-group">
-				<input type="text" class="form-control" ng-model="keyword_buffer" placeholder="filter" />
-				<span class="input-group-btn">
-					<button class="btn btn-default" ng-click="keyword = keyword_buffer" type="button">serach</button>
-				</span>
-			</div>
+			<form style="margin: 0;" ng-submit="keyword = keyword_buffer" class="navbar-form">
+				<div class="form-group">
+					<input type="text" class="form-control" ng-model="keyword_buffer" placeholder="過濾單位名稱" />
+
+				</div>
+				<button class="btn btn-default" type="submit">serach</button>
+			</form>
 		</div>
 	</div>
+	<div class="row" id="chart">
+	</div>
 
-	<% include './views/items.html' %>
+	<ng-react-grid grid="grid"></ng-react-grid>
 </div>

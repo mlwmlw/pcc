@@ -1,6 +1,6 @@
 <% extend './views/template.html' %>
 <script>
-	app.controller('page', function($scope, $http, $timeout) {
+	app.controller('page', function($scope, $http, $timeout, $filter, grid) {
 		$scope.items = null;
 		$http.get('/api/dates').then(function(res) {
 			var dates = $scope.dates = res.data;
@@ -14,10 +14,10 @@
 		$scope.loadByDate = function() {
 			$scope.items = false;
 			$http.get('/api/date/' + $scope.date).then(function(res) {
-				$scope.items = res.data;
+				$scope.grid.data = res.data;
 			});
 		};
-
+		$scope.grid = grid;
 	});
 </script>
 
@@ -37,18 +37,5 @@
 		</div>
 	</div>
 	<span ng-show="!dates">資料載入中..</span>
-	<div class="row">
-		<div class="col-xs-7">
-			
-		</div>
-		<div class="col-xs-5">
-			<div class="input-group">
-				<input type="text" class="form-control" ng-model="keyword_buffer" placeholder="filter" />
-				<span class="input-group-btn">
-					<button class="btn btn-default" ng-click="keyword = keyword_buffer" type="button">serach</button>
-				</span>
-			</div>
-		</div>
-	</div>
-	<% include './views/items.html' %>
+	<ng-react-grid grid="grid"></ng-react-grid>
 </div>

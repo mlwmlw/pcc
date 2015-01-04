@@ -1,0 +1,31 @@
+{
+  "name": "ngReactGrid",
+  "version": "0.7.0",
+  "description": "A really fast Angular grid using the power of React to render",
+  "homepage": "https://github.com/josebalius/ngReactGrid",
+  "authors": [
+    "Jose Garcia - jose.balius@gmail.com"
+  ],
+  "main": [
+    "build/js/ngReactGrid.min.js",
+    "build/css/ngReactGrid.css",
+    "build/img/arrow_icons.png"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "_release": "0.7.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.7.0",
+    "commit": "5a619b552339e4a439b99089fb844eb8ff2ddc20"
+  },
+  "_source": "git://github.com/josebalius/ngReactGrid.git",
+  "_target": "~0.7.0",
+  "_originalSource": "ngReactGrid",
+  "_direct": true
+}
