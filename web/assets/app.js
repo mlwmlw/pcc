@@ -43,7 +43,9 @@ app.service('grid', function($filter) {
 					return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
 				}},
 				{ field: "category", displayName: "分類"},
-				{ field: "name", displayName: "標案名稱"},
+				{ field: "name", displayName: "標案名稱", render: function(row) {
+					return React.DOM.a({target: "_blank", href:"//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, row.name);
+				}},
 				{ field: "price", displayName: "金額", render: function(row) {
 					return $filter('money')($filter('currency')(row.price));
 				}},

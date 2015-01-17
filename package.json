@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/mlwmlw/pcc",
   "dependencies": {
+    "cheerio": "^0.18.0",
     "co-body": "~1.0.0",
     "co-views": "~0.2.0",
     "consolidate": "~0.10.0",
@@ -29,10 +30,13 @@
     "koa-route": "~2.1.0",
     "koa-static": "~1.4.7",
     "lodash": "~2.4.1",
+    "moment": "~2.8.3",
+    "mongodb": "~1.4.19",
     "nodetime": "^0.8.15",
     "nunjucks": "~1.0.7",
-    "mongodb": "~1.4.19",
+    "progress": "^1.1.8",
     "q": "~1.0.1",
-    "moment": "~2.8.3"
+    "request": "^2.51.0",
+    "string": "^3.0.0"
   }
 }
