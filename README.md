@@ -16,13 +16,25 @@ get and parse pcc data
 
   $ lsc main 2014-06-19
 
-run http server at port 8888
+run http restful api server on port 8888
 
   $ lsc server
   
   Express server listening on port 8888
 
-restful api 
+run web ui listening on port 8889
+```
+$ gulp 
+[13:56:42] Using gulpfile ~/node/pcc/web/gulpfile.js
+[13:56:42] Starting 'serve'...
+spawn 6804
+[13:56:42] Finished 'serve' after 16 ms
+[13:56:42] Starting 'watch'...
+[13:56:42] Finished 'watch' after 195 ms
+[13:56:42] Starting 'default'...
+[13:56:42] Finished 'default' after 13 μs
+```
+api endpoint
 ===
 * GET /page/:page http://pcc.mlwmlw.org/api/page/1
 * GET /keyword/:keyword http://pcc.mlwmlw.org/api/keyword/陸軍 
