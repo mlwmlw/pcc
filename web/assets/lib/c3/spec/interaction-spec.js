@@ -1,7 +1,3 @@
-var describe = window.describe,
-    expect = window.expect,
-    it = window.it,
-    beforeEach = window.beforeEach;
 
 describe('c3 chart interaction', function () {
     'use strict';
@@ -19,16 +15,8 @@ describe('c3 chart interaction', function () {
     };
 
     beforeEach(function (done) {
-        if (typeof chart === 'undefined') {
-            window.initDom();
-        }
-        chart = window.c3.generate(args);
+        chart = window.initChart(chart, args, done);
         d3 = chart.internal.d3;
-        chart.internal.d3.select('.jasmine_html-reporter').style('display', 'none');
-
-        window.setTimeout(function () {
-            done();
-        }, 10);
     });
 
     describe('generate event rects', function () {
@@ -50,12 +38,12 @@ describe('c3 chart interaction', function () {
             });
 
             it('should have 4 event rects properly', function () {
-                var lefts = [77.5, 137, 203.5, 402.5],
-                    widths = [59.5, 66.5, 199, 191.5];
+                var lefts = [78, 138, 205.5, 407.5],
+                    widths = [60, 67.5, 202, 194];
                 d3.selectAll('.c3-event-rect').each(function (d, i) {
                     var box = d3.select(this).node().getBoundingClientRect();
-                    expect(box.left).toBe(lefts[i]);
-                    expect(box.width).toBe(widths[i]);
+                    expect(box.left).toBeCloseTo(lefts[i], -2);
+                    expect(box.width).toBeCloseTo(widths[i], -2);
                 });
             });
 
@@ -78,8 +66,8 @@ describe('c3 chart interaction', function () {
                 expect(eventRects.size()).toBe(1);
                 eventRects.each(function () {
                     var box = d3.select(this).node().getBoundingClientRect();
-                    expect(box.left).toBe(40.5);
-                    expect(box.width).toBe(590);
+                    expect(box.left).toBeCloseTo(40.5, -2);
+                    expect(box.width).toBeCloseTo(598, -2);
                 });
             });
         });
@@ -100,12 +88,12 @@ describe('c3 chart interaction', function () {
             });
 
             it('should have 4 event rects properly', function () {
-                var lefts = [43.5, 191, 349, 494],
-                    widths = [147.5, 158, 145, 134];
+                var lefts = [43.5, 193, 353, 500],
+                    widths = [149.5, 160, 147, 136];
                 d3.selectAll('.c3-event-rect').each(function (d, i) {
                     var box = d3.select(this).node().getBoundingClientRect();
-                    expect(box.left).toBe(lefts[i]);
-                    expect(box.width).toBe(widths[i]);
+                    expect(box.left).toBeCloseTo(lefts[i], -2);
+                    expect(box.width).toBeCloseTo(widths[i], -2);
                 });
 
             });
@@ -128,8 +116,8 @@ describe('c3 chart interaction', function () {
                 expect(eventRects.size()).toBe(1);
                 eventRects.each(function () {
                     var box = d3.select(this).node().getBoundingClientRect();
-                    expect(box.left).toBe(40.5);
-                    expect(box.width).toBe(590);
+                    expect(box.left).toBeCloseTo(40.5, -2);
+                    expect(box.width).toBeCloseTo(598, -2);
                 });
             });
 

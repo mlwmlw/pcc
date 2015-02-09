@@ -1,4 +1,4 @@
-var c3 = { version: "0.4.7" };
+var c3 = { version: "0.4.9" };
 
 var c3_chart_fn, c3_chart_internal_fn;
 
@@ -109,7 +109,7 @@ c3_chart_internal_fn.initParams = function () {
 
     $$.xOrient = config.axis_rotated ? "left" : "bottom";
     $$.yOrient = config.axis_rotated ? (config.axis_y_inner ? "top" : "bottom") : (config.axis_y_inner ? "right" : "left");
-    $$.y2Orient = config.axis_rotated ? (config.axis_y_inner ? "bottom" : "top") : (config.axis_y_inner ? "left" : "right");
+    $$.y2Orient = config.axis_rotated ? (config.axis_y2_inner ? "bottom" : "top") : (config.axis_y2_inner ? "left" : "right");
     $$.subXOrient = config.axis_rotated ? "left" : "bottom";
 
     $$.isLegendRight = config.legend_position === 'right';
@@ -394,7 +394,7 @@ c3_chart_internal_fn.updateSizes = function () {
 };
 
 c3_chart_internal_fn.updateTargets = function (targets) {
-    var $$ = this, config = $$.config;
+    var $$ = this;
 
     /*-- Main --*/
 
@@ -408,14 +408,19 @@ c3_chart_internal_fn.updateTargets = function (targets) {
     $$.updateTargetsForLine(targets);
 
     //-- Arc --//
-    if ($$.updateTargetsForArc) { $$.updateTargetsForArc(targets); }
+    if ($$.hasArcType() && $$.updateTargetsForArc) { $$.updateTargetsForArc(targets); }
+
+    /*-- Sub --*/
+
     if ($$.updateTargetsForSubchart) { $$.updateTargetsForSubchart(targets); }
 
-    /*-- Show --*/
-
     // Fade-in each chart
+    $$.showTargets();
+};
+c3_chart_internal_fn.showTargets = function () {
+    var $$ = this;
     $$.svg.selectAll('.' + CLASS.target).filter(function (d) { return $$.isTargetToShow(d.id); })
-      .transition().duration(config.transition_duration)
+      .transition().duration($$.config.transition_duration)
         .style("opacity", 1);
 };
 
@@ -470,13 +475,7 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
     if (targetsToShow.length) {
         $$.updateXDomain(targetsToShow, withUpdateXDomain, withUpdateOrgXDomain, withTrimXDomain);
         if (!config.axis_x_tick_values) {
-            if (config.axis_x_tick_fit || config.axis_x_tick_count) {
-                tickValues = $$.generateTickValues($$.mapTargetsToUniqueXs(targetsToShow), config.axis_x_tick_count, $$.isTimeSeries());
-            } else {
-                tickValues = undefined;
-            }
-            $$.xAxis.tickValues(tickValues);
-            $$.subXAxis.tickValues(tickValues);
+            tickValues = $$.updateXAxisTickValues(targetsToShow);
         }
     } else {
         $$.xAxis.tickValues([]);
@@ -551,22 +550,22 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
         .style('opacity', targetsToShow.length ? 0 : 1);
 
     // grid
-    $$.redrawGrid(duration);
+    $$.updateGrid(duration);
 
     // rect for regions
-    $$.redrawRegion(duration);
+    $$.updateRegion(duration);
 
     // bars
-    $$.redrawBar(durationForExit);
+    $$.updateBar(durationForExit);
 
     // lines, areas and cricles
-    $$.redrawLine(durationForExit);
-    $$.redrawArea(durationForExit);
-    $$.redrawCircle();
+    $$.updateLine(durationForExit);
+    $$.updateArea(durationForExit);
+    $$.updateCircle();
 
     // text
     if ($$.hasDataLabel()) {
-        $$.redrawText(durationForExit);
+        $$.updateText(durationForExit);
     }
 
     // arc
@@ -596,40 +595,66 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
     cx = ($$.config.axis_rotated ? $$.circleY : $$.circleX).bind($$);
     cy = ($$.config.axis_rotated ? $$.circleX : $$.circleY).bind($$);
 
-    // transition should be derived from one transition
-    d3.transition().duration(duration).each(function () {
-        var transitions = [];
+    if (options.flow) {
+        flow = $$.generateFlow({
+            targets: targetsToShow,
+            flow: options.flow,
+            duration: duration,
+            drawBar: drawBar,
+            drawLine: drawLine,
+            drawArea: drawArea,
+            cx: cx,
+            cy: cy,
+            xv: xv,
+            xForText: xForText,
+            yForText: yForText
+        });
+    }
 
-        $$.addTransitionForBar(transitions, drawBar);
-        $$.addTransitionForLine(transitions, drawLine);
-        $$.addTransitionForArea(transitions, drawArea);
-        $$.addTransitionForCircle(transitions, cx, cy);
-        $$.addTransitionForText(transitions, xForText, yForText, options.flow);
-        $$.addTransitionForRegion(transitions);
-        $$.addTransitionForGrid(transitions);
+    if (duration) {
+        // transition should be derived from one transition
+        d3.transition().duration(duration).each(function () {
+            var transitionsToWait = [];
 
-        // Wait for end of transitions if called from flow API
-        if (options.flow) {
+            // redraw and gather transitions
+            [
+                $$.redrawBar(drawBar, true),
+                $$.redrawLine(drawLine, true),
+                $$.redrawArea(drawArea, true),
+                $$.redrawCircle(cx, cy, true),
+                $$.redrawText(xForText, yForText, options.flow, true),
+                $$.redrawRegion(true),
+                $$.redrawGrid(true),
+            ].forEach(function (transitions) {
+                transitions.forEach(function (transition) {
+                    transitionsToWait.push(transition);
+                });
+            });
+
+            // Wait for end of transitions to call flow and onrendered callback
             waitForDraw = $$.generateWait();
-            transitions.forEach(function (t) {
+            transitionsToWait.forEach(function (t) {
                 waitForDraw.add(t);
             });
-            flow = $$.generateFlow({
-                targets: targetsToShow,
-                flow: options.flow,
-                duration: duration,
-                drawBar: drawBar,
-                drawLine: drawLine,
-                drawArea: drawArea,
-                cx: cx,
-                cy: cy,
-                xv: xv,
-                xForText: xForText,
-                yForText: yForText
-            });
+        })
+        .call(waitForDraw, function () {
+            if (flow) {
+                flow();
+            }
+            if (config.onrendered) {
+                config.onrendered.call($$);
+            }
+        });
+    }
+    else {
+        $$.redrawBar(drawBar);
+        $$.redrawLine(drawLine);
+        $$.redrawArea(drawArea);
+        $$.redrawCircle(cx, cy);
+        if (config.onrendered) {
+            config.onrendered.call($$);
         }
-    })
-    .call(waitForDraw || function () {}, flow || function () {});
+    }
 
     // update fadein condition
     $$.mapToIds($$.data.targets).forEach(function (id) {
@@ -733,8 +758,14 @@ c3_chart_internal_fn.xx = function (d) {
     return d ? this.x(d.x) : null;
 };
 c3_chart_internal_fn.xv = function (d) {
-    var $$ = this;
-    return Math.ceil($$.x($$.isTimeSeries() ? $$.parseDate(d.value) : d.value));
+    var $$ = this, value = d.value;
+    if ($$.isTimeSeries()) {
+        value = $$.parseDate(d.value);
+    }
+    else if ($$.isCategorized() && typeof d.value === 'string') {
+        value = $$.config.axis_x_categories.indexOf(d.value);
+    }
+    return Math.ceil($$.x(value));
 };
 c3_chart_internal_fn.yv = function (d) {
     var $$ = this,
@@ -907,8 +938,8 @@ c3_chart_internal_fn.parseDate = function (date) {
     var $$ = this, parsedDate;
     if (date instanceof Date) {
         parsedDate = date;
-    } else if (typeof date === 'number') {
-        parsedDate = new Date(date);
+    } else if (typeof date === 'number' || !isNaN(date)) {
+        parsedDate = new Date(+date);
     } else {
         parsedDate = $$.dataTimeFormat($$.config.data_xFormat).parse(date);
     }

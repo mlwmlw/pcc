@@ -127,14 +127,31 @@ app.get '/unit/:unit/:month?', (req, res) ->
 				return b.publish - a.publish
 			res.send docs
 
-app.get '/units_stats/:date?', (req, res) ->
+app.get '/units_stats/:start/:end?', (req, res) ->
 	db <- connectDB
-	db.collection 'report' .find {_id: req.params.date} .toArray (err, data) ->
+	if req.params.end
+		filter = {
+			_id: {
+				"$gte": req.params.start,
+				"$lte": req.params.end
+			}
+		}
+	else
+		filter = {_id: req.params.start}
+	
+	db.collection 'report' .find filter .toArray (err, data) ->
 		if err
 			console.log err
 			res.send []
 		else
-			res.send data[0].res
+			if data.length == 1
+				res.send data[0].res
+			else
+				result = {}
+				for value in data
+					result[value._id] = value.res
+				res.send result
+				
 
 #app.get '/units_stats/:date?/:days?', (req, res) ->
 #	db <- connectDB

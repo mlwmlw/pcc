@@ -1,7 +1,3 @@
-var describe = window.describe,
-    expect = window.expect,
-    it = window.it,
-    beforeEach = window.beforeEach;
 
 describe('c3 chart axis', function () {
     'use strict';
@@ -380,11 +376,10 @@ describe('c3 chart axis', function () {
                         expectedTickTexts = [
                             'this is a very',
                             'long tick text',
-                            'on category',
-                            'axis',
+                            'on category axis'
                         ],
                         expectedX = '0';
-                    expect(tspans.size()).toBe(4);
+                    expect(tspans.size()).toBe(3);
                     tspans.each(function (d, i) {
                         var tspan = d3.select(this);
                         expect(tspan.text()).toBe(expectedTickTexts[i]);
@@ -411,7 +406,7 @@ describe('c3 chart axis', function () {
                     ticks.each(function (d, i) {
                         var tspans = d3.select(this).selectAll('tspan'),
                             expectedX = '-9',
-                            expectedDy = '2';
+                            expectedDy = '3';
                         if (i > 0) { // i === 0 should be checked in next test
                             expect(tspans.size()).toBe(1);
                             tspans.each(function () {
@@ -674,4 +669,94 @@ describe('c3 chart axis', function () {
 
         });
     });
+
+    describe('axis.y.inner', function () {
+
+        it('should update args', function () {
+            args = {
+                data: {
+                    columns: [
+                        ['data1', 30, 200, 100, 400, 150, 250],
+                        ['data2', 50, 20, 10, 40, 15, 25]
+                    ]
+                },
+                axis: {
+                    y: {
+                        inner: false
+                    }
+                }
+            };
+            expect(true).toBeTruthy();
+        });
+
+        it('should not have inner y axis', function () {
+            var paddingLeft = chart.internal.getCurrentPaddingLeft(),
+                tickTexts = chart.internal.main.selectAll('.c3-axis-y g.tick text');
+            expect(paddingLeft).toBeGreaterThan(19);
+            tickTexts.each(function () {
+                expect(+d3.select(this).attr('x')).toBeLessThan(0);
+            });
+        });
+
+        it('should update args to have inner y axis', function () {
+            args.axis.y.inner = true;
+            expect(true).toBeTruthy();
+        });
+
+        it('should have inner y axis', function () {
+            var paddingLeft = chart.internal.getCurrentPaddingLeft(),
+                tickTexts = chart.internal.main.selectAll('.c3-axis-y g.tick text');
+            expect(paddingLeft).toBe(1);
+            tickTexts.each(function () {
+                expect(+d3.select(this).attr('x')).toBeGreaterThan(0);
+            });
+        });
+
+    });
+
+    describe('axis.y2.inner', function () {
+
+        it('should update args', function () {
+            args = {
+                data: {
+                    columns: [
+                        ['data1', 30, 200, 100, 400, 150, 250],
+                        ['data2', 50, 20, 10, 40, 15, 25]
+                    ]
+                },
+                axis: {
+                    y2: {
+                        show: true,
+                        inner: false
+                    }
+                }
+            };
+            expect(true).toBeTruthy();
+        });
+
+        it('should not have inner y axis', function () {
+            var paddingRight = chart.internal.getCurrentPaddingRight(),
+                tickTexts = chart.internal.main.selectAll('.c3-axis-2y g.tick text');
+            expect(paddingRight).toBeGreaterThan(19);
+            tickTexts.each(function () {
+                expect(+d3.select(this).attr('x')).toBeGreaterThan(0);
+            });
+        });
+
+        it('should update args to have inner y axis', function () {
+            args.axis.y2.inner = true;
+            expect(true).toBeTruthy();
+        });
+
+        it('should have inner y axis', function () {
+            var paddingRight = chart.internal.getCurrentPaddingRight(),
+                tickTexts = chart.internal.main.selectAll('.c3-axis-2y g.tick text');
+            expect(paddingRight).toBe(2);
+            tickTexts.each(function () {
+                expect(+d3.select(this).attr('x')).toBeLessThan(0);
+            });
+        });
+
+    });
+
 });
