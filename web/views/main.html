@@ -16,7 +16,16 @@
 				return input;
 			};
 	});
-	app.controller('page', function($scope, $http, $timeout) {
+	app.controller('page', function($scope, $http, $timeout, $location, grid) {
+		$scope.grid = grid;
+		$scope.breadcrumb = ['全部'];
+		$scope.$watch(function () { 
+			return $location.search().unit; 
+		}, function (val) {
+			if(!val)
+				return;
+			setUnit(val);
+		});
 		$http.get('/api/month').success(function(res) {
 			res = res.sort(function(b, a) {
 				if (a.year != b.year) {
@@ -30,30 +39,32 @@
 			});
 			$scope.month = res[0]
 			$scope.monthes = res;
-			$scope.stats()
+			$scope.stats();
 		});
 		$scope.stats = function() {
 			var year = $scope.month.year,
 				month = $scope.month.month;
 			$http.get('/api/units_stats/' + year + '-' + (month < 10 ? '0' + month: month) + '-01', {cache: true}).success(function(res) {
 				$scope.data = res;
-				$scope.breadcrumb = [];
-				setUnit();
+				setUnit($location.search().unit);
 			});
 		}
-		var setUnit = $scope.setUnit = function(unit) {
-			if(/\d+/.test(unit)) {
-				$scope.breadcrumb = $scope.breadcrumb.slice(0, unit + 1);
-				unit = $scope.breadcrumb[$scope.breadcrumb.length - 1];
-				if(unit == '全部')
-					unit = null;
-			}
-			else {
-				$scope.breadcrumb.push(unit || '全部');
-			}
+		var setUnit = $scope.setUnit = function(unit, level) {
 			var units = $scope.data;
 			var stats = {};
 			var data = [];
+			if(!units)
+				return;
+			if(/\d+/.test(level)) {
+				$scope.breadcrumb.splice(level + 1);
+				if(level == 0)
+					unit = null;
+				$location.search('unit', unit);
+			}
+			else if(unit) {
+				$scope.breadcrumb.push(unit);
+			}
+			
 			for(var i in units) {
 				var u = units[i];
 				if(unit == undefined)
@@ -72,6 +83,14 @@
 			});
 			data = data.slice(0, $scope.limit);
 			chart(data);
+		}
+		function loadUnit(unit) {
+			var year = $scope.month.year,
+			month = $scope.month.month;
+			month = year + '-' + (month < 10 ? '0' + month: month);
+			$http.get('/api/unit/' + unit + '/' + month).success(function(res) {
+				$scope.grid.data = res;
+			});
 		}
 		function chart(data) {
 			if($scope.chart) {
@@ -112,17 +131,13 @@
 						type : 'pie',
 						onclick: function (d, i) { 
 							if($scope.breadcrumb.length >= 2) {
-								var year = $scope.month.year,
-								month = $scope.month.month;
-								month = year + '-' + (month < 10 ? '0' + month: month);
-								$http.get('/api/unit/' + d.id + '/' + month).success(function(res) {
-									$scope.items = res;
-								});
-								//location.href = '/unit/' + d.id;
+								$scope.breadcrumb.splice(2);
+								$scope.breadcrumb.push(d.id);
+								loadUnit(d.id);	
 							}
 							else {
 								$scope.$apply(function() {
-									setUnit(d.id); 
+									$location.search('unit', d.id);
 								});
 							}
 						}
@@ -162,8 +177,8 @@
 	</div>
 	<div>
 	<ol class="breadcrumb">
-	  <li ng-repeat="(key, bread) in breadcrumb" ng-class="{active: $last}">
-			<a ng-click="setUnit(key)" href="javascript:void(0)">
+	  <li ng-repeat="(key, bread) in breadcrumb track by $index" ng-class="{active: $last}">
+			<a ng-click="setUnit(bread, $index)" href="javascript:void(0)">
 			[[bread]]
 			</a>
 		</li>
@@ -171,5 +186,5 @@
 	</div>	
 	<div class="row" id="chart">
 	</div>
-	<% include './views/items.html' %>
+	<ng-react-grid grid="grid"></ng-react-grid>
 </div>
