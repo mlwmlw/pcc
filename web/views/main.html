@@ -42,7 +42,7 @@
 			$scope.monthes = res;
 			$scope.stats();
 		});
-		$http.get('/api/units_stats/2014-06-01/2015-02-01', {cache: true}).success(function(res) {
+		$http.get('/api/units_stats/2014-02-01/2015-02-01', {cache: true}).success(function(res) {
 			var stats = {}, data = [], dates = {}, value, units = [];
 			for(var month in res) {
 				dates[month] = ''
@@ -81,21 +81,29 @@
 				{date: '2014-02-01', a: 100, b: 200},
 				{date: '2014-03-01', a: 100, b: 200},
 			] */
+			var timer;
 			$scope.chart_line = c3.generate({
 				bindto: '#chart_line',
 				//xFormat: '%Y-%m',
-				
 				data: {
 					onclick: function (d, i) { 
 						var m = d.x;
-						for(var i in $scope.monthes) {
-							var o = $scope.monthes[i];
-							if(o.year == m.getFullYear() && o.month == m.getMonth() + 1) {
-								$scope.month = $scope.monthes[i];
-								$scope.stats()
-								break;
-							}
+						if(timer) {
+							$timeout.cancel(timer);
 						}
+						timer = $timeout(function() {
+							for(var i in $scope.monthes) {
+								var o = $scope.monthes[i];
+								if(o.year == m.getFullYear() && o.month == m.getMonth() + 1) {
+									$scope.month = $scope.monthes[i];
+									$scope.stats(function() {
+										$scope.chart.focus([d.id]);
+									});
+									break;
+								}
+							}
+							timer = null;
+						}, 100);
 					},
 					json: data,
 					keys: {
@@ -116,12 +124,12 @@
 
 		});
 
-		$scope.stats = function() {
+		$scope.stats = function(cb) {
 			var year = $scope.month.year,
 				month = $scope.month.month;
 			$http.get('/api/units_stats/' + year + '-' + (month < 10 ? '0' + month: month) + '-01', {cache: true}).success(function(res) {
 				$scope.data = res;
-				setUnit($location.search().unit);
+				setUnit($location.search().unit, undefined, cb);
 			});
 		}
 		$scope.chart = c3.generate({
@@ -165,7 +173,7 @@
 			}
 		});
 
-		var setUnit = $scope.setUnit = function(unit, level) {
+		var setUnit = $scope.setUnit = function(unit, level, cb) {
 			var units = $scope.data;
 			var stats = {};
 			var data = [];
@@ -195,10 +203,10 @@
 				data.push([i, stats[i]]);
 			}
 			data.sort(function(b, a) {
-				return a.value - b.value;
+				return a[1] - b[1];
 			});
 			data = data.slice(0, $scope.limit);
-			chart(data);
+			chart(data, cb);
 		}
 		function loadUnit(unit) {
 			var year = $scope.month.year,
@@ -208,12 +216,13 @@
 				$scope.grid.data = res;
 			});
 		}
-		function chart(data) {
+		function chart(data, cb) {
 			$scope.chart.unload();
 			$timeout(function() {
 				$scope.chart.load({
 					columns: data
 				});
+				cb && cb();
 			}, 1000);
 		}
 	});
@@ -238,7 +247,7 @@
 
 			<div class="form-group">
 			顯示單位數量（依照金額排序）：
-			<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 20" ng-options="n for n in [] | range:1:50">
+			<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 25" ng-options="n for n in [] | range:5:40">
 			</select>
 			</div>
 		</form>
