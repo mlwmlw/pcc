@@ -43,6 +43,7 @@
 			$scope.stats();
 		});
 		$http.get('/api/units_stats/2014-02-01/2015-02-01', {cache: true}).success(function(res) {
+			$scope.raw = res;
 			var stats = {}, data = [], dates = {}, value, units = [];
 			for(var month in res) {
 				dates[month] = ''
@@ -74,43 +75,46 @@
 				}
 				data.push(row);
 			}
-			/*
-			units = {a:0, b:0}
-			data = [
-				{date: '2014-01-01', a: 100, b: 200},
-				{date: '2014-02-01', a: 100, b: 200},
-				{date: '2014-03-01', a: 100, b: 200},
-			] */
+			
 			var timer;
 			$scope.chart_line = c3.generate({
 				bindto: '#chart_line',
+				size: {
+					height: 300
+				},
 				//xFormat: '%Y-%m',
 				data: {
 					onclick: function (d, i) { 
 						var m = d.x;
+						for(var i in $scope.monthes) {
+							var o = $scope.monthes[i];
+							if(o.year == m.getFullYear() && o.month == m.getMonth() + 1) {
+								$scope.month = $scope.monthes[i];
+								break;
+							}
+						}
 						if(timer) {
 							$timeout.cancel(timer);
 						}
 						timer = $timeout(function() {
-							for(var i in $scope.monthes) {
-								var o = $scope.monthes[i];
-								if(o.year == m.getFullYear() && o.month == m.getMonth() + 1) {
-									$scope.month = $scope.monthes[i];
-									$scope.stats(function() {
-										$scope.chart.focus([d.id]);
-									});
-									break;
-								}
-							}
+							$scope.stats(function() {
+								$scope.chart.focus([d.id]);
+							});
 							timer = null;
-						}, 100);
+						}, 50);
 					},
 					json: data,
 					keys: {
 						x: 'date',
 						value: Object.keys(units).slice(0, $scope.limit)
 					},
-					
+					axes: {
+						'行政院': 'y',
+						'行政院': 'y2'
+					}
+				},
+				grid: {
+					y: {show: true}
 				},
 				axis: {
 						x: {
@@ -118,8 +122,42 @@
 							tick: {
 								format: '%Y-%m'
 							}
+						},
+						y: {
+							tick: {
+								format: function(val) {
+									val = val.toString();
+									if(val.slice(-9) == '000000000')
+										return val.slice(0, -9) + 'B';
+									else if(val.slice(-6) == '000000')
+										return val.slice(0, -6) + 'M';
+									else
+										return val;
+								}
+							}
+						},
+						y2: {
+							tick: {
+								format: function(val) {
+									val = val.toString();
+									if(val.slice(-9) == '000000000')
+										return val.slice(0, -9) + 'B';
+									else if(val.slice(-6) == '000000')
+										return val.slice(0, -6) + 'M';
+									else
+										return val;
+
+								}
+							},
+							show: true
 						}
-					}
+				},
+				tooltip: {
+					grouped: false
+				}/*, 
+				subchart: {
+					show: true
+				}*/
 			});
 
 		});
@@ -127,7 +165,13 @@
 		$scope.stats = function(cb) {
 			var year = $scope.month.year,
 				month = $scope.month.month;
-			$http.get('/api/units_stats/' + year + '-' + (month < 10 ? '0' + month: month) + '-01', {cache: true}).success(function(res) {
+			var key = year + '-' + (month < 10 ? '0' + month: month) + '-01';
+			if($scope.raw && $scope.raw[key]) {
+				$scope.data = $scope.raw[key];
+				setUnit($location.search().unit, undefined, cb);
+				return ;
+			}
+			$http.get('/api/units_stats/' + key, {cache: true}).success(function(res) {
 				$scope.data = res;
 				setUnit($location.search().unit, undefined, cb);
 			});
