@@ -15,10 +15,9 @@ app.filter('money', function() {
 	return function(input) {
 		input = input.replace('.00', '');
 		if(input.slice(-8) == ',000,000')
-			return input.substr(0, input.length -8) + 'm';
+			return input.substr(0, input.length -8) + 'M';
 		else if(input.slice(-4) == ',000')
-			return input.substr(0, input.length -4) + 'k';
-
+			return input.substr(0, input.length -4) + 'K';
 		else 
 			return input;
 	};
