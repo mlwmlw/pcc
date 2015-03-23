@@ -1,10 +1,10 @@
-require! <[ ./pcc mongodb q progress moment]>
+require! <[ ./tender mongodb q progress moment]>
 uri = require \./database
 client = mongodb.MongoClient
 client = client.connect uri, (err, db) ->
 	collection = db.collection 'pcc'
 	#.subtract 'days', 3
-	today = pcc.getDocsByDate moment process.argv[2] .then (res) ->
+	today = tender.getDocsByDate moment process.argv[2] .then (res) ->
 		#collection.remove (err, result) ->
 		#	console.log 'clear pcc collection'
 		rows = []

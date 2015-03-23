@@ -12,31 +12,31 @@ export getDocsByDate = (date) ->
 			pages.push(getDocs date, page) 
 		console.log "All page " + pages.length
 		q.all pages .done (result) ->
-			deferred.resolve result
+			rows = []
+			for key, page of result
+				Array.prototype.push.apply rows, page.rows
+			deferred.resolve rows
 	return deferred.promise
 
-count = 0
 
 getDocs = (date, page) ->
 	date = moment date or null
-	#today = date.getFullYear! - 1911 + "/" + (date.getMonth!+ 1) + "/" + date.getDate! 
 	today = (date.year! - 1911) + '/' + date.format 'MM/DD' 
 	page = page or 1
 	post = {
 		method: 'search',
+		searchTarget: 'ATM',
 		searchMethod: true,
-		hid_1:1,
 		tenderWay:1,
-		tenderDateRadio: 'on',
-		tenderStartDate: today,
-		tenderEndDate: today,
-		isSpdt: 'N'
+		awardAnnounceStartDate: today,
+		awardAnnounceEndDate: today
 	}
 	deferred = q.defer!
-	url = 'http://web.pcc.gov.tw/tps/pss/tender.do?searchMode=common&searchType=basic&pageIndex=' + page
+	url = 'http://web.pcc.gov.tw/tps/pss/tender.do?searchMode=common&searchType=advance&pageIndex=' + page
 	request.post url, {form: post}, (error, res) -> 
 		$ = cheerio.load res.body
 		data = []
+		promises = []
 		$ '#print_area table tr' .each (i) ->
 			row = {}
 			$row = $ 'td', this
@@ -44,25 +44,32 @@ getDocs = (date, page) ->
 				return
 			row.unit = $row.eq 1 .text!
 			name = $row.eq 2 .text!.match /\S+/g
-			row.key = $row.eq 2 .find 'a' .attr 'href' .match(/primaryKey=(.+)/)[1]  
+			row.key = $row.eq 2 .find 'a' .attr 'href' .match(/pkAtmMain=(\d+)/)[1]  
 			row.id = name[0]
 			if name.length > 2
 				row.name = name[1] + name[2]
 			else
 				row.name = name[1]
 			row.type = $row.eq 4 .text!
-			row.category = $row.eq 5 .text!
-			row.publish = moment(($row.eq 6 .text!.replace "\n", ""), "YYYY/MM/DD").add 'years', 1911 .toDate!
-			row.end_date = moment(($row.eq 7 .text!.replace "\n", ""), "YYYY/MM/DD").add 'years', 1911 .toDate!
-			price = $row.eq 8 .text!.match /\S+/g
-			row.price = (price && price[0]) || 0
+			price = $row.eq 6 .text!.match /\S+/g
+			row.price = (price && +price[0]) || 0
+			row.awarding = $row.eq 7 .find 'a' .attr 'href'
+			row.failed = $row.eq 8 .find 'a' .attr 'href'
+			if row.awarding 
+				deferred = q.defer!
+				promises.push deferred.promise
+				error, res <- request.get 'http://web.pcc.gov.tw/tps/pss/' + row.awarding
+				$ = cheerio.load res.body
+				row.merchant := $ '.award_table_tr_4 tr' .eq 5 .find 'td' .text! .replace /(^\s+|\s+$)/g, ''
+				deferred.resolve row
 			data.push row
-
-		count++
-		#console.log page, data.length, count
-		deferred.resolve {
-			page: page,
-			raw: res.body, 
-			rows: data
-		}
+		q.all promises .done (result) ->
+			deferred.resolve {
+				page: page,
+				raw: res.body, 
+				rows: data
+			}
 	return deferred.promise
+
+#getDocsByDate '2015-03-23' .then (data) ->
+#	console.log data

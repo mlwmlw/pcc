@@ -13,7 +13,6 @@ connectDB = (cb) ->
 	client.connect uri, (err, db) ->
 		cb db
 deferred = null
-cache = {}
 getAll = !->
 	if deferred
 		return deferred.promise
@@ -27,24 +26,9 @@ getAll = !->
 			deferred.resolve docs
 	deferred.promise
 
-setInterval !->
-	#deferred := null
-	cache := {}
-	console.log "clear cache"
-, 3600 * 1000
 #getAll!
 app.use (req, res, next) ->
-	if cache[req.url]
-		console.log 'cache hit: ' + req.url
-		return res.send cache[req.url]
-	#else
-	#	console.log 'cache miss: ' + req.url
 	res.setHeader 'Content-Type', 'application/json';
-	send = res.send
-	res.send = (data) ->
-		if /units_stats/.test(req.url) || /month/.test(req.url) || /dates/.test(req.url)
-			cache[req.url] = data
-		send.call res, data
 	next!
 
 app.get '/page/:page', (req, res) ->
