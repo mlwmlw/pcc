@@ -26,6 +26,9 @@ app.use(route.get('/units/:unit?', function *(next) {
 app.use(route.get('/about', function *(next) {
 	this.body = yield render('about')
 }));
+app.use(route.get('/hackpad', function *(next) {
+	this.body = yield render('hackpad')
+}));
 
 app.use(mount('/assets', serve('assets')));
 app.listen(8889);
