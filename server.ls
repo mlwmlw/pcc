@@ -97,7 +97,7 @@ app.get '/merchants/rank/:order?', (req, res) ->
 	{ $match: { "award.merchants._id": {$ne: ""}}},
 	{ $group : {_id: "$award.merchants._id", merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
 	$sort, 
-	{ $limit: 30]
+	{ $limit: 30}]
 	for i,m of merchants
 		m.merchant = m.merchants.pop!
 		delete m.merchants
