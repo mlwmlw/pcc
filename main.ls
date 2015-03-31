@@ -34,12 +34,10 @@ client = client.connect uri, (err, db) ->
 		for key, row of res
 			row._id = row.key
 			if /更正公告/.test row.name
-				publish = moment.min moment(date), moment(row.publish) .toDate!
 				delete row.name
-				delete row.publish
-				bulk.find {_id: row.key} .upsert!.update { $set: row, $min: {publish: publish} }
-			else
-				bulk.find {_id: row.key} .upsert!.update row
+			publish = moment.min moment(date), moment(row.publish) .toDate!
+			delete row.publish
+			bulk.find {_id: row.key} .upsert!.update { $set: row, $min: {publish: publish} }
 		console.log "tender " + res.length
 		if res.length
 			promiseMain.add bulk.execute
