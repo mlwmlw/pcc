@@ -4,15 +4,19 @@ export getDocsByDate = (date) ->
 	deferred = q.defer!
 	pcc = getDocs date
 	pcc.then (res) -> 
-		pages = []
+		pages = [pcc]
 		$ = cheerio.load res.raw
 		total = +$ '.T11b' .text!
 		last_page = Math.ceil total / 100
-		for page from 1 to last_page
+		for page from 2 to last_page
 			pages.push(getDocs date, page) 
 		console.log "All page " + pages.length
-		q.all pages .done (result) ->
-			deferred.resolve result
+		q.all pages .done (res) ->
+			rows = []
+			for key, page of res
+				if page.rows.length
+					Array.prototype.push.apply rows, page.rows
+			deferred.resolve rows
 	return deferred.promise
 
 count = 0
@@ -52,8 +56,8 @@ getDocs = (date, page) ->
 				row.name = name[1]
 			row.type = $row.eq 4 .text!
 			row.category = $row.eq 5 .text!
-			row.publish = moment(($row.eq 6 .text!.replace "\n", ""), "YYYY/MM/DD").add 'years', 1911 .toDate!
-			row.end_date = moment(($row.eq 7 .text!.replace "\n", ""), "YYYY/MM/DD").add 'years', 1911 .toDate!
+			row.publish = moment(($row.eq 6 .text!.replace "\n", ""), "YYYY/MM/DD").add 1911, 'years' .toDate!
+			row.end_date = moment(($row.eq 7 .text!.replace "\n", ""), "YYYY/MM/DD").add 1911, 'years' .toDate!
 			price = $row.eq 8 .text!.match /\S+/g
 			row.price = (price && price[0]) || 0
 			data.push row

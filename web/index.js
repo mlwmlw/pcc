@@ -26,6 +26,16 @@ app.use(route.get('/units/:unit?', function *(next) {
 app.use(route.get('/about', function *(next) {
 	this.body = yield render('about')
 }));
+app.use(route.get('/rank', function *(id, next) {
+	this.body = yield render('rank')
+}));
+app.use(route.get('/merchants/:id?', function *(id, next) {
+	if(id)
+		this.body = yield render('merchant')
+	else
+		this.body = yield render('merchants')
+}));
+
 app.use(route.get('/hackpad', function *(next) {
 	this.body = yield render('hackpad')
 }));

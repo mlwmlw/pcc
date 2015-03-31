@@ -82,7 +82,34 @@ app.get '/category/:category', (req, res) ->
 	connectDB (db) ->
 		db.collection 'pcc' .find { category: req.params.category } .toArray (err, docs) ->
 			res.send docs
+app.get '/merchants/', (req, res) ->
+	db <- connectDB
+	err, merchants <- db.collection 'merchants' .find {} .toArray
+	res.send merchants
 
+app.get '/merchants/rank/:order?', (req, res) ->
+	db <- connectDB
+	$sort = {}
+	$sort.$sort = {};
+	$sort.$sort[req.params.order || "sum"] = -1;
+	err, merchants <- db.collection 'pcc' .aggregate [
+	{ $unwind: "$award.merchants" }, 
+	{ $match: { "award.merchants._id": {$ne: ""}}},
+	{ $group : {_id: "$award.merchants._id", merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
+	$sort, 
+	{ $limit: 30]
+	for i,m of merchants
+		m.merchant = m.merchants.pop!
+		delete m.merchants
+	res.send merchants
+app.get '/merchant/:id?', (req, res) ->
+	db <- connectDB
+	err, docs <- db.collection 'pcc' .find {"award.merchants._id": req.params.id} .toArray
+	res.send docs
+	#db.collection 'pcc' .aggregate [
+	#	{ $unwind: "$award.merchants" },
+	#	{ $match : {"award.merchants._id": req.params.id}}], (err, docs) ->
+	#	res.send docs
 app.get '/units/:id?', (req, res) ->
 	db <- connectDB
 	if req.params.id == 'all'
@@ -110,7 +137,6 @@ app.get '/unit/:unit/:month?', (req, res) ->
 			docs.sort (a, b) ->
 				return b.publish - a.publish
 			res.send docs
-
 app.get '/units_stats/:start/:end?', (req, res) ->
 	db <- connectDB
 	if req.params.end

@@ -1,0 +1,24 @@
+<% extend './views/template.html' %>
+<script>
+	app.controller('page', function($scope, $http, grid, $location) {
+		var id = location.href.split('/').pop();
+		$http.get('/api/merchant/' + id).then(function(res) {
+			$scope.grid.data = res.data;
+			$scope.merchant = res.data[0].award.merchants[0];
+		});
+		grid.columnDefs.push({ 
+			field: "publish", 
+			displayName: "決標公告", 
+			render: function(row) {
+				return React.DOM.a({href:row.award.url, target: "_blank"}, '前往');
+			}
+		});
+		$scope.grid = grid;
+	});
+	
+</script>
+<div class="starter-template">
+	<h1><span ng-bind="merchant.name"></span> 廠商得標案件檢索</h1>
+	
+	<ng-react-grid grid="grid"></ng-react-grid>
+</div>

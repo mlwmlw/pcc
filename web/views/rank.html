@@ -1,0 +1,48 @@
+<% extend './views/template.html' %>
+<script>
+	app.controller('page', function($scope, $http, $filter) {
+		$http.get('/api/merchants/rank').then(function(res) {
+			$scope.grid_sum.data = res.data;
+		});
+		$http.get('/api/merchants/rank/count').then(function(res) {
+			$scope.grid_count.data = res.data;
+		});
+		$scope.grid_sum = {
+			data: [], 
+			height: 1500,
+			columnDefs: [
+				{ field: "name", displayName: "廠商", render: function(row) {
+					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row._id, target: '_blank'}, row.merchant.name);
+				}},
+				{ field: "address", displayName: "公司所在地", render: function(row) {
+					return row.merchant.address;	
+				}},
+				{ field: "sum", displayName: "總金額", render: function(row) {
+					return row.sum;	
+				}}
+		]};
+		$scope.grid_count = {
+			data: [], 
+			height: 1500,
+			columnDefs: [
+				{ field: "name", displayName: "廠商", render: function(row) {
+					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row._id, target: '_blank'}, row.merchant.name);
+				}},
+				{ field: "address", displayName: "公司所在地", render: function(row) {
+					return row.merchant.address;	
+				}},
+				{ field: "count", displayName: "得標數", render: function(row) {
+					return row.count;	
+				}}
+
+		]};
+	});
+	
+</script>
+<div class="starter-template">
+	<h1>標案總金額排行</h1>
+	<ng-react-grid grid="grid_sum"></ng-react-grid>
+	<h1>標案數量排行</h1>
+	<ng-react-grid grid="grid_count"></ng-react-grid>
+
+</div>

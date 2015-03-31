@@ -1,0 +1,32 @@
+<% extend './views/template.html' %>
+<script>
+	app.controller('page', function($scope, $http, $filter) {
+		$http.get('/api/merchants').then(function(res) {
+			$scope.grid.data = res.data;
+		});
+		$scope.grid = {
+			data: [], 
+			height: 1500,
+			columnDefs: [
+				{ field: "name", displayName: "廠商", render: function(row) {
+					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row._id, target: '_blank'}, row.name);
+				}},
+				{ field: "org", displayName: "單位"},
+				{ field: "phone", displayName: "電話", render: function(row) {
+					return row.phone || '';	
+				}},
+				{ field: "address", displayName: "公司所在地", render: function(row) {
+					return row.address || '';	
+				}},
+				{ field: "name", displayName: "標案檢索", render: function(row) {
+					return React.DOM.a({href:"/merchants/" + row._id}, '前往');
+				}}
+		]};
+
+	});
+	
+</script>
+<div class="starter-template">
+	<h1>廠商列表</h1>
+	<ng-react-grid grid="grid"></ng-react-grid>
+</div>

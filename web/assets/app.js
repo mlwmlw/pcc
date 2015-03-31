@@ -36,7 +36,7 @@ app.filter('date', function() {
 app.service('grid', function($filter) {
 	var grid = {
 			data: [], 
-			height: 800,
+			height: 1500,
 			columnDefs: [
 				{ field: "unit", displayName: "單位", render: function(row) {
 					return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
