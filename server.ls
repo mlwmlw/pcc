@@ -44,14 +44,14 @@ app.get '/keyword/:keyword', (req, res) ->
 		db.collection 'pcc' .find {name: new RegExp ".*" + req.params.keyword + ".*"} .toArray (err, docs) ->
 			res.send docs
 
-app.get '/date/:date', (req, res) ->
+app.get '/date/:type/:date', (req, res) ->
 	db <- connectDB 
 	date = new Date req.params.date
 	date.setDate date.getDate! - 1
 	tomorrow = new Date req.params.date
 	tomorrow.setDate date.getDate! + 1
-	console.log date
-	db.collection 'pcc' .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
+	c = if req.params.type=='tender' then 'pcc' else 'award'
+	db.collection c .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
 		res.send docs
 app.get '/month', (req, res) ->
 	db <- connectDB
@@ -86,6 +86,13 @@ app.get '/merchants/', (req, res) ->
 	db <- connectDB
 	err, merchants <- db.collection 'merchants' .find {} .toArray
 	res.send merchants
+
+app.get '/tender/rank/', (req, res) ->
+	db <- connectDB
+	start = moment!.startOf 'month' .toDate!
+	end = moment!.endOf 'month' .toDate!
+	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lt: end}} .sort {$price: -1} .limit 10 .toArray
+	res.send tenders
 
 app.get '/merchants/rank/:order?', (req, res) ->
 	db <- connectDB

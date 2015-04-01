@@ -11,29 +11,29 @@ app.use(logger());
 // logger
 
 app.use(route.get('/', function *(next) {
-	this.body = yield render('main')
+	this.body = yield render('main');
 }));
-app.use(route.get('/date', function *(next) {
-	this.body = yield render('date')
+app.use(route.get('/date/:type?', function *(type, next) {
+	this.body = yield render('date', {type: type});
 }));
 
 app.use(route.get('/unit/:unit?', function *(unit, next) {
-	this.body = yield render('unit', {unit: unit})
+	this.body = yield render('unit', {unit: unit});
 }));
 app.use(route.get('/units/:unit?', function *(next) {
-	this.body = yield render('units')
+	this.body = yield render('units');
 }));
 app.use(route.get('/about', function *(next) {
-	this.body = yield render('about')
+	this.body = yield render('about');
 }));
-app.use(route.get('/rank', function *(id, next) {
-	this.body = yield render('rank')
+app.use(route.get('/rank/:type?', function *(type, next) {
+	this.body = yield render('rank', {type: type});
 }));
 app.use(route.get('/merchants/:id?', function *(id, next) {
 	if(id)
-		this.body = yield render('merchant')
+		this.body = yield render('merchant');
 	else
-		this.body = yield render('merchants')
+		this.body = yield render('merchants');
 }));
 
 app.use(route.get('/hackpad', function *(next) {

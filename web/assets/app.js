@@ -13,6 +13,7 @@ app.run(function($rootScope, $http, $window) {
 });
 app.filter('money', function() {
 	return function(input) {
+		input = input +"";
 		input = input.replace('.00', '');
 		if(input.slice(-8) == ',000,000')
 			return input.substr(0, input.length -8) + 'M';
@@ -41,9 +42,8 @@ app.service('grid', function($filter) {
 				{ field: "unit", displayName: "單位", render: function(row) {
 					return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
 				}},
-				{ field: "category", displayName: "分類"},
 				{ field: "name", displayName: "標案名稱", render: function(row) {
-					return React.DOM.a({target: "_blank", href:"//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, row.name);
+					return React.DOM.a({target: "_blank", href: row.url || "//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, row.name);
 				}},
 				{ field: "price", displayName: "金額", render: function(row) {
 					return $filter('money')($filter('currency')(row.price));

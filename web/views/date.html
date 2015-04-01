@@ -2,6 +2,7 @@
 <script>
 	app.controller('page', function($scope, $http, $timeout, $filter, grid) {
 		$scope.items = null;
+		var type = '<%- @type %>';
 		$http.get('/api/dates').then(function(res) {
 			var dates = $scope.dates = res.data;
 			for(var i in dates) {
@@ -13,16 +14,28 @@
 		});
 		$scope.loadByDate = function() {
 			$scope.items = false;
-			$http.get('/api/date/' + $scope.date).then(function(res) {
+			$http.get('/api/date/' + type + '/' + $scope.date).then(function(res) {
 				$scope.grid.data = res.data;
 			});
 		};
+		if(type == 'award') {
+			grid.columnDefs.push({ 
+				field: "merchant", displayName: "得標廠商", render: function(row) {
+					if(row.merchants && row.merchants.length) {
+						return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row.merchants[0]._id, target: '_blank'}, row.merchants[0].name);
+					}
+					else {
+						return '無法決標';
+					}
+				}
+			});
+		}
 		$scope.grid = grid;
 	});
 </script>
 
 <div class="starter-template">
-	<h1>中華民國政府標案檢索</h1>
+	<h1>中華民國政府 <% if @type == 'award': %>決標<% else: %>招標<% end %> 標案檢索</h1>
 	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
 	<div class="form-group">
 		<div class="col-md-8">

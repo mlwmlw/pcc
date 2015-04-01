@@ -1,12 +1,21 @@
 <% extend './views/template.html' %>
 <script>
-	app.controller('page', function($scope, $http, $filter) {
-		$http.get('/api/merchants/rank').then(function(res) {
-			$scope.grid_sum.data = res.data;
-		});
-		$http.get('/api/merchants/rank/count').then(function(res) {
-			$scope.grid_count.data = res.data;
-		});
+	app.controller('page', function($scope, $http, $filter, grid) {
+		var type = '<%- @type %>';
+		if(type == 'merchant') {
+			$http.get('/api/merchants/rank').then(function(res) {
+				$scope.grid_sum.data = res.data;
+			});
+			$http.get('/api/merchants/rank/count').then(function(res) {
+				$scope.grid_count.data = res.data;
+			});
+		}
+		else {
+			$scope.grid_price = grid;
+			$http.get('/api/tender/rank').then(function(res) {
+				$scope.grid_price.data = res.data;
+			});
+		}
 		$scope.grid_sum = {
 			data: [], 
 			height: 1500,
@@ -18,7 +27,13 @@
 					return row.merchant.address;	
 				}},
 				{ field: "sum", displayName: "總金額", render: function(row) {
-					return row.sum;	
+					return $filter('money')($filter('currency')(row.sum));
+				}}, 
+				{ field: "count", displayName: "得標數", render: function(row) {
+					return row.count;	
+				}},
+				{ field: "name", displayName: "標案檢索", render: function(row) {
+					return React.DOM.a({href:"/merchants/" + row._id, target: '_blank'}, '前往');
 				}}
 		]};
 		$scope.grid_count = {
@@ -33,16 +48,26 @@
 				}},
 				{ field: "count", displayName: "得標數", render: function(row) {
 					return row.count;	
+				}},
+				{ field: "sum", displayName: "總金額", render: function(row) {
+					return $filter('money')($filter('currency')(row.sum));
+				}},
+				{ field: "name", displayName: "標案檢索", render: function(row) {
+					return React.DOM.a({href:"/merchants/" + row._id, target: '_blank'}, '前往');
 				}}
-
 		]};
 	});
 	
 </script>
 <div class="starter-template">
-	<h1>標案總金額排行</h1>
-	<ng-react-grid grid="grid_sum"></ng-react-grid>
-	<h1>標案數量排行</h1>
-	<ng-react-grid grid="grid_count"></ng-react-grid>
+	<% if @type == 'merchant' : %>
+		<h1>標案總金額排行</h1>
+		<ng-react-grid grid="grid_sum"></ng-react-grid>
+		<h1>標案數量排行</h1>
+		<ng-react-grid grid="grid_count"></ng-react-grid>
+	<% else: %>
+		<h1>今日我最貴</h1>
+		<ng-react-grid grid="grid_price"></ng-react-grid>
+	<% end %>
 
 </div>
