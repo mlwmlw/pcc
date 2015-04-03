@@ -1,4 +1,4 @@
-require! <[ fs express http mongodb q moment ]>
+require! <[ fs express http mongodb q moment redis compression ]>
 _ = require 'lodash'
 uri = require \./database
 app = express!
@@ -7,30 +7,40 @@ express.static __dirname + '/public' |> app.use
 app.set 'views', __dirname+'/views'
 app.set 'view engine' 'jade'
 app.set 'port' (process.env.PORT or 8888)
-
+cache = redis.createClient!
 client = mongodb.MongoClient
-connectDB = (cb) ->
-	client.connect uri, (err, db) ->
-		cb db
+err, db <- client.connect uri
 deferred = null
 getAll = !->
 	if deferred
 		return deferred.promise
 	deferred := q.defer!
-	connectDB (db) ->
-		collection = db.collection 'pcc'
-		collection.find {} .sort {publish: -1} .toArray (err, docs) ->
-			console.log 'data ready all : '
-			#console.log docs.length
-			
-			deferred.resolve docs
+	collection = db.collection 'pcc'
+	collection.find {} .sort {publish: -1} .toArray (err, docs) ->
+		console.log 'data ready all : '
+		deferred.resolve docs
 	deferred.promise
 
-#getAll!
+app.use compression!
 app.use (req, res, next) ->
-	res.setHeader 'Content-Type', 'application/json';
-	next!
+	res.setHeader 'Content-Type', 'application/json'
+	if /month|categories|units_stats/.test req.path
+		send = res.send
+		res.send = (result) ->
+			cache.set req.path, result
+			cache.expire req.path, 3600
+			send.call res, result
+		err, reply <- cache.get req.path
+		if reply
+			res.setHeader 'cache', 'HIT'
+			send.call res, reply
+		else
+			res.setHeader 'cache', 'MISS'
+			next!
+	else
+		next!
 
+	
 app.get '/page/:page', (req, res) ->
 	getAll!.then (pcc) ->
 		page = req.params.page
@@ -39,13 +49,10 @@ app.get '/page/:page', (req, res) ->
 
 app.get '/keyword/:keyword', (req, res) ->
 	console.log req.params.keyword
-
-	connectDB (db) ->
-		db.collection 'pcc' .find {name: new RegExp ".*" + req.params.keyword + ".*"} .toArray (err, docs) ->
-			res.send docs
+	db.collection 'pcc' .find {name: new RegExp ".*" + req.params.keyword + ".*"} .toArray (err, docs) ->
+		res.send docs
 
 app.get '/date/:type/:date', (req, res) ->
-	db <- connectDB 
 	date = new Date req.params.date
 	date.setDate date.getDate! - 1
 	tomorrow = new Date req.params.date
@@ -54,7 +61,6 @@ app.get '/date/:type/:date', (req, res) ->
 	db.collection c .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
 		res.send docs
 app.get '/month', (req, res) ->
-	db <- connectDB
 	collection = db.collection 'pcc'
 	collection.aggregate { $group: { _id: { year: { $year: '$publish'}, month: { $month: '$publish'} } } }, (err, docs) ->
 		monthes = _.pluck docs, '_id'
@@ -64,38 +70,32 @@ app.get '/month', (req, res) ->
 		res.send monthes
 
 app.get '/dates', (req, res) ->
-	connectDB (db) ->
-		db.collection 'pcc' .aggregate { $group: { _id: '$publish'}}, (err, docs) ->
-			dates = _.pluck docs, '_id'
-			dates = dates.map (val) ->
-				moment val .zone '+0800' .format!
-			dates.sort!
-			res.send dates
+	db.collection 'pcc' .aggregate { $group: { _id: '$publish'}}, (err, docs) ->
+		dates = _.pluck docs, '_id'
+		dates = dates.map (val) ->
+			moment val .zone '+0800' .format!
+		dates.sort!
+		res.send dates
 
 app.get '/categories', (req, res) ->
-	connectDB (db) ->
-		db.collection 'pcc' .aggregate { $group: { _id: '$category'}}, (err, docs) ->
-			res.send _.pluck docs, '_id'
+	db.collection 'pcc' .aggregate { $group: { _id: '$category'}}, (err, docs) ->
+		res.send _.pluck docs, '_id'
 
 app.get '/category/:category', (req, res) ->
-	console.log req.params.category
-	connectDB (db) ->
-		db.collection 'pcc' .find { category: req.params.category } .toArray (err, docs) ->
-			res.send docs
+	db.collection 'pcc' .find { category: req.params.category } .toArray (err, docs) ->
+		res.send docs
+
 app.get '/merchants/', (req, res) ->
-	db <- connectDB
 	err, merchants <- db.collection 'merchants' .find {} .toArray
 	res.send merchants
 
 app.get '/tender/rank/', (req, res) ->
-	db <- connectDB
 	start = moment!.startOf 'month' .toDate!
 	end = moment!.endOf 'month' .toDate!
-	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lt: end}} .sort {$price: -1} .limit 10 .toArray
+	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lte: end}} .sort {price: -1} .limit 50 .toArray
 	res.send tenders
 
 app.get '/merchants/rank/:order?', (req, res) ->
-	db <- connectDB
 	$sort = {}
 	$sort.$sort = {};
 	$sort.$sort[req.params.order || "sum"] = -1;
@@ -109,16 +109,12 @@ app.get '/merchants/rank/:order?', (req, res) ->
 		m.merchant = m.merchants.pop!
 		delete m.merchants
 	res.send merchants
+
 app.get '/merchant/:id?', (req, res) ->
-	db <- connectDB
 	err, docs <- db.collection 'pcc' .find {"award.merchants._id": req.params.id} .toArray
 	res.send docs
-	#db.collection 'pcc' .aggregate [
-	#	{ $unwind: "$award.merchants" },
-	#	{ $match : {"award.merchants._id": req.params.id}}], (err, docs) ->
-	#	res.send docs
+
 app.get '/units/:id?', (req, res) ->
-	db <- connectDB
 	if req.params.id == 'all'
 		err, docs <- db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}
 		units = _.pluck docs, '_id'
@@ -144,8 +140,8 @@ app.get '/unit/:unit/:month?', (req, res) ->
 			docs.sort (a, b) ->
 				return b.publish - a.publish
 			res.send docs
+
 app.get '/units_stats/:start/:end?', (req, res) ->
-	db <- connectDB
 	if req.params.end
 		filter = {
 			_id: {
@@ -156,18 +152,18 @@ app.get '/units_stats/:start/:end?', (req, res) ->
 	else
 		filter = {_id: req.params.start}
 	
-	db.collection 'report' .find filter .toArray (err, data) ->
-		if err
-			console.log err
-			res.send []
+	err, data <- db.collection 'report' .find filter .toArray
+	if err
+		console.log err
+		res.send []
+	else
+		if data.length == 1
+			res.send data[0].res
 		else
-			if data.length == 1
-				res.send data[0].res
-			else
-				result = {}
-				for value in data
-					result[value._id] = value.res
-				res.send result
+			result = {}
+			for value in data
+				result[value._id] = value.res
+			res.send result
 				
 
 #app.get '/units_stats/:date?/:days?', (req, res) ->
@@ -235,7 +231,6 @@ app.get '/units_stats/:start/:end?', (req, res) ->
 #			res.send result
 
 app.get '/units_count', (req, res) ->
-	db <- connectDB
 	mapper = !->
 		emit this.parent, {count: 1,unit: this.name}
 	reducer = (key, values) ->
@@ -253,8 +248,8 @@ app.get '/units_count', (req, res) ->
 		if err
 			console.log err
 		res.send result
+
 app.get '/month/:month', (req, res) ->
-	db <- connectDB 
 	start = new Date req.params.month + "-1"
 	end = new Date req.params.month + "-1"
 	end.setMonth end.getMonth!+1 

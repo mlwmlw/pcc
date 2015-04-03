@@ -4,12 +4,14 @@ var route = require('koa-route');
 var parse = require('co-body');
 var serve = require('koa-static');
 var mount = require('koa-mount');
+var gzip = require('koa-gzip');
 var koa = require('koa');
 var app = koa();
 
 app.use(logger());
 // logger
 
+app.use(gzip());
 app.use(route.get('/', function *(next) {
 	this.body = yield render('main');
 }));
