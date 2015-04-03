@@ -8,7 +8,7 @@ app.run(function($rootScope, $http, $window) {
 		$rootScope.categories = res.data;
 	});
 	$rootScope.search = function(keyword) {
-		$window.location.href = '/api/keyword/' + keyword;
+		$window.location.href = '/search/' + keyword;
 	}
 });
 app.filter('money', function() {
@@ -45,7 +45,7 @@ app.service('grid', function($filter) {
 				{ field: "name", displayName: "標案名稱", render: function(row) {
 					return React.DOM.a({target: "_blank", href: row.url || "//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, row.name);
 				}},
-				{ field: "price", displayName: "金額", render: function(row) {
+				{ field: "price", displayName: "預算金額", render: function(row) {
 					return $filter('money')($filter('currency')(row.price));
 				}},
 				{ field: "type", displayName: "類型"},

@@ -24,7 +24,7 @@ getAll = !->
 app.use compression!
 app.use (req, res, next) ->
 	res.setHeader 'Content-Type', 'application/json'
-	if /month|categories|units_stats/.test req.path
+	if /rank|units|month|categories|units_stats/.test req.path
 		send = res.send
 		res.send = (result) ->
 			cache.set req.path, result
@@ -49,7 +49,8 @@ app.get '/page/:page', (req, res) ->
 
 app.get '/keyword/:keyword', (req, res) ->
 	console.log req.params.keyword
-	db.collection 'pcc' .find {name: new RegExp ".*" + req.params.keyword + ".*"} .toArray (err, docs) ->
+	reg = new RegExp req.params.keyword
+	db.collection 'pcc' .find {$or: [{name: reg}, {unit: reg}, {'award.merchants.name': reg}]} .toArray (err, docs) ->
 		res.send docs
 
 app.get '/date/:type/:date', (req, res) ->
@@ -92,7 +93,7 @@ app.get '/merchants/', (req, res) ->
 app.get '/tender/rank/', (req, res) ->
 	start = moment!.startOf 'month' .toDate!
 	end = moment!.endOf 'month' .toDate!
-	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lte: end}} .sort {price: -1} .limit 50 .toArray
+	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lte: end}} .sort {price: -1} .limit 100 .toArray
 	res.send tenders
 
 app.get '/merchants/rank/:order?', (req, res) ->
@@ -104,7 +105,7 @@ app.get '/merchants/rank/:order?', (req, res) ->
 	{ $match: { "award.merchants._id": {$ne: ""}}},
 	{ $group : {_id: "$award.merchants._id", merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
 	$sort, 
-	{ $limit: 30}]
+	{ $limit: 100}]
 	for i,m of merchants
 		m.merchant = m.merchants.pop!
 		delete m.merchants
@@ -128,18 +129,17 @@ app.get '/units/:id?', (req, res) ->
 		res.send units
 
 app.get '/unit/:unit/:month?', (req, res) ->
-	connectDB (db) ->
-		filter = { unit: {"$regex": "^" + req.params.unit + ".{0,1}$"}}
-		if req.params.month
-			start = new Date req.params.month + "-01"
-			end = new Date req.params.month + "-01"
-			end.setMonth end.getMonth!+1 
-			filter.publish = {$gte: start, $lt: end}
-		console.log filter
-		db.collection 'pcc' .find filter .toArray (err, docs) ->
-			docs.sort (a, b) ->
-				return b.publish - a.publish
-			res.send docs
+	filter = { unit: {"$regex": "^" + req.params.unit + ".{0,1}$"}}
+	if req.params.month
+		start = new Date req.params.month + "-01"
+		end = new Date req.params.month + "-01"
+		end.setMonth end.getMonth!+1 
+		filter.publish = {$gte: start, $lt: end}
+	console.log filter
+	db.collection 'pcc' .find filter .toArray (err, docs) ->
+		docs.sort (a, b) ->
+			return b.publish - a.publish
+		res.send docs
 
 app.get '/units_stats/:start/:end?', (req, res) ->
 	if req.params.end

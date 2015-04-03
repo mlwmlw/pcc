@@ -42,10 +42,13 @@
 			$scope.monthes = res;
 			$scope.stats();
 		});
-		$http.get('/api/units_stats/2014-02-01/2015-03-01', {cache: true}).success(function(res) {
+		$http.get('/api/units_stats/2014-08-01/2015-03-01', {cache: true}).success(function(res) {
 			$scope.raw = res;
 			$scope.line();
 		});
+		$scope.transform = function() {
+			$scope.chart_line.transform($scope.mode);
+		}
 		$scope.line = function(data, units) {
 			var res = $scope.raw;
 			var stats = {}, data = [], dates = {}, value, units = {};
@@ -272,21 +275,27 @@
 	<div >
 		<form class="form-inline">
 			<div class="form-group">
-			請選擇月份：<select class="form-control" ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
+				請選擇月份：<select class="form-control" ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
+			</div>
+			<div class="form-group">
+				統計類型：<select class="form-control" ng-change="stats()" ng-model="type" ng-init="type = 'price'">
+					<option value="price">金額</option>
+					<option value="count">標案數量</option>
+				</select>
+			</div>
+			<div class="form-group">
+				顯示單位數量（依照金額排序）：
+				<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 25" ng-options="n for n in [] | range:5:40">
+				</select>
+			</div>
+			<div class="form-group">
+				圖形：
+				<select class="form-control" ng-change="transform()" ng-model="mode" ng-init="mode='line'">
+					<option value="line">折線</option>
+					<option value="bar">直方</option>
+				</select>
 			</div>
 
-			<div class="form-group">
-			統計類型：<select class="form-control" ng-change="stats()" ng-model="type" ng-init="type = 'price'">
-				<option value="price">金額</option>
-				<option value="count">標案數量</option>
-			</select>
-			</div>
-
-			<div class="form-group">
-			顯示單位數量（依照金額排序）：
-			<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 25" ng-options="n for n in [] | range:5:40">
-			</select>
-			</div>
 		</form>
 	</div>	
 	<div>

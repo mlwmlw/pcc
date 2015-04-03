@@ -37,6 +37,9 @@ app.use(route.get('/merchants/:id?', function *(id, next) {
 	else
 		this.body = yield render('merchants');
 }));
+app.use(route.get('/search/:keyword?', function *(keyword, next) {
+	this.body = yield render('search', {keyword: keyword})
+}));
 
 app.use(route.get('/hackpad', function *(next) {
 	this.body = yield render('hackpad')
