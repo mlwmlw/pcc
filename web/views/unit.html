@@ -9,12 +9,13 @@
 				var reg = new RegExp("<%- @unit %>" || null);
 				if(reg.test(units[i])) {
 					$scope.unit = units[i];
-					$scope.loadUnit($scope.unit);
 					return;
 				}
 			}
 		});
 		$scope.loadUnit = function(unit) {
+			if(!unit)
+				return;
 			$scope.items = false;
 			$http.get('/api/unit/' + unit).then(function(res) {
 				var items = $scope.grid.data = res.data;
@@ -54,11 +55,10 @@
 				});
 			});
 		};
+		$scope.loadUnit("<%- @unit %>");
 	});
 </script>
 <div class="starter-template">
-	<h1>中華民國政府標案檢索</h1>
-	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a></p>
 	發佈單位：
 	<span ng-show="!units">資料載入中..</span>
 	<div class="row">
