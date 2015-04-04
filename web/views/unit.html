@@ -19,6 +19,7 @@
 			$scope.items = false;
 			$http.get('/api/unit/' + unit).then(function(res) {
 				var items = $scope.grid.data = res.data;
+				/*
 				var dates = {};
 				for(var i in items) {
 					var date = items[i].publish.replace(/T.+$/, '');
@@ -53,7 +54,57 @@
 						}
 					}
 				});
+				*/
+				
+				var map = {};
+				for(var i in items) {
+					map[items[i].id] = items[i];
+				}
+				items = [];
+				for(var i in map) {
+					items.push(map[i]);
+				}
+				items.sort(function(a, b) {
+					return +b.price - +a.price;
+				});
+				items = items.slice(0, 10);
+				var chart = c3.generate({
+					data: {
+						json: items,
+						keys: {
+								x: 'name',
+								value: ['price']
+						},
+						type: 'bar'
+					},
+					axis: {
+						rotated: true,
+						x: {
+							tick: {
+								multiline: false
+							},
+							type:　'category'
+						},
+						y: {
+							tick: {
+								format: function(val) {
+									val = val.toString();
+									if(val.slice(-9) == '000000000')
+										return val.slice(0, -9) + 'B';
+									else if(val.slice(-6) == '000000')
+										return val.slice(0, -6) + 'M';
+									else
+										return val;
+								}
+							}
+						}
+					},
+					legend: {
+						show: false
+					}
+				});
 			});
+			
 		};
 		$scope.loadUnit("<%- @unit %>");
 	});

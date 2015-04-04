@@ -8,3 +8,10 @@
 	background-color: #2C2C2C;
 	text-align:center;
 }
+.ngReactGrid ul {
+	padding-left: 15px;
+	margin:0px;
+}
+body {
+	padding-top:60px;
+}

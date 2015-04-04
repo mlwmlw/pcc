@@ -48,10 +48,14 @@ app.get '/page/:page', (req, res) ->
 		res.send pcc.slice page * perPage, (+page+1) * perPage
 
 app.get '/keyword/:keyword', (req, res) ->
-	console.log req.params.keyword
+	if(!req.params.keyword)
+		return res.send \failed
 	reg = new RegExp req.params.keyword
 	db.collection 'pcc' .find {$or: [{name: reg}, {unit: reg}, {'award.merchants.name': reg}]} .toArray (err, docs) ->
 		res.send docs
+		db.collection 'search_log' .insert {keyword: req.params.keyword, ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, ts: new Date!}, (err, res) ->
+		if err
+			console.log err
 
 app.get '/date/:type/:date', (req, res) ->
 	date = new Date req.params.date
@@ -95,6 +99,17 @@ app.get '/tender/rank/', (req, res) ->
 	end = moment!.endOf 'month' .toDate!
 	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lte: end}} .sort {price: -1} .limit 100 .toArray
 	res.send tenders
+
+app.get '/partner', (req, res) ->
+	db.collection 'award' .aggregate [
+		{$match: {merchants: {$exists: 1}}},
+		{$unwind: "$merchants"},
+		{$group: {_id: {unit: "$unit", merchant:"$merchants.name", merchant_id: "$merchants._id"}, price: {$sum: "$price"}, count: {$sum: 1}}},
+		{$sort: {count: -1}},
+		{$limit: 50},
+		{$project: {unit: "$_id.unit", merchant: {_id: "$_id.merchant_id", name: "$_id.merchant"}, price: "$price", count: "$count"}}
+	], (err, docs) ->
+		res.send docs
 
 app.get '/merchants/rank/:order?', (req, res) ->
 	$sort = {}

@@ -4,16 +4,65 @@
 		var type = '<%- @type %>';
 		if(type == 'merchant') {
 			$http.get('/api/merchants/rank').then(function(res) {
-				$scope.grid_sum.data = res.data;
+				var items = $scope.grid_sum.data = res.data;
+				items.sort(function(a, b) {
+					return +b.sum - +a.sum;
+				});
+				for(var i in items) {
+					items[i].name = items[i].merchant.name;
+				}
+				items = items.slice(0, 20);
+				var chart = c3.generate({
+					data: {
+						json: items,
+						keys: {
+								x: 'name',
+								value: ['sum']
+						},
+						type: 'bar'
+					},
+					axis: {
+						rotated: true,
+						x: {
+							tick: {
+								multiline: false
+							},
+							type:　'category'
+						},
+						y: {
+							tick: {
+								format: function(val) {
+									val = val.toString();
+									if(val.slice(-9) == '000000000')
+										return val.slice(0, -9) + 'B';
+									else if(val.slice(-6) == '000000')
+										return val.slice(0, -6) + 'M';
+									else
+										return val;
+								}
+							}
+						}
+					},
+					legend: {
+						show: false
+					}
+				});
+
 			});
 			$http.get('/api/merchants/rank/count').then(function(res) {
 				$scope.grid_count.data = res.data;
 			});
 		}
-		else {
+		else if(type == 'tender') {
 			$scope.grid_price = grid;
 			$http.get('/api/tender/rank').then(function(res) {
 				$scope.grid_price.data = res.data;
+			});
+		}
+		else {
+			$scope.grid_price = grid;
+			$http.get('/api/partner').then(function(res) {
+				$scope.grid_partner.data = res.data;
 			});
 		}
 		$scope.grid_sum = {
@@ -56,18 +105,42 @@
 					return React.DOM.a({href:"/merchants/" + row._id, target: '_blank'}, '前往');
 				}}
 		]};
+		$scope.grid_partner = {
+			data: [], 
+			height: 1500,
+			columnDefs: [
+				{ field: "unit", displayName: "單位", render: function(row) {
+					return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
+				}},
+				{ field: "merchant", displayName: "廠商", render: function(row) {
+					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row.merchant._id, target: '_blank'}, row.merchant.name);
+				}},
+				{ field: "count", displayName: "得標數", render: function(row) {
+					return row.count;	
+				}},
+				{ field: "price", displayName: "總金額", render: function(row) {
+					return $filter('money')($filter('currency')(row.price));
+				}},
+				{ field: "name", displayName: "標案檢索", render: function(row) {
+					return React.DOM.a({href:"/merchants/" + row.merchant._id}, '前往');
+				}}
+		]};
 	});
 	
 </script>
 <div class="starter-template">
 	<% if @type == 'merchant' : %>
+		<div class="row" id="chart"></div>
 		<h1>標案總金額排行</h1>
 		<ng-react-grid grid="grid_sum"></ng-react-grid>
 		<h1>標案數量排行</h1>
 		<ng-react-grid grid="grid_count"></ng-react-grid>
-	<% else: %>
+	<% else if @type == 'tender': %>
 		<h1>本月標案金額排行</h1>
 		<ng-react-grid grid="grid_price"></ng-react-grid>
+	<% else: %>
+		<h1>廠商與單位得標關聯</h1>
+		<ng-react-grid grid="grid_partner"></ng-react-grid>
 	<% end %>
 
 </div>

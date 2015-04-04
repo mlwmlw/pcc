@@ -4,13 +4,10 @@
 		var id = location.href.split('/').pop();
 		$http.get('/api/merchant/' + id).then(function(res) {
 			$scope.grid.data = res.data;
-			$scope.merchant = res.data[0].award.merchants[0];
-		});
-		grid.columnDefs.push({ 
-			field: "publish", 
-			displayName: "決標公告", 
-			render: function(row) {
-				return React.DOM.a({href:row.award.url, target: "_blank"}, '前往');
+			for(var i = 0; i< res.data.length;i++) {
+				if(!res.data[i].award)
+					continue;
+				$scope.merchant = res.data[i].award.merchants[0];
 			}
 		});
 		$scope.grid = grid;
@@ -18,7 +15,7 @@
 	
 </script>
 <div class="starter-template">
-	<h1><span ng-bind="merchant.name"></span> 廠商得標案件檢索</h1>
+	<h1><a href="http://company.g0v.ronny.tw/id/[[merchant._id]]" target="_blank" ng-bind="merchant.name"></a> 廠商得標案件檢索</h1>
 	
 	<ng-react-grid grid="grid"></ng-react-grid>
 </div>

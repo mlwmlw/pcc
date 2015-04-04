@@ -55,7 +55,13 @@ app.service('grid', function($filter) {
 				{field: "merchant", displayName: "得標廠商", render: function(row) {
 					merchants = row.merchants ? row.merchants : row.award && row.award.merchants;
 					if(merchants && merchants.length) {
-						return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + merchants[0]._id, target: '_blank'}, merchants[0].name);
+						var $merchants = [];
+						merchants.map(function(m) {
+							$merchants.push(
+								React.DOM.li({}, React.DOM.a({href:'/merchants/' + m._id}, m.name))
+							);
+						});
+						return React.DOM.ul({}, $merchants);
 					}
 					else if (merchants && merchants.length == 0) {
 						return '無法決標';

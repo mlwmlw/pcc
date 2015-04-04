@@ -1,0 +1,16 @@
+<% extend './views/template.html' %>
+<script>
+	app.controller('page', function($scope, $http, $timeout, $filter, grid) {
+		var keyword = $scope.keyword = '<%- @keyword %>';
+		$scope.grid = grid;
+		$http.get('/api/keyword/' + keyword).then(function(res) {
+			$scope.grid.data = res.data;
+		});
+	});
+</script>
+
+<div class="starter-template">
+	<h1>搜尋 [[keyword]] 結果</h1>
+	<span ng-show="grid.data === null">資料載入中..</span>
+	<ng-react-grid grid="grid"></ng-react-grid>
+</div>
