@@ -3,12 +3,29 @@
 	app.controller('page', function($scope, $http, grid, $location) {
 		var id = location.href.split('/').pop();
 		$http.get('/api/merchant/' + id).then(function(res) {
-			$scope.grid.data = res.data;
+			var data = $scope.grid.data = res.data;
 			for(var i = 0; i< res.data.length;i++) {
 				if(!res.data[i].award)
 					continue;
 				$scope.merchant = res.data[i].award.merchants[0];
 			}
+			var units = {};	
+			for(var i in data) {
+				if(!units[data[i].unit])
+					units[data[i].unit] = 0;
+				units[data[i].unit] += +data[i].price;
+			}
+			var stats = [];
+			for(var i in units) {
+				stats.push([i, units[i]]);
+			}
+			var chart = c3.generate({
+				data: {
+					columns: stats,
+					type: 'pie'
+				}
+			});
+
 		});
 		$scope.grid = grid;
 	});
@@ -16,6 +33,6 @@
 </script>
 <div class="starter-template">
 	<h1><a href="http://company.g0v.ronny.tw/id/[[merchant._id]]" target="_blank" ng-bind="merchant.name"></a> 廠商得標案件檢索</h1>
-	
+	<div class="row" id="chart"></div>
 	<ng-react-grid grid="grid"></ng-react-grid>
 </div>

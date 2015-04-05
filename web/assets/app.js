@@ -1,4 +1,4 @@
-var app = angular.module('myapp', ['ui.bootstrap', 'ngRoute', 'ngReactGrid']);	
+var app = angular.module('myapp', ['ui.bootstrap', 'ngRoute', 'ngReactGrid', 'angular-loading-bar']);	
 app.config(function($interpolateProvider) {
 	$interpolateProvider.startSymbol('[[');
 	$interpolateProvider.endSymbol(']]');
