@@ -20,7 +20,7 @@ app.use(route.get('/date/:type?', function *(type, next) {
 }));
 
 app.use(route.get('/unit/:unit?', function *(unit, next) {
-	this.body = yield render('unit', {unit: unit});
+	this.body = yield render('unit', {unit: unit, title: unit + '標案查詢'});
 }));
 app.use(route.get('/units/:unit?', function *(next) {
 	this.body = yield render('units');
@@ -38,7 +38,7 @@ app.use(route.get('/merchants/:id?', function *(id, next) {
 		this.body = yield render('merchants');
 }));
 app.use(route.get('/search/:keyword?', function *(keyword, next) {
-	this.body = yield render('search', {keyword: keyword})
+	this.body = yield render('search', {keyword: keyword, title: '搜尋' + keyword})
 }));
 
 app.use(route.get('/hackpad', function *(next) {

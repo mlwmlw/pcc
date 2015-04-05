@@ -1,9 +1,10 @@
 var app = angular.module('myapp', ['ui.bootstrap', 'ngRoute', 'ngReactGrid', 'angular-loading-bar']);	
-app.config(function($interpolateProvider) {
+app.config(function($interpolateProvider, $locationProvider) {
 	$interpolateProvider.startSymbol('[[');
 	$interpolateProvider.endSymbol(']]');
 });
-app.run(function($rootScope, $http, $window) {
+app.run(function($rootScope, $http, $window, $location) {
+	
 	$http.get('/api/categories').then(function(res) {
 		$rootScope.categories = res.data;
 	});
@@ -58,7 +59,7 @@ app.service('grid', function($filter) {
 						var $merchants = [];
 						merchants.map(function(m) {
 							$merchants.push(
-								React.DOM.li({}, React.DOM.a({href:'/merchants/' + m._id}, m.name))
+								React.DOM.li({}, React.DOM.a({href:'/merchants/' + (m._id || m.name)}, m.name))
 							);
 						});
 						return React.DOM.ul({}, $merchants);

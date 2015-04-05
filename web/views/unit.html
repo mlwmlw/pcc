@@ -1,6 +1,7 @@
 <% extend './views/template.html' %>
 <script>
-	app.controller('page', function($scope, $http, grid) {
+	app.controller('page', function($scope, $http, grid, $location) {
+		var colors = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'];
 		$scope.items = null;
 		$scope.grid = grid;
 		$http.get('/api/units/all').then(function(res) {
@@ -16,7 +17,6 @@
 		$scope.loadUnit = function(unit) {
 			if(!unit)
 				return;
-			$scope.items = false;
 			$http.get('/api/unit/' + unit).then(function(res) {
 				var items = $scope.grid.data = res.data;
 				/*
@@ -68,43 +68,93 @@
 					return +b.price - +a.price;
 				});
 				items = items.slice(0, 10);
-				var chart = c3.generate({
-					data: {
-						json: items,
-						keys: {
-								x: 'name',
-								value: ['price']
-						},
-						type: 'bar'
-					},
-					axis: {
-						rotated: true,
-						x: {
-							tick: {
-								multiline: false
+				if(items.length > 3) {
+					var chart = c3.generate({
+						bindto: '#chart',
+						data: {
+							json: items,
+							keys: {
+									x: 'name',
+									value: ['price']
 							},
-							type:　'category'
+							type: 'bar',
+							color: function (color, d) {
+								return colors[d.index];
+							}
 						},
-						y: {
-							tick: {
-								format: function(val) {
-									val = val.toString();
-									if(val.slice(-9) == '000000000')
-										return val.slice(0, -9) + 'B';
-									else if(val.slice(-6) == '000000')
-										return val.slice(0, -6) + 'M';
-									else
-										return val;
+						axis: {
+							rotated: true,
+							x: {
+								tick: {
+									multiline: false
+								},
+								type:　'category'
+							},
+							y: {
+								tick: {
+									format: function(val) {
+										val = val.toString();
+										if(val.slice(-9) == '000000000')
+											return val.slice(0, -9) + 'B';
+										else if(val.slice(-6) == '000000')
+											return val.slice(0, -6) + 'M';
+										else
+											return val;
+									}
 								}
 							}
+						},
+						legend: {
+							show: false
 						}
-					},
-					legend: {
-						show: false
+					});
+				}
+				var units = {};	
+				for(var i in $scope.grid.data) {
+					var item = $scope.grid.data[i];
+					if(!item.award || item.award.merchants.length == 0)
+						continue;
+					for(var j in item.award.merchants) {
+						var merchant = item.award.merchants[j];
+						if(!units[merchant.name])
+							units[merchant.name] = 0;
+						units[merchant.name]++;//= +item.price;
 					}
+				}
+				var stats = [];
+				for(var i in units) {
+					stats.push({name: i, count: units[i]});
+				}
+				stats.sort(function(a, b) {
+					return b.count - a.count;
 				});
+				stats = stats.slice(0, 20);
+				if(stats.length > 3) {
+					var chart = c3.generate({
+						bindto: '#unit',
+						data: {
+							json: stats,
+							keys: {
+								x: 'name',
+								value: ['count']
+							},
+							type: 'bar',
+							color: function (color, d) {
+								return colors[d.index];
+							}
+
+						},
+						legend: {
+								hide: true
+						},
+						axis: {
+							x: {
+								type:　'category'
+							}
+						}
+					});
+				}
 			});
-			
 		};
 		$scope.loadUnit("<%- @unit %>");
 	});
@@ -128,8 +178,7 @@
 			</form>
 		</div>
 	</div>
-	<div class="row" id="chart">
-	</div>
-
+	<div id="chart" class="row"></div>
+	<div id="unit" class="row"></div>
 	<ng-react-grid grid="grid"></ng-react-grid>
 </div>

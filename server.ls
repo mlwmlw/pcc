@@ -63,8 +63,9 @@ app.get '/date/:type/:date', (req, res) ->
 	tomorrow = new Date req.params.date
 	tomorrow.setDate date.getDate! + 1
 	c = if req.params.type=='tender' then 'pcc' else 'award'
-	db.collection c .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
+	db.collection c .find {publish: { $gte: date, $lt: tomorrow }} .sort {price: -1} .toArray (err, docs) ->
 		res.send docs
+
 app.get '/month', (req, res) ->
 	collection = db.collection 'pcc'
 	collection.aggregate { $group: { _id: { year: { $year: '$publish'}, month: { $month: '$publish'} } } }, (err, docs) ->
@@ -87,12 +88,23 @@ app.get '/categories', (req, res) ->
 		res.send _.pluck docs, '_id'
 
 app.get '/category/:category', (req, res) ->
-	db.collection 'pcc' .find { category: req.params.category } .toArray (err, docs) ->
+	db.collection 'pcc' .find { category: req.params.category } .limit 200 .toArray (err, docs) ->
 		res.send docs
 
 app.get '/merchants/', (req, res) ->
 	err, merchants <- db.collection 'merchants' .find {} .toArray
 	res.send merchants
+
+app.get '/merchant/:id?', (req, res) ->
+	id = req.params.id
+	if !id
+		return res.send {}
+	if /\d+/.test id 
+		filter = {"award.merchants._id": id} 
+	else
+		filter = {"award.merchants.name": id}
+	err, docs <- db.collection 'pcc' .find filter .toArray
+	res.send docs
 
 app.get '/tender/rank/', (req, res) ->
 	start = moment!.startOf 'month' .toDate!
@@ -125,10 +137,6 @@ app.get '/merchants/rank/:order?', (req, res) ->
 		m.merchant = m.merchants.pop!
 		delete m.merchants
 	res.send merchants
-
-app.get '/merchant/:id?', (req, res) ->
-	err, docs <- db.collection 'pcc' .find {"award.merchants._id": req.params.id} .toArray
-	res.send docs
 
 app.get '/units/:id?', (req, res) ->
 	if req.params.id == 'all'
