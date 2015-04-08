@@ -36,52 +36,68 @@ app.filter('date', function() {
 	};
 });
 app.service('grid', function($filter) {
+	var columns = {
+		unit: {
+			field: "unit", displayName: "單位", render: function(row) {
+				return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
+			}
+		},
+		name: {
+			field: "name", displayName: "標案名稱", render: function(row) {
+				return React.DOM.a({target: "_blank", href: row.url || "//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, row.name);
+			}
+		},
+		price: {
+field: "price", displayName: "預算/決標金額", render: function(row) {
+					return $filter('money')($filter('currency')(row.price));
+				}
+		}, 
+		publish: { 
+			field: "publish", displayName: "發佈日期", render: function(row) {
+				return $filter('date')(row.publish);
+			}
+		},
+		merchant: {
+			field: "merchant", displayName: "得標廠商", render: function(row) {
+				merchants = row.merchants ? row.merchants : row.award && row.award.merchants;
+				if(merchants && merchants.length) {
+					var $merchants = [];
+					merchants.map(function(m) {
+						$merchants.push(
+							React.DOM.li({}, React.DOM.a({href:'/merchants/' + (m._id || m.name)}, m.name))
+						);
+					});
+					return React.DOM.ul({}, $merchants);
+				}
+				else if (merchants && merchants.length == 0) {
+					return '無法決標';
+				}
+				else {
+					return '';
+				}
+			}
+		},
+		award_publish: {
+			field: "publish", displayName: "決標公告", render: function(row) {
+				url = row.url ? row.url : row.award && row.award.url;
+				if(url) {
+					return React.DOM.a({href:url, target: "_blank"}, '前往');
+				}
+				else {
+					return '';
+				}
+			}
+		}
+	};
+	var settings = {
+		base: [columns.unit, columns.name, columns.price, columns.publish, columns.merchant, columns.award_publish]	
+	};
 	var grid = {
 			data: [], 
 			height: 1500,
-			columnDefs: [
-				{ field: "unit", displayName: "單位", render: function(row) {
-					return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
-				}},
-				{ field: "name", displayName: "標案名稱", render: function(row) {
-					return React.DOM.a({target: "_blank", href: row.url || "//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, row.name);
-				}},
-				{ field: "price", displayName: "預算/決標金額", render: function(row) {
-					return $filter('money')($filter('currency')(row.price));
-				}},
-				{ field: "type", displayName: "類型"},
-				{ field: "publish", displayName: "發佈日期", render: function(row) {
-					return $filter('date')(row.publish);
-				}},
-				{field: "merchant", displayName: "得標廠商", render: function(row) {
-					merchants = row.merchants ? row.merchants : row.award && row.award.merchants;
-					if(merchants && merchants.length) {
-						var $merchants = [];
-						merchants.map(function(m) {
-							$merchants.push(
-								React.DOM.li({}, React.DOM.a({href:'/merchants/' + (m._id || m.name)}, m.name))
-							);
-						});
-						return React.DOM.ul({}, $merchants);
-					}
-					else if (merchants && merchants.length == 0) {
-						return '無法決標';
-					}
-					else {
-						return '';
-					}
-				}},
-				{field: "publish", displayName: "決標公告", render: function(row) {
-					url = row.url ? row.url : row.award && row.award.url;
-					if(url) {
-						return React.DOM.a({href:url, target: "_blank"}, '前往');
-					}
-					else {
-						return '';
-					}
-				}}
-		]};
-		return grid;
+			columnDefs: settings.base
+	};
+	return grid;
 });
 app.filter('option', function () {
 	return function (items, value) {

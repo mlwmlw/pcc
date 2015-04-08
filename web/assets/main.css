@@ -15,3 +15,17 @@
 body {
 	padding-top:60px;
 }
+.navbar-form .form-control.search {
+	width: 6em;
+	-webkit-transition: width 0.4s ease-in-out;
+	-moz-transition:width 0.4s ease-in-out;
+	-o-transition: width 0.4s ease-in-out;
+	transition: width 0.4s ease-in-out;
+	display: inline-block;
+}
+.navbar-form .form-control.search:focus{
+	width:20em;
+}
+.ngReactGridViewPort {
+	-webkit-overflow-scrolling: touch;
+}

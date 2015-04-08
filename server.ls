@@ -51,7 +51,7 @@ app.get '/keyword/:keyword', (req, res) ->
 	if(!req.params.keyword)
 		return res.send \failed
 	reg = new RegExp req.params.keyword
-	db.collection 'pcc' .find {$or: [{name: reg}, {unit: reg}, {'award.merchants.name': reg}]} .toArray (err, docs) ->
+	db.collection 'pcc' .find {$or: [{name: reg}, {unit: reg}, {'award.merchants.name': reg}]} .sort {publish: -1} .toArray (err, docs) ->
 		res.send docs
 		db.collection 'search_log' .insert {keyword: req.params.keyword, ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, ts: new Date!}, (err, res) ->
 		if err
