@@ -1,7 +1,7 @@
 <% extend './views/template.html' %>
 <script>
 	app.controller('page', function($scope, $http, grid, $location) {
-		var colors = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'];
+		
 		$scope.items = null;
 		$scope.grid = grid;
 		$http.get('/api/units/all').then(function(res) {
@@ -14,48 +14,60 @@
 				}
 			}
 		});
+		$scope.chart = c3.generate({
+			bindto: '#chart',
+			data: {
+				json: [],
+				type: 'bar',
+				color: grid.color
+			},
+			axis: {
+				rotated: true,
+				x: {
+					tick: {
+						multiline: false
+					},
+					type:　'category'
+				},
+				y: {
+					tick: {
+						format: function(val) {
+							val = val.toString();
+							if(val.slice(-9) == '000000000')
+								return val.slice(0, -9) + 'B';
+							else if(val.slice(-6) == '000000')
+								return val.slice(0, -6) + 'M';
+							else
+								return val;
+						}
+					}
+				}
+			},
+			legend: {
+				show: false
+			}
+		});
+		$scope.bar = c3.generate({
+			bindto: '#unit',
+			data: {
+				json: [],
+				type: 'bar',
+				color: grid.color
+			},
+			legend: {
+					hide: true
+			},
+			axis: {
+				x: {
+					type:　'category'
+				}
+			}
+		});
 		$scope.loadUnit = function(unit) {
 			if(!unit)
 				return;
 			$http.get('/api/unit/' + unit).then(function(res) {
 				var items = $scope.grid.data = res.data;
-				/*
-				var dates = {};
-				for(var i in items) {
-					var date = items[i].publish.replace(/T.+$/, '');
-					if(dates[date])
-						dates[date].price += +items[i].price;
-					else
-						dates[date] = {date: date, price: +items[i].price};
-				}
-				dates = $.map(dates, function(value) {
-					return value;
-				});
-				var chart = c3.generate({
-					data: {
-						json: dates,
-						//types: {
-						//	price: 'spline'
-						//},
-						keys: {
-							x: 'date',
-							value: ['price']
-						}
-					},
-					zoom: {
-						  enabled: true
-					},
-					axis: {
-						x: {
-							type: 'timeseries',
-							tick: {
-								format: '%Y-%m-%d'
-							}
-						}
-					}
-				});
-				*/
-				
 				var map = {};
 				for(var i in items) {
 					map[items[i].id] = items[i];
@@ -68,44 +80,13 @@
 					return +b.price - +a.price;
 				});
 				items = items.slice(0, 10);
+				$scope.chart.unload();
 				if(items.length > 3) {
-					var chart = c3.generate({
-						bindto: '#chart',
-						data: {
-							json: items,
-							keys: {
-									x: 'name',
-									value: ['price']
-							},
-							type: 'bar',
-							color: function (color, d) {
-								return colors[d.index];
-							}
-						},
-						axis: {
-							rotated: true,
-							x: {
-								tick: {
-									multiline: false
-								},
-								type:　'category'
-							},
-							y: {
-								tick: {
-									format: function(val) {
-										val = val.toString();
-										if(val.slice(-9) == '000000000')
-											return val.slice(0, -9) + 'B';
-										else if(val.slice(-6) == '000000')
-											return val.slice(0, -6) + 'M';
-										else
-											return val;
-									}
-								}
-							}
-						},
-						legend: {
-							show: false
+					$scope.chart.load({
+						json: items,
+						keys: {
+							x: 'name',
+							value: ['price']
 						}
 					});
 				}
@@ -118,41 +99,27 @@
 						var merchant = item.award.merchants[j];
 						if(!units[merchant.name])
 							units[merchant.name] = 0;
-						units[merchant.name]++;//= +item.price;
+						units[merchant.name] = +item.price;
 					}
 				}
 				var stats = [];
 				for(var i in units) {
-					stats.push({name: i, count: units[i]});
+					stats.push({name: i, price: units[i]});
 				}
 				stats.sort(function(a, b) {
-					return b.count - a.count;
+					return b.price - a.price;
 				});
-				stats = stats.slice(0, 20);
+				stats = stats.slice(0, 15);
+				$scope.bar.unload();
 				if(stats.length > 3) {
-					var chart = c3.generate({
-						bindto: '#unit',
-						data: {
-							json: stats,
-							keys: {
-								x: 'name',
-								value: ['count']
-							},
-							type: 'bar',
-							color: function (color, d) {
-								return colors[d.index];
-							}
-
-						},
-						legend: {
-								hide: true
-						},
-						axis: {
-							x: {
-								type:　'category'
-							}
+					$scope.bar.load({
+						json: stats,
+						keys: {
+							x: 'name',
+							value: ['price']
 						}
 					});
+					
 				}
 			});
 		};
@@ -178,7 +145,7 @@
 			</form>
 		</div>
 	</div>
-	<div id="chart" class="row"></div>
-	<div id="unit" class="row"></div>
+	<div ng-show="chart.data().length"id="chart" class="row"></div>
+	<div ng-show="bar.data().length" id="unit" class="row"></div>
 	<ng-react-grid grid="grid"></ng-react-grid>
 </div>

@@ -29,3 +29,7 @@ body {
 .ngReactGridViewPort {
 	-webkit-overflow-scrolling: touch;
 }
+ul {
+	list-style:none;
+	padding:0;
+}

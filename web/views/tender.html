@@ -1,0 +1,94 @@
+<% extend './views/template.html' %>
+<script>
+	app.controller('page', function($scope, $http, grid, $location) {
+	
+		$scope.grid = grid;
+		$http.get('/api/tender/<%- @id %>/<%- @unit %>').then(function(res) {
+			var tenders = $scope.tenders = res.data;
+			for(var i in tenders) {
+				if(tenders[i].award) {
+					$scope.merchants = tenders[i].award.merchants;
+					break;
+				}
+			}
+		}).then(function() {
+			for(var i in $scope.merchants) {
+				$http.get('/api/merchants/' + $scope.merchants[i].name).then(function(res) {
+					$scope.merchants[i] = res.data;
+				});
+			}
+		});
+	});
+</script>
+<div class="starter-template">
+	
+	<div class="col-sm-8">
+		<div class="panel panel-default">
+			<div class="panel-heading">標案歷史</div>
+			<div class="panel-body">
+				<div ng-repeat="t in tenders" class="row">
+					<div class="col-xs-12">
+						<h2>[[t.name]]</h2>
+						<dl class="dl-horizontal">
+							<dt>標案名稱</dt>
+							<dd>[[t.name]]</dd>
+							<dt>招標金額</dt>
+							<dd>[[t.price]]</dd>
+							<dt>招標日期</dt>
+							<dd>[[t.publish | gmt]]</dd>
+							<dt>決標日期</dt>
+							<dd>[[t.end_date | gmt]]</dd>
+							<dt>標案案號</dt>
+							<dd>[[t.id]]</dd>
+							<dt>分類</dt>
+							<dd>[[t.category]]</dd>
+							<dt>形式</dt>
+							<dd>[[t.type]]</dd>
+							<dt>結果</dt>
+							<dd>
+								<span class="label label-danger" ng-if="t.award.merchants.length == 0">
+									無法決標
+								</span>
+								<span class="label label-success" ng-if="t.award.merchants.length">決標</span>
+							</dd>
+						</dl>
+						<p class="lead" style="text-align:right">
+							<a target="_blank" ng-href="//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey=[[t.key]]"><button class="btn btn-info">招標公告</button></a>
+							<a target="_blank" ng-if="t.award.url" ng-href="[[t.award.url]]"><button class="btn" ng-class="{'btn-danger': t.award.merchants.length == 0, 'btn-success': t.award.merchants.length}">決標公告</button></a>
+						</p>
+						<hr />
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">機關資訊</div>
+			<div class="panel-body"><a href="/unit/<%- @unit %>" target="_blank"><%- @unit %></a></div>
+		</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">得標廠商</div>
+			<div class="panel-body">
+				<div class="row col-xs-12" ng-repeat="m in merchants">
+					<a href="/merchants/[[m.name]]">
+						<h3>[[m.name]]</h3>
+					</a>
+					<ul class="dl-horizontal">
+						<li><strong>機關代號：</strong>[[m._id]]</li>
+						<li><strong>地址：</strong>[[m.address]]</li>
+						<li><strong>電話：</strong>[[m.phone]]</li>
+						<li><strong>字號：</strong>[[m.registration]]</li>
+						<li></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">表達意見</div>
+			<div class="panel-body">
+			</div>
+		</div>
+	</div>
+
+</div>

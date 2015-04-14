@@ -130,15 +130,7 @@
 						},
 						y: {
 							tick: {
-								format: function(val) {
-									val = val.toString();
-									if(val.slice(-9) == '000000000')
-										return val.slice(0, -9) + 'B';
-									else if(val.slice(-6) == '000000')
-										return val.slice(0, -6) + 'M';
-									else
-										return val;
-								}
+								format: grid.money
 							}
 						}
 				},
@@ -272,6 +264,9 @@
 	<h2>各月招標資料統計</h2>
 	<p>此功能用來大致分析每個單位所得到的資源數量，各單位可以再點擊進去看詳細。</p>
 	<p>目前相同標案再不同月重新發標會被重複計算，很多標案也沒有發標金額，所以應該參考標案數量來比較。</p>
+		
+	<div class="row" id="chart_line">
+	</div>
 	<div >
 		<form class="form-inline">
 			<div class="form-group">
@@ -285,7 +280,7 @@
 			</div>
 			<div class="form-group">
 				顯示單位數量（依照金額排序）：
-				<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 25" ng-options="n for n in [] | range:5:40">
+				<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 15" ng-options="n for n in [] | range:5:40">
 				</select>
 			</div>
 			<div class="form-group">
@@ -297,21 +292,18 @@
 			</div>
 
 		</form>
-	</div>	
-	<div>
 	</div>
 	<div>
-	<ol class="breadcrumb">
-	  <li ng-repeat="(key, bread) in breadcrumb track by $index" ng-class="{active: $last}">
-			<a ng-click="setUnit(bread, $index)" href="javascript:void(0)">
-			[[bread]]
-			</a>
-		</li>
-	</ol>
-	</div>	
-	<div class="row" id="chart_line">
+		<ol class="breadcrumb">
+			<li ng-repeat="(key, bread) in breadcrumb track by $index" ng-class="{active: $last}">
+				<a ng-click="setUnit(bread, $index)" href="javascript:void(0)">
+				[[bread]]
+				</a>
+			</li>
+		</ol>
 	</div>
 	<div class="row" id="chart">
 	</div>
+		
 	<ng-react-grid grid="grid"></ng-react-grid>
 </div>

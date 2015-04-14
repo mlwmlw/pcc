@@ -24,7 +24,8 @@ app.filter('money', function() {
 			return input;
 	};
 });
-app.filter('date', function() {
+
+app.filter('gmt', function() {
 	return function(input) {
 		var time = input.match(/([^Z]+)(Z(\d+))?/);
 		var input = Date.parse(time[1]);
@@ -35,6 +36,7 @@ app.filter('date', function() {
 		return (new Date(input)).toISOString().replace(/T.+$/, '');
 	};
 });
+
 app.service('grid', function($filter) {
 	var columns = {
 		unit: {
@@ -44,7 +46,7 @@ app.service('grid', function($filter) {
 		},
 		name: {
 			field: "name", displayName: "標案名稱", render: function(row) {
-				return React.DOM.a({target: "_blank", href: row.url || "//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, row.name);
+				return React.DOM.a({target: "_blank", href: '/tender/' + row.unit.replace(/\s+/g, '') + '/' + row.id}, row.name);
 			}
 		},
 		price: {
@@ -78,13 +80,13 @@ field: "price", displayName: "預算/決標金額", render: function(row) {
 			}
 		},
 		award_publish: {
-			field: "publish", displayName: "決標公告", render: function(row) {
+			field: "publish", displayName: "原始公告", render: function(row) {
 				url = row.url ? row.url : row.award && row.award.url;
 				if(url) {
-					return React.DOM.a({href:url, target: "_blank"}, '前往');
+					return React.DOM.a({href:url, target: "_blank"}, '決標公告');
 				}
 				else {
-					return '';
+					return React.DOM.a({target: "_blank", href: row.url || "//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey="  + row.key}, '招標公告');
 				}
 			}
 		}
@@ -97,6 +99,27 @@ field: "price", displayName: "預算/決標金額", render: function(row) {
 			height: 1500,
 			columnDefs: settings.base
 	};
+	grid.colors = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'];
+	grid.color = function(color, d) {
+		return grid.colors[d.index];
+	};
+	grid.money = function(val) {
+		val = val.toString();
+		if(val.slice(-8) == '00000000')
+			return val.slice(0, -8) + '億';
+		else if(val.slice(-4) == '0000')
+			return val.slice(0, -4) + '萬';
+		else
+			return val;
+
+		/*if(val.slice(-9) == '000000000')
+			return val.slice(0, -9) + 'B';
+		else if(val.slice(-6) == '000000')
+			return val.slice(0, -6) + 'M';
+		else
+			return val;
+		*/
+	}
 	return grid;
 });
 app.filter('option', function () {

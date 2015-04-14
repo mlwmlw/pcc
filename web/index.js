@@ -44,6 +44,9 @@ app.use(route.get('/search/:keyword?', function *(keyword, next) {
 app.use(route.get('/hackpad', function *(next) {
 	this.body = yield render('hackpad')
 }));
+app.use(route.get('/tender/:unit/:id', function *(unit, id, next) {
+	this.body = yield render('tender', {unit: unit, id: id})
+}));
 
 app.use(mount('/assets', serve('assets')));
 app.listen(8889);
