@@ -35,9 +35,9 @@ client = client.connect uri, (err, db) ->
 			row._id = row.key
 			if /更正公告/.test row.name
 				delete row.name
-			publish = moment.min moment(date), moment(row.publish) .toDate!
+			publish = moment.max moment(date), moment(row.publish) .toDate!
 			delete row.publish
-			bulk.find {_id: row.key} .upsert!.update { $set: row, $min: {publish: publish} }
+			bulk.find {_id: row.key} .upsert!.update { $set: row, $max: {publish: publish} }
 		console.log "tender " + res.length
 		if res.length
 			promiseMain.add bulk.execute
@@ -58,7 +58,7 @@ client = client.connect uri, (err, db) ->
 					$set: a
 				}
 				pccBulk.find {id: a.id, publish: publish, unit: new RegExp a.unit} .update {
-					$set: {award: {_id: a.key, merchants: a.merchants || [], url: a.url, publish: a.publish}}
+					$set: {merchants: a.candidates || [], award: {_id: a.key, merchants: a.merchants || [], url: a.url, publish: a.publish}}
 				}
 			promiseSub.add awardBulk.execute
 			promiseSub.add pccBulk.execute

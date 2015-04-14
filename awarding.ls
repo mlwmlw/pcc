@@ -28,9 +28,13 @@ parseFailed = (url, cb) ->
 	cb {origin_publish: trim($ '.main tr' .eq(6) .find 'td' .text!).replace /(\d+)\/(\d+)\/(\d+)/, (date, year, month, day) ->
 		(+year + 1911) + "-" + month + "-" + day
 	} 
-parseAward = (url, cb) ->
+parseAward = (url, cb, mode) ->
 	award = {}
-	error, res <- request.get url
+	if mode
+		modeUrl = url+"&contentMode="+mode
+	else
+		modeUrl = url+"&contentMode=0"
+	error, res <- request.get modeUrl
 	$ = cheerio.load res.body
 	merchants = {}
 	merchant = trim($ '.award_table_tr_4 tr' .eq 5 .find 'td' .text!)
@@ -40,33 +44,53 @@ parseAward = (url, cb) ->
 				(+year + 1911) + "-" + month + "-" + day
 			return false
 	$rows = $ '.award_table_tr_3 tr'
-	$th = $rows.find 'th'
-	$td = $rows.find 'td'
 	total = $rows.eq 0 .find 'td' .text!.replace(/\s+/g, '') - 1
 	id = null
-	map = {'廠商代碼': '_id', '廠商名稱': 'name', '廠商電話': 'phone', '廠商地址': 'address', '廠商業別': 'industry', '組織型態': 'org', '僱用員工總人數是否超過100人': 'over100', '決標金額': 'amount'}
-	for i to $th.length - 1
-		if i == 0
-			continue;
-		key = $th.eq(i).text!.replace(/\s+/g, '')
-		value = $td.eq(i).text!.replace(/\s+/g, '')
-		if map[key] == '_id'
-			id = value
-			merchants[id] = {}
-		else if map[key] == 'industry'
-			split = $td.eq(i).text!.split(/\s+/)
-			value = split[1]
-			if split.length > 3
-				merchants[id].registration = split[3]
-		else if map[key] == 'amount'
-			value = +value.replace(/[元,]/g, '')
-		if !map[key]
-			continue;
-		merchants[id][map[key]] = value
+	map = {'廠商代碼': '_id', '廠商名稱': 'name', '廠商電話': 'phone', '廠商地址': 'address', '廠商業別': 'industry', '組織型態': 'org', '僱用員工總人數是否超過100人': 'over100', '決標金額': 'amount', '是否得標': 'awarding', '得標廠商國別': 'country', '有無在我國辦理分公司登記': 'tw_branch'}
+	#multiple mode
+#	console.log url, $rows.length
+	if $rows.length == 0
+		$rows = $ '.award_table_tr_3'
+		value = trim($rows.eq(2).find 'td' .text!)
+		if /完整資料/.test value
+			return parseAward url, cb, 1
+		else 
+			value = value.replace /\s+/g, ' '
+			ms = value.match /(\d+)\s+(\S+)\s+(\S+)\s+(\S+)/g
+			for i, raw of ms
+				m = raw.split /[ ]+/
+				id = m[2]
+				merchants[id] = {
+					_id: id,
+					awarding: {'得標': 1, '未得標': 0}[m[1]],
+					name: m[3]
+				}
+	else
+		for i to $rows.length - 1
+			if i == 0
+				continue;
+			$row = $rows.eq i
+			key = $row.find 'th' .text!.replace /\s+/g, ''
+			value = $row.find 'td' .text!.replace /\s+/g, ''
+			if !map[key]
+				continue;
+			if map[key] == '_id'
+				id = value
+				merchants[id] = {}
+			else if map[key] == 'industry'
+				split = $row.find 'td' .text!.split(/\s+/)
+				value = split[1]
+				if split.length > 3
+					merchants[id].registration = split[3]
+			else if map[key] == 'amount'
+				value = +value.replace(/[元,]/g, '')
+			else if map[key] == 'awarding'
+				value = {'是': 1, '否': 0}[value]
+			merchants[id][map[key]] = value
 	award.merchants = []	
 	for i, merchant of merchants
 		clone = {} <<< merchant
-		if merchant.amount
+		if merchant.awarding
 			award.merchants.push clone
 		delete merchant.amount
 	cb(award, merchants)
@@ -120,6 +144,7 @@ getDocs = (date, page) ->
 						merchants.push m;
 					row.merchants = award.merchants;
 					row.origin_publish = award.origin_publish
+					row.candidates = ms
 					awardDeferred.resolve row
 			else
 				row.url = 'http://web.pcc.gov.tw/tps/pss/' + row.failed_url
@@ -143,6 +168,9 @@ getDocs = (date, page) ->
 	return deferred.promise
 
 #parseAward 'http://web.pcc.gov.tw/tps/main/pms/tps/atm/atmAwardAction.do?newEdit=false&searchMode=common&method=inquiryForPublic&pkAtmMain=51511072&tenderCaseNo=GAA0326001'
-#parseAward 'http://web.pcc.gov.tw/tps/main/pms/tps/atm/atmAwardAction.do?newEdit=false&searchMode=common&method=inquiryForPublic&pkAtmMain=51510570&tenderCaseNo=NO1040271'
-#getDocsByDate '2015-03-23' .then (data) ->
-#	console.log data
+#parseAward 'http://web.pcc.gov.tw/tps/main/pms/tps/atm/atmAwardAction.do?newEdit=false&searchMode=common&method=inquiryForPublic&pkAtmMain=51500178&tenderCaseNo=104-0029'
+#parseAward 'http://web.pcc.gov.tw/tps/main/pms/tps/atm/atmAwardAction.do?newEdit=false&searchMode=common&method=inquiryForPublic&pkAtmMain=51519966&tenderCaseNo=GF3-104011&contentMode=0', (abc, ms) ->
+#parseAward 'http://web.pcc.gov.tw/tps/main/pms/tps/atm/atmAwardAction.do?newEdit=false&searchMode=common&method=inquiryForPublic&pkAtmMain=51105162&tenderCaseNo=LP5-102022', (abc, ms) ->
+#	console.log abc, ms
+#getDocsByDate '2015-01-19' .then (data) ->
+	#console.log data

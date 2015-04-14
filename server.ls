@@ -91,9 +91,40 @@ app.get '/category/:category', (req, res) ->
 	db.collection 'pcc' .find { category: req.params.category } .limit 200 .toArray (err, docs) ->
 		res.send docs
 
-app.get '/merchants/', (req, res) ->
-	err, merchants <- db.collection 'merchants' .find {} .toArray
+app.get '/rank/merchants/:order?/:year?', (req, res) ->
+	year = req.params.year
+	start = new Date year, 0, 1
+	end = new Date year, 11, 31
+	$sort = {}
+	$sort.$sort = {};
+	$sort.$sort[req.params.order || "sum"] = -1;
+	$match = { "award.merchants._id": {$ne: ""}}
+	$match.publish = {$gte: start, $lte: end}
+	err, merchants <- db.collection 'pcc' .aggregate [
+	{ $unwind: "$award.merchants" }, 
+	{ $match: $match},
+	{ $group : {_id: "$award.merchants._id", merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
+	$sort, 
+	{ $limit: 100}]
+	for i,m of merchants
+		m.merchant = m.merchants.pop!
+		delete m.merchants
 	res.send merchants
+
+
+
+app.get '/merchants/:id?', (req, res) ->
+	id = req.params.id
+	filter = {}
+	if /\d+/.test id 
+		filter = {_id: id} 
+	else
+		filter = {name: id}
+	err, merchants <- db.collection 'merchants' .find filter .toArray
+	if id 
+		res.send merchants[0]
+	else
+		res.send merchants
 
 app.get '/merchant/:id?', (req, res) ->
 	id = req.params.id
@@ -106,15 +137,33 @@ app.get '/merchant/:id?', (req, res) ->
 	err, docs <- db.collection 'pcc' .find filter .toArray
 	res.send docs
 
-app.get '/tender/rank/', (req, res) ->
-	start = moment!.startOf 'month' .toDate!
-	end = moment!.endOf 'month' .toDate!
+app.get '/tender/:id/:unit?', (req, res) ->
+	id = req.params.id
+	unit = req.params.unit
+	if !id
+		return res.send {}
+	filter = {id: id}
+	if unit
+		filter.unit = new RegExp(unit - /\s+/g)
+	err, tenders <- db.collection 'pcc' .find filter .sort {publish: -1} .toArray
+	res.send tenders
+
+
+app.get '/rank/tender/:month?', (req, res) ->
+	m = req.params.month
+	start = moment m .startOf 'month' .toDate!
+	end = moment m .endOf 'month' .toDate!
 	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lte: end}} .sort {price: -1} .limit 100 .toArray
 	res.send tenders
 
-app.get '/partner', (req, res) ->
+app.get '/partner/:year?', (req, res) ->
+	year = req.params.year
+	start = new Date year, 0, 1
+	end = new Date year, 11, 31
+	$match = {merchants: {$exists: 1}}
+	$match.publish = {$gte: start, $lte: end}
 	db.collection 'award' .aggregate [
-		{$match: {merchants: {$exists: 1}}},
+		{$match: $match},
 		{$unwind: "$merchants"},
 		{$group: {_id: {unit: "$unit", merchant:"$merchants.name", merchant_id: "$merchants._id"}, price: {$sum: "$price"}, count: {$sum: 1}}},
 		{$sort: {count: -1}},
@@ -122,21 +171,6 @@ app.get '/partner', (req, res) ->
 		{$project: {unit: "$_id.unit", merchant: {_id: "$_id.merchant_id", name: "$_id.merchant"}, price: "$price", count: "$count"}}
 	], (err, docs) ->
 		res.send docs
-
-app.get '/merchants/rank/:order?', (req, res) ->
-	$sort = {}
-	$sort.$sort = {};
-	$sort.$sort[req.params.order || "sum"] = -1;
-	err, merchants <- db.collection 'pcc' .aggregate [
-	{ $unwind: "$award.merchants" }, 
-	{ $match: { "award.merchants._id": {$ne: ""}}},
-	{ $group : {_id: "$award.merchants._id", merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
-	$sort, 
-	{ $limit: 100}]
-	for i,m of merchants
-		m.merchant = m.merchants.pop!
-		delete m.merchants
-	res.send merchants
 
 app.get '/units/:id?', (req, res) ->
 	if req.params.id == 'all'
@@ -158,7 +192,6 @@ app.get '/unit/:unit/:month?', (req, res) ->
 		end = new Date req.params.month + "-01"
 		end.setMonth end.getMonth!+1 
 		filter.publish = {$gte: start, $lt: end}
-	console.log filter
 	db.collection 'pcc' .find filter .toArray (err, docs) ->
 		docs.sort (a, b) ->
 			return b.publish - a.publish
