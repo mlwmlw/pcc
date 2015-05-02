@@ -1,4 +1,25 @@
 <% extend './views/template.html' %>
+<style>
+.node {
+	  cursor: pointer;
+}
+
+.node circle {
+	  fill: #fff;
+		  stroke: steelblue;
+			  stroke-width: 1.5px;
+}
+
+.node text {
+	  font: 10px sans-serif;
+}
+
+.link {
+	  fill: none;
+		  stroke: #ccc;
+			  stroke-width: 1.5px;
+}
+</style>
 <script>
 	app.config(function($routeProvider, $locationProvider) {
 			//$locationProvider.html5Mode(true);

@@ -33,6 +33,7 @@ client = client.connect uri, (err, db) ->
 	tender.getDocsByDate date .then (res) ->
 		for key, row of res
 			row._id = row.key
+			row.price = +row.price
 			if /更正公告/.test row.name
 				delete row.name
 			publish = moment.max moment(date), moment(row.publish) .toDate!

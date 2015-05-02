@@ -31,6 +31,9 @@ app.use(route.get('/about', function *(next) {
 app.use(route.get('/rank/:type?', function *(type, next) {
 	this.body = yield render('rank', {type: type});
 }));
+app.use(route.get('/merchant_type/:type?', function *(type, next) {
+	this.body = yield render('merchant_type', {type: type});
+}));
 app.use(route.get('/merchants/:id?', function *(id, next) {
 	if(id)
 		this.body = yield render('merchant');

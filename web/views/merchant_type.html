@@ -1,0 +1,52 @@
+<% extend './views/template.html' %>
+
+<script>
+	app.controller('page', function($scope, $http, grid, $location) {
+		var type = "<%- @type %>";
+		$scope.items = null;
+		$scope.grid = grid;
+		$http.get('/api/merchant_type').then(function(res) {
+			$scope.types = res.data;
+		});
+		if(type) {
+			$http.get('/api/merchant_type/' + type).then(function(res) {
+				$scope.grid.data = res.data;
+			});
+		}
+		$scope.grid = {
+			data: [], 
+			height: 1500,
+			columnDefs: [
+				{ field: "name", displayName: "廠商", render: function(row) {
+					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row._id, target: '_blank'}, row.name);
+				}},
+				{ field: "org", displayName: "單位"},
+				{ field: "phone", displayName: "電話", render: function(row) {
+					return row.phone || '';	
+				}},
+				{ field: "address", displayName: "公司所在地", render: function(row) {
+					return row.address || '';	
+				}},
+				{ field: "name", displayName: "標案檢索", render: function(row) {
+					return React.DOM.a({href:"/merchants/" + row._id}, '前往');
+				}}
+		]};
+	});
+</script>
+<div class="starter-template">
+	<div class="row">
+		<div class="col-sm-7">
+			<ng-react-grid grid="grid"></ng-react-grid>
+		</div>
+		<div class="col-sm-5">
+			<div class="sidebar-module sidebar-module-inset">
+				<ol>
+					<li ng-repeat="type in types">
+						<a href="/merchant_type/[[type._id]]">[[type.name]]</a> ([[type.count]])
+					</li>
+				</ol>
+			</div>
+		</div>
+		
+	</div>
+</div>

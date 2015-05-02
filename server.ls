@@ -24,11 +24,11 @@ getAll = !->
 app.use compression!
 app.use (req, res, next) ->
 	res.setHeader 'Content-Type', 'application/json'
-	if /rank|units|month|categories|units_stats/.test req.path
+	if /merchants|rank|units|month|categories|units_stats/.test req.path
 		send = res.send
 		res.send = (result) ->
 			cache.set req.path, result
-			cache.expire req.path, 3600
+			cache.expire req.path, 3600*6
 			send.call res, result
 		err, reply <- cache.get req.path
 		if reply
@@ -112,15 +112,49 @@ app.get '/rank/merchants/:order?/:year?', (req, res) ->
 	res.send merchants
 
 
+app.get '/tree', (req, res) ->
+	err, units <- db.collection 'unit' .find {} .toArray
+	tree = {
+		name: "root",
+		children: []
+	}
+	for u in units
+		u.children = []
+		for su in units
+			if su.parent == u._id
+				u.children.push su
+
+	for u in units
+		if !u.parent
+			children = []
+			for s in u.children
+				children.push {
+					name: s.name,
+					children: null
+				}
+			tree.children.push {
+				name: u.name
+				children: children
+			}
+	res.send tree
+
+app.get '/merchant_type/:id?', (req, res) ->
+	id = req.params.id
+	if id
+		err, merchants <- db.collection 'merchants' .find {types: {$elemMatch: {id: id}}}, {name: 1, address: 1, phone: 1, org: 1, _id: 1} .toArray
+		res.send merchants
+	else
+		err, types <- db.collection 'merchant_type' .find {count: {$gt: 1}} .toArray
+		res.send types
 
 app.get '/merchants/:id?', (req, res) ->
 	id = req.params.id
 	filter = {}
 	if /\d+/.test id 
 		filter = {_id: id} 
-	else
+	else if id
 		filter = {name: id}
-	err, merchants <- db.collection 'merchants' .find filter .toArray
+	err, merchants <- db.collection 'merchants' .find filter, {name: 1, address: 1, phone: 1, org: 1, _id: 1} .toArray
 	if id 
 		res.send merchants[0]
 	else
@@ -154,6 +188,10 @@ app.get '/rank/tender/:month?', (req, res) ->
 	start = moment m .startOf 'month' .toDate!
 	end = moment m .endOf 'month' .toDate!
 	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lte: end}} .sort {price: -1} .limit 100 .toArray
+	tenders = _.indexBy tenders, 'id'
+	tenders = _.toArray tenders
+	tenders.sort (a, b) ->
+		b.price - a.price
 	res.send tenders
 
 app.get '/partner/:year?', (req, res) ->

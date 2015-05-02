@@ -33,3 +33,6 @@ ul {
 	list-style:none;
 	padding:0;
 }
+.panel-body {
+word-wrap: break-word;
+}

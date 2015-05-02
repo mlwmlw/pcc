@@ -6,15 +6,16 @@
 		$http.get('/api/tender/<%- @id %>/<%- @unit %>').then(function(res) {
 			var tenders = $scope.tenders = res.data;
 			for(var i in tenders) {
-				if(tenders[i].award) {
-					$scope.merchants = tenders[i].award.merchants;
-					break;
+				if(tenders[i].award.merchants && tenders[i].award.merchants.length) {
+					$scope.award = tenders[i].award.merchants;
 				}
+				if(tenders[i].merchants)
+					$scope.merchants = tenders[i].merchants;
 			}
 		}).then(function() {
-			for(var i in $scope.merchants) {
-				$http.get('/api/merchants/' + $scope.merchants[i].name).then(function(res) {
-					$scope.merchants[i] = res.data;
+			for(var i in $scope.award) {
+				$http.get('/api/merchants/' + $scope.award[i].name).then(function(res) {
+					$scope.award[i] = res.data;
 				});
 			}
 		});
@@ -70,9 +71,9 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">得標廠商</div>
 			<div class="panel-body">
-				<div class="row col-xs-12" ng-repeat="m in merchants">
+				<div class="row col-xs-12" ng-repeat="m in award">
 					<a href="/merchants/[[m.name]]">
-						<h3>[[m.name]]</h3>
+						[[m.name]]
 					</a>
 					<ul class="dl-horizontal">
 						<li><strong>機關代號：</strong>[[m._id]]</li>
@@ -84,6 +85,17 @@
 				</div>
 			</div>
 		</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">投標廠商</div>
+			<div class="panel-body">
+				<div class="row col-xs-12" ng-repeat="m in merchants">
+					<a href="/merchants/[[m.name]]">
+						[[m.org]] - [[m.name]]
+					</a>
+				</div>
+			</div>
+		</div>
+
 		<div class="panel panel-default">
 			<div class="panel-heading">表達意見</div>
 			<div class="panel-body">
