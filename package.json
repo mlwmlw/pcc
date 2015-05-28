@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "lsc -c server.ls && pm2 restart server.js"
+    "start": "lsc -c server.ls && pm2 stop server || pm2 start server.js --max-memory-restart 150M  --log-date-format 'YYYY-MM-DD HH:mm:ss'"
   },
   "repository": {
     "type": "git",

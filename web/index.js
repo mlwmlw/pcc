@@ -12,9 +12,13 @@ app.use(logger());
 // logger
 
 app.use(gzip());
-app.use(route.get('/', function *(next) {
+app.use(route.get('/stats', function *(next) {
 	this.body = yield render('main');
 }));
+app.use(route.get('/', function *(next) {
+	this.body = yield render('landing', {page: 'landing'});
+}));
+
 app.use(route.get('/date/:type?', function *(type, next) {
 	this.body = yield render('date', {type: type});
 }));
