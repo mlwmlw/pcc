@@ -47,13 +47,10 @@ getDocs = (date, page) ->
 			if $row.length < 7 or i == 0
 				return
 			row.unit = $row.eq 1 .text!
-			name = $row.eq 2 .text!.match /\S+/g
 			row.key = $row.eq 2 .find 'a' .attr 'href' .match(/primaryKey=(.+)/)[1]  
-			row.id = name[0]
-			if name.length > 2
-				row.name = name[1] + name[2]
-			else
-				row.name = name[1]
+			id = $row.eq 2 .text!.match /\S+/g
+			row.id = id.shift!
+			row.name = $row.eq 2 .find 'a' .text!.replace /^\s+|\s+$/g, ''
 			row.type = $row.eq 4 .text!
 			row.category = $row.eq 5 .text!
 			row.publish = moment(($row.eq 6 .text!.replace "\n", ""), "YYYY/MM/DD").add 1911, 'years' .toDate!
