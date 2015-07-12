@@ -42,7 +42,7 @@
 			$scope.monthes = res;
 			$scope.stats();
 		});
-		$http.get('/api/units_stats/2014-08-01/2015-04-01', {cache: true}).success(function(res) {
+		$http.get('/api/units_stats/2014-08-01/2015-07-01', {cache: true}).success(function(res) {
 			$scope.raw = res;
 			$scope.line();
 		});

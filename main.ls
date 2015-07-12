@@ -54,7 +54,7 @@ client = client.connect uri, (err, db) ->
 			promiseSub.add merchantBulk.execute
 		if awards.length
 			for i, a of awards
-				publish = moment(a.origin_publish).zone('+0800').toDate!
+				publish = moment(a.origin_publish || a.publish).zone('+0800').toDate!
 				awardBulk.find {_id: a.key} .upsert!.update { 
 					$set: a
 				}

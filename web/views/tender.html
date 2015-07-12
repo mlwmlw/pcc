@@ -1,6 +1,6 @@
 <% extend './views/template.html' %>
 <script>
-	app.controller('page', function($scope, $http, grid, $location) {
+	app.controller('page', function($scope, $http, grid, $location, $rootScope) {
 	
 		$scope.grid = grid;
 		$http.get('/api/tender/<%- @id %>/<%- @unit %>').then(function(res) {
@@ -11,6 +11,7 @@
 				}
 				if(tenders[i].merchants)
 					$scope.merchants = tenders[i].merchants;
+				$rootScope.title = tenders[i].name;
 			}
 		}).then(function() {
 			for(var i in $scope.award) {

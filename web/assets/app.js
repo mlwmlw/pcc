@@ -61,7 +61,7 @@ field: "price", displayName: "預算/決標金額", render: function(row) {
 		},
 		merchant: {
 			field: "merchant", displayName: "得標廠商", render: function(row) {
-				merchants = row.merchants ? row.merchants : row.award && row.award.merchants;
+				var merchants = row.award && row.award.merchants ? row.award.merchants : row.merchants;
 				if(merchants && merchants.length) {
 					var $merchants = [];
 					merchants.map(function(m) {

@@ -20,11 +20,13 @@
   "dependencies": {
     "cheerio": "^0.18.0",
     "co-body": "~1.0.0",
+    "co-request": "^0.2.1",
     "co-views": "~0.2.0",
     "compression": "^1.4.3",
     "consolidate": "~0.10.0",
     "ect": "^0.5.9",
     "express": "^4.9.4",
+    "hackpad": "0.0.3",
     "koa": "~0.8.1",
     "koa-gzip": "^0.1.0",
     "koa-logger": "~1.2.2",
@@ -39,7 +41,6 @@
     "progress": "^1.1.8",
     "q": "~1.0.1",
     "redis": "^0.12.1",
-    "request": "^2.51.0",
     "string": "^3.0.0"
   }
 }

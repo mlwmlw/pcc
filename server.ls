@@ -1,8 +1,9 @@
-require! <[ fs express http mongodb q moment redis compression ]>
+require! <[ fs express http mongodb q moment redis compression]>
 _ = require 'lodash'
+Hackpad = require 'hackpad'
+Hackpad.config = require './hackpad'
 uri = require \./database
 app = express!
-## app.engine 'haml' (require 'hamljs').render
 express.static __dirname + '/public' |> app.use
 app.set 'views', __dirname+'/views'
 app.set 'view engine' 'jade'
@@ -363,6 +364,20 @@ app.get '/month/:month', (req, res) ->
 			console.log 'err'
 			console.log err
 		res.send result
-
+app.get '/news', (req, res) ->
+	client = new Hackpad Hackpad.config.id, Hackpad.config.secret
+	err, pad <- client.export 'wIwtdBU33fU', 'latest', 'html'
+	res.send pad.match(/<\/h1>([^]+)<\/body>/)[1]
+	/*
+memwatch = require 'memwatch'
+hd = null
+memwatch.on 'leak', (info) ->	
+	console.error 'Memory leak detected: ', info
+	diff = hd.end!
+	console.error util.inspect(diff, true, null) 
+	hd = null;
+*/	
 http.createServer app .listen (app.get 'port'), ->
 	console.log 'Express server listening on port ' + app.get 'port'
+
+

@@ -6,6 +6,7 @@ var serve = require('koa-static');
 var mount = require('koa-mount');
 var gzip = require('koa-gzip');
 var koa = require('koa');
+var request = require('co-request');
 var app = koa();
 
 app.use(logger());
@@ -16,7 +17,8 @@ app.use(route.get('/stats', function *(next) {
 	this.body = yield render('main');
 }));
 app.use(route.get('/', function *(next) {
-	this.body = yield render('landing', {page: 'landing'});
+	var news = yield request('http://pcc.mlwmlw.org/api/news');
+	this.body = yield render('landing', {page: 'landing', news: news.body});
 }));
 
 app.use(route.get('/date/:type?', function *(type, next) {

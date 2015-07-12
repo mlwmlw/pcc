@@ -1,13 +1,18 @@
 <% extend './views/template.html' %>
 <script>
-	app.controller('page', function($scope, $http, grid, $location) {
+	app.controller('page', function($scope, $http, grid, $location, $rootScope) {
 		var id = location.href.split('/').pop();
 		$http.get('/api/merchant/' + id).then(function(res) {
 			var data = $scope.grid.data = res.data;
 			for(var i = 0; i< res.data.length;i++) {
 				if(!res.data[i].award)
 					continue;
-				$scope.merchant = res.data[i].award.merchants[0];
+				for(var j in res.data[i].award.merchants) {
+					if(res.data[i].award.merchants[j]._id != id)
+						continue;
+					$scope.merchant = res.data[i].award.merchants[j];
+					$rootScope.title = $scope.merchant.name + '得標案件';
+				}
 			}
 			var units = {};	
 			for(var i in data) {

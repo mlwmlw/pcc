@@ -14,7 +14,7 @@
 }
 body {
 	padding-top:60px;
-	font-family: "Source Sans Pro", "ヒラギノ角ゴ Pro", "Hiragino Kaku Gothic Pro", "文泉驛微米黑", "WenQuanYi Micro Hei Light", "微軟正黑體", "Microsoft JhengHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: "Source Sans Pro", "ヒラギノ角ゴ Pro", "Hiragino Kaku Gothic Pro", "Lantinghei TC", "文泉驛微米黑", "WenQuanYi Micro Hei Light", "微軟正黑體", "Microsoft JhengHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 .navbar-form .form-control.search {
 	width: 6em;
@@ -54,6 +54,7 @@ word-wrap: break-word;
   background-size: cover;
 	text-align:left;
 	-webkit-filter: grayscale(60%);
+	background-attachment: fixed;
 }
 .intro-header h1 {
 	font-size:3.5em;
@@ -98,6 +99,13 @@ word-wrap: break-word;
   text-align: center;
   color: #fff;
   background-color: #fed136;
+}
+.timeline>li .timeline-panel {
+  float: right;
+  position: relative;
+  width: 100%;
+  padding: 0 20px 0 100px;
+  text-align: left;
 }
 @media (min-width: 768px) {
 	.timeline>li {

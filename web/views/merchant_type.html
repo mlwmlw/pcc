@@ -1,12 +1,18 @@
 <% extend './views/template.html' %>
 
 <script>
-	app.controller('page', function($scope, $http, grid, $location) {
+	app.controller('page', function($scope, $http, grid, $location, $rootScope) {
 		var type = "<%- @type %>";
 		$scope.items = null;
 		$scope.grid = grid;
 		$http.get('/api/merchant_type').then(function(res) {
-			$scope.types = res.data;
+			var types = $scope.types = res.data;
+			for(var i in types) {
+				if(types[i]._id == type) {
+					$rootScope.title = types[i].name + '廠商列表';
+					break;
+				}
+			}
 		});
 		if(type) {
 			$http.get('/api/merchant_type/' + type).then(function(res) {

@@ -103,7 +103,8 @@ getDocs = (date, page) ->
 		method: 'search',
 		searchTarget: 'ATM',
 		searchMethod: true,
-		tenderWay:1,
+		#tenderWay:1,
+		tenderStatus: '4,5,21,29,9,22,23,30,34',
 		awardAnnounceStartDate: today,
 		awardAnnounceEndDate: today
 	}
@@ -172,5 +173,5 @@ getDocs = (date, page) ->
 #parseAward 'http://web.pcc.gov.tw/tps/main/pms/tps/atm/atmAwardAction.do?newEdit=false&searchMode=common&method=inquiryForPublic&pkAtmMain=51519966&tenderCaseNo=GF3-104011&contentMode=0', (abc, ms) ->
 #parseAward 'http://web.pcc.gov.tw/tps/main/pms/tps/atm/atmAwardAction.do?newEdit=false&searchMode=common&method=inquiryForPublic&pkAtmMain=51105162&tenderCaseNo=LP5-102022', (abc, ms) ->
 #	console.log abc, ms
-#getDocsByDate '2015-01-19' .then (data) ->
-	#console.log data
+#getDocsByDate '2015-06-30' .then (data) ->
+#	console.log data

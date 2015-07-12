@@ -70,7 +70,7 @@ pcc.mapReduce mapper, reducer, {
 				count: row.value.count
 				price: row.value.price
 			}
-		#console.log result
+		console.log result
 		db.collection \report .update {
 			_id: process.argv[2]
 		}, {

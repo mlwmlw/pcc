@@ -2,11 +2,13 @@
 <html ng-app="myapp">
   <head>
     <meta charset="utf-8">
-		<title><% if @title : %><%- @title %> - <% end %>開放標案 - g0v</title>
+		<title ng-bind="(title ? title + ' - ': '<%- @title %>')  + '開放政府標案'"><% if @title : %><%- @title %> - <% end %>開放政府標案</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="非官方政府標案查詢">
+    <meta name="description" content="貼近民眾的標案檢索平台">
     <meta name="author" content="mlwmlw">
+		<meta property="og:type" content="article">
+		<meta property="og:description" content="貼近民眾的標案檢索平台">
     <base href="/">
     <link rel="icon" href="/assets/favicon.ico">
 		<script src="/assets/lib/jquery/dist/jquery.min.js"></script>
@@ -88,7 +90,7 @@
 						</li>
 						<li class="dropdown"><a class="dropdown-toggle" href="javascript:void(0)">統計<span class="caret"></span></a>
 							<ul class="dropdown-menu" role="menu">
-								<li><a href="/">各月發標統計</a></li>
+								<li><a href="/stats">各月招標統計</a></li>
 								<li><a href="/rank/merchant">得標廠商排行</a></li>
 								<li><a href="/rank/tender">本月我最貴</a></li>
 								<li><a href="/rank/partner">最佳拍檔</a></li>
@@ -116,8 +118,8 @@
     </div><!-- /.container -->
 		<div class="footer">
 			<div class="container">
-				@2014 by <a target="_blank" href="//mlwmlw.org">mlwmlw</a>
-				，非官方網站，資料來源請見 <a target="_blank" href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a>
+				@2014 
+				開放標案，資料來源請見 <a target="_blank" href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a>
 			</div>
 		</div>
 
