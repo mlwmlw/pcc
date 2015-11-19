@@ -3,6 +3,10 @@ pcc.gXv.tw
 demo: http://pcc.mlwmlw.org/
 api: http://pcc.mlwmlw.org/api
 
+狀態
+===
+被 pcc 鎖 IP 九月以後就暫時沒更新資料-_-
+
 Installation
 ===
 Please go to pcc folder, then input
