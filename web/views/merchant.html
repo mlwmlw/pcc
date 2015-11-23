@@ -4,14 +4,21 @@
 		var id = location.href.split('/').pop();
 		$http.get('/api/merchant/' + id).then(function(res) {
 			var data = $scope.grid.data = res.data;
+			$rootScope.desc = '近期得標案件：';
 			for(var i = 0; i< res.data.length;i++) {
-				if(!res.data[i].award)
+				var row = res.data[i];
+				if(!row.award)
 					continue;
-				for(var j in res.data[i].award.merchants) {
-					if(res.data[i].award.merchants[j]._id != id)
+				for(var j in row.award.merchants) {
+					if(row.award.merchants[j]._id != id)
 						continue;
-					$scope.merchant = res.data[i].award.merchants[j];
+					$scope.merchant = row.award.merchants[j];
 					$rootScope.title = $scope.merchant.name + '得標案件';
+				}
+				if(i < 5) {
+					var publish = new Date(row.publish);
+					var month = publish.getMonth() + 1;
+					$rootScope.desc += publish.getFullYear() + '-' + ((month < 10 ? '0': '') + month) + '-' + publish.getDate() + ' ' + row.unit.replace(/\s/g, '') +' - ' + row.name + ' $' + row.price + ",";
 				}
 			}
 			var units = {};	
@@ -33,7 +40,14 @@
 					type: 'pie'
 				}
 			});
-
+			$rootScope.desc += "\n得標機關排行：";
+			for(var i in stats) {
+				if(i > 2) 
+					break;
+				else if(i > 0)
+					$rootScope.desc += ',';
+				$rootScope.desc += stats[i][0].replace(/\s+/g, '');
+			}
 		});
 		$scope.grid = grid;
 	});
