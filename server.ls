@@ -67,7 +67,7 @@ app.get '/keywords', (req, res) ->
 	{$limit: 20},
 	{ $sample : { size: 10 } }
 	] .toArray (err, docs) -> 
-		res.send _.pluck docs, '_id'
+		res.send _.map docs, '_id'
 
 app.get '/date/:type/:date', (req, res) ->
 	date = new Date req.params.date
@@ -81,7 +81,7 @@ app.get '/date/:type/:date', (req, res) ->
 app.get '/month', (req, res) ->
 	collection = db.collection 'pcc'
 	collection.aggregate { $group: { _id: { year: { $year: '$publish'}, month: { $month: '$publish'} } } }, (err, docs) ->
-		monthes = _.pluck docs, '_id'
+		monthes = _.map docs, '_id'
 		monthes = monthes.map (val) ->
 			val.name = val.year + ' 年 ' + val.month + ' 月'
 			return val
@@ -104,7 +104,7 @@ app.get '/dates', (req, res) ->
 		{ $match: {publish: {$gte: start, $lt: end}}},
 		{ $group: { _id: '$publish'}}
 		], (err, docs) ->
-		dates = _.pluck docs, '_id'
+		dates = _.map docs, '_id'
 		dates = dates.map (val) ->
 			moment val .zone '+0800' .format!
 		dates.sort!
@@ -112,7 +112,7 @@ app.get '/dates', (req, res) ->
 
 app.get '/categories', (req, res) ->
 	db.collection 'pcc' .aggregate { $group: { _id: '$category'}}, (err, docs) ->
-		res.send _.pluck docs, '_id'
+		res.send _.map docs, '_id'
 
 app.get '/category/:category', (req, res) ->
 	db.collection 'pcc' .find { category: req.params.category } .limit 200 .toArray (err, docs) ->
@@ -241,7 +241,7 @@ app.get '/partner/:year?', (req, res) ->
 app.get '/units/:id?', (req, res) ->
 	if req.params.id == 'all'
 		err, docs <- db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}
-		units = _.pluck docs, '_id'
+		units = _.map docs, '_id'
 		units = units.filter (v) ->
 			v
 		units = units.map (row) ->
