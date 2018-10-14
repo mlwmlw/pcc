@@ -1,151 +1,169 @@
 <% extend './views/template.html' %>
-<script>
-	app.controller('page', function($scope, $http, grid, $location) {
-		
-		$scope.items = null;
-		$scope.grid = grid;
-		$http.get('/api/units/all').then(function(res) {
-			var units = $scope.units = res.data;
-			for(var i in units) {
-				var reg = new RegExp("<%- @unit %>" || null);
-				if(reg.test(units[i])) {
-					$scope.unit = units[i];
-					return;
-				}
-			}
-		});
-		$scope.chart = c3.generate({
-			bindto: '#chart',
-			data: {
-				json: [],
-				type: 'bar',
-				color: grid.color
-			},
-			axis: {
-				rotated: true,
-				x: {
-					tick: {
-						multiline: false
-					},
-					type:　'category'
-				},
-				y: {
-					tick: {
-						format: function(val) {
-							val = val.toString();
-							if(val.slice(-9) == '000000000')
-								return val.slice(0, -9) + 'B';
-							else if(val.slice(-6) == '000000')
-								return val.slice(0, -6) + 'M';
-							else
-								return val;
-						}
-					}
-				}
-			},
-			legend: {
-				show: false
-			}
-		});
-		$scope.bar = c3.generate({
-			bindto: '#unit',
-			data: {
-				json: [],
-				type: 'bar',
-				color: grid.color
-			},
-			legend: {
-					hide: true
-			},
-			axis: {
-				x: {
-					type:　'category'
-				}
-			}
-		});
-		$scope.loadUnit = function(unit) {
-			if(!unit)
-				return;
-			$http.get('/api/unit/' + unit).then(function(res) {
-				var items = $scope.grid.data = res.data;
-				var map = {};
-				for(var i in items) {
-					map[items[i].id] = items[i];
-				}
-				items = [];
-				for(var i in map) {
-					items.push(map[i]);
-				}
-				items.sort(function(a, b) {
-					return +b.price - +a.price;
-				});
-				items = items.slice(0, 10);
-				$scope.chart.unload();
-				if(items.length > 3) {
-					$scope.chart.load({
-						json: items,
-						keys: {
-							x: 'name',
-							value: ['price']
-						}
-					});
-				}
-				var units = {};	
-				for(var i in $scope.grid.data) {
-					var item = $scope.grid.data[i];
-					if(!item.award || item.award.merchants.length == 0)
-						continue;
-					for(var j in item.award.merchants) {
-						var merchant = item.award.merchants[j];
-						if(!units[merchant.name])
-							units[merchant.name] = 0;
-						units[merchant.name] = +item.price;
-					}
-				}
-				var stats = [];
-				for(var i in units) {
-					stats.push({name: i, price: units[i]});
-				}
-				stats.sort(function(a, b) {
-					return b.price - a.price;
-				});
-				stats = stats.slice(0, 15);
-				$scope.bar.unload();
-				if(stats.length > 3) {
-					$scope.bar.load({
-						json: stats,
-						keys: {
-							x: 'name',
-							value: ['price']
-						}
-					});
-					
-				}
-			});
-		};
-		$scope.loadUnit("<%- @unit %>");
-	});
-</script>
-<div class="starter-template">
-	發佈單位：
-	<span ng-show="!units">資料載入中..</span>
-	<div class="row">
-		<div class="col-xs-7">
-			<select class="form-control" ng-change="loadUnit(unit)" ng-model="unit" ng-options="u for u in units | filter: keyword">
+    <script>
+        app.controller('page', function($rootScope, $scope, $http, grid, $location) {
+
+            $scope.items = null;
+            $scope.grid = grid;
+            $rootScope.title = ($location.search().unit || "<%- @unit %>") + '標案查詢';
+
+            $http.get('/api/units/all').then(function(res) {
+                var units = $scope.units = res.data;
+                for (var i in units) {
+                    var reg = new RegExp($location.search().unit || "<%- @unit %>" || null);
+                    if (reg.test(units[i])) {
+                        $scope.unit = units[i];
+                        return;
+                    }
+                }
+            });
+            $scope.chart = c3.generate({
+                bindto: '#chart',
+                data: {
+                    json: [],
+                    type: 'bar',
+                    color: grid.color
+                },
+                axis: {
+                    rotated: true,
+                    x: {
+                        tick: {
+                            multiline: false
+                        },
+                        type: 　 'category'
+                    },
+                    y: {
+                        tick: {
+                            format: function(val) {
+                                val = val.toString();
+                                if (val.slice(-9) == '000000000')
+                                    return val.slice(0, -9) + 'B';
+                                else if (val.slice(-6) == '000000')
+                                    return val.slice(0, -6) + 'M';
+                                else
+                                    return val;
+                            }
+                        }
+                    }
+                },
+                legend: {
+                    show: false
+                }
+            });
+            $scope.bar = c3.generate({
+                bindto: '#unit',
+                data: {
+                    json: [],
+                    type: 'bar',
+                    color: grid.color
+                },
+                legend: {
+                    hide: true
+                },
+                axis: {
+                    x: {
+                        type: 'category'
+                    }
+                }
+            });
+            $scope.loadUnit = function(unit) {
+                if (!unit)
+                    return;
+                $location.search('unit', unit);
+                $http.get('/api/unit/' + unit).then(function(res) {
+                    var items = $scope.grid.data = res.data;
+                    var map = {};
+                    for (var i in items) {
+                        map[items[i].id] = items[i];
+                    }
+                    items = [];
+                    for (var i in map) {
+                        items.push(map[i]);
+                    }
+                    items.map(function(row) {
+                        if (!row.price && row.award && row.award.merchants.length) {
+                            row.price = row.award.merchants.reduce(function(total, row) {
+                                return total + row.amount;
+                            }, 0);
+                        }
+                    });
+                    items.sort(function(a, b) {
+                        return +b.price - +a.price;
+                    });
+
+                    items = items.slice(0, 10);
+                    $scope.chart.unload();
+                    if (items.length > 3) {
+                        $scope.chart.load({
+                            json: items,
+                            keys: {
+                                x: 'name',
+                                value: ['price']
+                            }
+                        });
+                    }
+                    var units = {};
+                    for (var i in $scope.grid.data) {
+                        var item = $scope.grid.data[i];
+                        if (!item.award || item.award.merchants.length == 0)
+                            continue;
+                        for (var j in item.award.merchants) {
+                            var merchant = item.award.merchants[j];
+
+                            if (!units[merchant.name])
+                                units[merchant.name] = 0;
+                            units[merchant.name] = +merchant.amount;
+                        }
+                    }
+                    var stats = [];
+                    for (var i in units) {
+                        stats.push({
+                            name: i,
+                            price: units[i]
+                        });
+                    }
+                    stats.sort(function(a, b) {
+                        return b.price - a.price;
+                    });
+                    stats = stats.slice(0, 15);
+                    $scope.bar.unload();
+                    if (stats.length > 3) {
+                        $scope.bar.load({
+                            json: stats,
+                            keys: {
+                                x: 'name',
+                                value: ['price']
+                            }
+                        });
+
+                    }
+                });
+            };
+
+            $scope.loadUnit($location.search().unit || "<%- @unit %>");
+
+
+        });
+    </script>
+    <div class="starter-template">
+        發佈單位：
+        <span ng-show="!units">資料載入中..</span>
+        <div class="row">
+            <div class="col-xs-7">
+                <select class="form-control" ng-change="loadUnit(unit)" ng-model="unit" ng-options="u for u in units | filter: keyword">
 				<option value="">請選擇</option>
 			</select>
-		</div>
-		<div class="col-xs-5">
-			<form style="margin: 0;" ng-submit="keyword = keyword_buffer" class="navbar-form">
-				<div class="form-group">
-					<input type="text" class="form-control" ng-model="keyword_buffer" placeholder="過濾單位名稱" />
+            </div>
+            <div class="col-xs-5">
+                <form style="margin: 0;" ng-submit="keyword = keyword_buffer" class="navbar-form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" ng-model="keyword_buffer" placeholder="過濾單位名稱" />
 
-				</div>
-				<button class="btn btn-default" type="submit">serach</button>
-			</form>
-		</div>
-	</div>
-	<div ng-show="chart.data().length"id="chart" class="row"></div>
-	<div ng-show="bar.data().length" id="unit" class="row"></div>
-	<ng-react-grid grid="grid"></ng-react-grid>
-</div>
+                    </div>
+                    <button class="btn btn-default" type="submit">serach</button>
+                </form>
+            </div>
+        </div>
+        <div ng-show="chart.data().length" id="chart" class="row"></div>
+        <div ng-show="bar.data().length" id="unit" class="row"></div>
+        <ng-react-grid grid="grid"></ng-react-grid>
+    </div>

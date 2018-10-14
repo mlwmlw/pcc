@@ -1,60 +1,131 @@
 <% extend './views/template.html' %>
-<script>
-	app.controller('page', function($scope, $http, grid, $location, $rootScope) {
-		var id = location.href.split('/').pop();
-		$http.get('/api/merchant/' + id).then(function(res) {
-			var data = $scope.grid.data = res.data;
-			$rootScope.desc = '近期得標案件：';
-			for(var i = 0; i< res.data.length;i++) {
-				var row = res.data[i];
-				if(!row.award)
-					continue;
-				for(var j in row.award.merchants) {
-					if(row.award.merchants[j]._id != id)
-						continue;
-					$scope.merchant = row.award.merchants[j];
-					$rootScope.title = $scope.merchant.name + '得標案件';
-				}
-				if(i < 5) {
-					var publish = new Date(row.publish);
-					var month = publish.getMonth() + 1;
-					$rootScope.desc += publish.getFullYear() + '-' + ((month < 10 ? '0': '') + month) + '-' + publish.getDate() + ' ' + row.unit.replace(/\s/g, '') +' - ' + row.name + ' $' + row.price + ",";
-				}
-			}
-			var units = {};	
-			for(var i in data) {
-				if(!units[data[i].unit])
-					units[data[i].unit] = 0;
-				units[data[i].unit] += +data[i].price;
-			}
-			var stats = [];
-			for(var i in units) {
-				stats.push([i, units[i]]);
-			}
-			stats.sort(function(a, b) {
-				return b[1] - a[1];
-			});
-			var chart = c3.generate({
-				data: {
-					columns: stats,
-					type: 'pie'
-				}
-			});
-			$rootScope.desc += "\n得標機關排行：";
-			for(var i in stats) {
-				if(i > 2) 
-					break;
-				else if(i > 0)
-					$rootScope.desc += ',';
-				$rootScope.desc += stats[i][0].replace(/\s+/g, '');
-			}
-		});
-		$scope.grid = grid;
-	});
-	
-</script>
-<div class="starter-template">
-	<h1><a href="http://company.g0v.ronny.tw/id/[[merchant._id]]" target="_blank" ng-bind="merchant.name"></a> 廠商得標案件檢索</h1>
-	<div class="row" id="chart"></div>
-	<ng-react-grid grid="grid"></ng-react-grid>
-</div>
+    <script>
+        app.controller('page', function($scope, $http, grid, $location, $rootScope) {
+
+            var id = $scope.type = '<%- @id %>';
+            var year = $scope.type = '<%- @year %>';
+            $http.get('/api/merchant/' + id).then(function(res) {
+                var data = $scope.grid.data = res.data;
+                $rootScope.desc = '近期得標案件：';
+                for (var i = 0; i < res.data.length; i++) {
+                    var row = res.data[i];
+                    if (!row.award)
+                        continue;
+                    if (row.award && row.award.merchants) {
+                        row.price = row.award.merchants.reduce(function(total, row) {
+                            return total + row.amount;
+                        }, 0);
+                    }
+
+                    for (var j in row.award.merchants) {
+                        if (row.award.merchants[j]._id != id && row.award.merchants[j].name != decodeURI(id))
+                            continue;
+                        $scope.merchant = row.award.merchants[j];
+                        $rootScope.title = $scope.merchant.name + '得標案件';
+                    }
+                    if (i < 5) {
+                        var publish = new Date(row.publish);
+                        var month = publish.getMonth() + 1;
+                        $rootScope.desc += publish.getFullYear() + '-' + ((month < 10 ? '0' : '') + month) + '-' + publish.getDate() + ' ' + row.unit.replace(/\s/g, '') + ' - ' + row.name + ' $' + row.price + ",";
+                    }
+                }
+                data.sort(function(a, b) {
+                    return new Date(b.publish) - new Date(a.publish);
+                });
+                $scope.years = ['全部'].concat(data.map(function(row) {
+                    var d = new Date(row.publish);
+                    //return d.getFullYear() + '-' + (d.getMonth() < 9 ? '0' : '') + (d.getMonth() + 1);
+                    return d.getFullYear()
+                }).filter(function onlyUnique(value, index, self) {
+                    return self.indexOf(value) === index;
+                }));
+
+
+                var chart = c3.generate({
+                    data: {
+                        columns: [],
+                        type: 'pie',
+
+                    },
+                    legend: {
+                        //show: false,
+                        position: 'right'
+                    }
+                });
+
+                $scope.year = year || $scope.years[1];
+                $scope.stats = [];
+                $scope.changeYear = function() {
+                    var units = {};
+                    for (var i in data) {
+                        d = new Date(data[i].publish);
+                        if ($scope.year != '全部' && $scope.year != d.getFullYear())
+                            continue;
+                        if (data[i].unit == null)
+                            continue;
+
+                        if (+data[i].price == 0)
+                            continue;
+                        var unit = data[i].unit.replace(/\s/g, '')
+                        if (!units[unit])
+                            units[unit] = 0;
+
+
+
+                        units[unit] += +data[i].price;
+                    }
+                    chart.unload({
+                        columns: $scope.stats
+                    });
+                    setTimeout(function() {
+                        $scope.stats = [];
+                        for (var i in units) {
+                            $scope.stats.push([i, units[i]]);
+                        }
+                        $scope.stats.sort(function(a, b) {
+                            return b[1] - a[1];
+                        });
+                        chart.load({
+                            columns: $scope.stats.slice(0, 30)
+                        });
+                    }, 500)
+
+                    /*chart.load({
+                        columns: $scope.stats
+                    });*/
+
+
+                }
+                $scope.changeYear();
+
+                $rootScope.desc += "\n得標機關排行：";
+                for (var i in $scope.stats) {
+                    if (i > 2)
+                        break;
+                    else if (i > 0)
+                        $rootScope.desc += ',';
+                    $rootScope.desc += $scope.stats[i][0].replace(/\s+/g, '');
+                }
+            });
+            $scope.grid = grid;
+            $scope.grid.pageSize = 1000;
+            $scope.grid.height = 'auto';
+
+        });
+    </script>
+    <div class="starter-template">
+        <h1>
+            <a href="http://company.g0v.ronny.tw/id/[[merchant._id]]" target="_blank" ng-bind="merchant.name"></a> 廠商得標案件檢索
+        </h1>
+        <div class="form-group">
+            <label class="control-label">統計年份</label>
+            <div>
+                <select ng-change="changeYear()" class="form-control" ng-options="year for year in years" ng-model="year"></select>
+            </div>
+        </div>
+
+
+
+        <div class="row" id="chart"></div>
+        <ng-react-grid grid="grid"></ng-react-grid>
+    </div>

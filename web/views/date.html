@@ -1,43 +1,68 @@
 <% extend './views/template.html' %>
-<script>
-	app.controller('page', function($scope, $http, $timeout, $filter, grid) {
-		$scope.items = null;
-		var type = '<%- @type %>';
-		$http.get('/api/dates').then(function(res) {
-			var dates = $scope.dates = res.data;
-			for(var i in dates) {
-				dates[i] = dates[i].replace(/T.+$/, '');
-			}
-			$scope.dates = dates = dates.sort().reverse();
-			$scope.date = dates[0];
-			$scope.loadByDate();	
-		});
-		$scope.loadByDate = function() {
-			$scope.items = false;
-			$http.get('/api/date/' + type + '/' + $scope.date).then(function(res) {
-				$scope.grid.data = res.data;
-			});
-		};
-		
-		$scope.grid = grid;
-	});
-</script>
+    <script>
+        app.controller('page', function($rootScope, $scope, $http, $timeout, $filter, grid) {
+            $scope.items = null;
+            var type = '<%- @type %>';
+            var date = '<%- @date %>';
+						var data = <%- @data %>;
+            if (date.length) {
+                $scope.date = date;
+            }
+						if (type == 'tender')
+							$rootScope.title = $scope.date + ' 招標標案檢索';
+						else
+							$rootScope.title = $scope.date + ' 決標標案檢索';
+            var now = new Date();
+            $http.get('/api/dates?year=' + now.getFullYear()).then(function(res) {
+                var dates = $scope.dates = res.data;
+                for (var i in dates) {
+                    dates[i] = dates[i].replace(/T.+$/, '');
+                }
+							
+                $scope.dates = dates = dates.sort().reverse();
+                if (date) {
+									$scope.dates.unshift(date);
+									$scope.date = date;
+								}
+								else
+									$scope.date = dates[0];
+								if(data)
+									$scope.grid.data = data;
+								else
+									$scope.loadByDate();
+            });
+            $scope.loadByDate = function() {
+                $scope.items = false;
+                $http.get('/api/date/' + type + '/' + $scope.date).then(function(res) {
+                    $scope.grid.data = res.data;
 
-<div class="starter-template">
-	<h1>中華民國政府 <% if @type == 'award': %>決標<% else: %>招標<% end %> 標案檢索</h1>
-	<p class="lead">非官方網站，資料來源請見 <a href="http://web.pcc.gov.tw/" target="_blank">http://web.pcc.gov.tw/</a></p>
-	<div class="form-group">
-		<div class="col-md-8">
-			<div class="form-group row">
-				<label for="inputKey" class="col-md-2 control-label">發佈日期</label>
-				<div class="col-md-4">
-					<select class="form-control" ng-change="loadByDate()" ng-model="date" ng-options="d for d in dates" >
-		<option value="">請選擇</option>
-	</select>
-				</div>
-			</div>
-		</div>
-	</div>
-	<span ng-show="!dates">資料載入中..</span>
-	<ng-react-grid grid="grid"></ng-react-grid>
-</div>
+                });
+            };
+
+            $scope.grid = grid;
+            $scope.grid.pageSize = 1000;
+            $scope.grid.height = 'auto';
+        });
+    </script>
+
+    <div class="starter-template">
+        <h1>
+            <% if @type == 'award': %>決標
+                <% else: %>招標
+                    <% end %> 標案檢索</h1>
+        <a href="/month"> 依月份瀏覽</a>
+        <div class="form-group">
+            <div class="col-md-8">
+                <div class="form-group row">
+                    <label for="inputKey" class="col-md-2 control-label">發佈日期</label>
+                    <div class="col-md-4">
+                        <select class="form-control" ng-change="loadByDate()" ng-model="date" ng-options="d for d in dates track by d">
+													<option value="">請選擇</option>
+												</select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span ng-show="!dates">資料載入中..</span>
+        <ng-react-grid grid="grid"></ng-react-grid>
+    </div>

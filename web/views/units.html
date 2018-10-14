@@ -1,54 +1,107 @@
 <% extend './views/template.html' %>
-<style>
-.node {
-	  cursor: pointer;
-}
+    <style>
+        .node {
+            cursor: pointer;
+        }
+        
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
+        
+        .node text {
+            font: 10px sans-serif;
+        }
+        
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1.5px;
+        }
+    </style>
+    <script>
+        app.config(function($routeProvider, $locationProvider) {
+            //$locationProvider.html5Mode(true);
+        });
 
-.node circle {
-	  fill: #fff;
-		  stroke: steelblue;
-			  stroke-width: 1.5px;
-}
+        app.controller('page', function($scope, $http, $location, grid) {
+            $scope.parent = '';
+            $scope.$watch(function() {
+                return $location.search().parent;
+            }, function(val) {
+                if (!val)
+                    val = '';
+                $http.get('/api/units/' + val).then(function(res) {
+                    $scope.units = res.data;
+                    $scope.grid.data = res.data;
+                    $scope.parent = res.data[0].parent_name;
+                });
+            })
+            $scope.load = function(parent) {
+                $location.search('parent', parent);
+            };
+            if (!$location.search().parent)
+                $scope.load();
+            $scope.grid = {
+                data: [],
+                height: 'auto',
+                pageSize: 10000,
+                columnDefs: [{
+                    field: "parent",
+                    displayName: "代號",
+                    render: function(row) {
+                        return row._id;
+                    }
+                }, {
+                    field: "name",
+                    displayName: "機關",
+                    render: function(row) {
+                        return row.name
+                    }
+                }, {
+                    field: "count",
+                    displayName: "子機關數",
+                    render: function(row) {
+                        if (row.childs == 0)
+                            return '無';
+                        return React.DOM.a({
+                            href: "/units/#?parent=" + row._id
+                        }, row.childs + '');
+                        return
+                    }
+                }, {
+                    field: "tenders",
+                    displayName: "標案數",
+                    render: function(row) {
+                        return row.tenders
+                    }
+                }, {
+                    field: "link",
+                    displayName: "標案檢索",
+                    render: function(row) {
+                        if (row.tenders == 0)
+                            return '';
+                        return React.DOM.a({
+                            href: "/unit/" + row.name
+                        }, '前往');
+                    }
+                }]
+            };
+        });
+    </script>
+    <div class="starter-template">
+        <h1>[[parent]]機關檢索</h1>
+        <ng-react-grid grid="grid"></ng-react-grid>
 
-.node text {
-	  font: 10px sans-serif;
-}
+        <!--div class="row">
+            <alert ng-if="!units.length">查無資料</alert>
+            <ul>
+                <li ng-repeat="unit in units">
 
-.link {
-	  fill: none;
-		  stroke: #ccc;
-			  stroke-width: 1.5px;
-}
-</style>
-<script>
-	app.config(function($routeProvider, $locationProvider) {
-			//$locationProvider.html5Mode(true);
-	});
-	
-	app.controller('page', function($scope, $http, $location) {
-		$scope.$watch(function () { return $location.search().parent; }, function (val) {
-			if(!val)
-				val = '';
-			$http.get('/api/units/' + val).then(function(res) {
-				$scope.units = res.data;
-			});
-		})
-		$scope.load = function(parent) {
-			$location.search('parent', parent);
-		};
-		if(!$location.search().parent)
-			$scope.load();
-	});
-	
-</script>
-<div class="starter-template">
-	<h1>中華民國政府標案檢索</h1>
-	<div class="row">
-		<alert ng-if="!units.length">查無資料</alert>
-		<ul>
-			<li ng-repeat="unit in units">
-				<a href="javascript:void(0)" ng-click="load(unit._id)">[[unit._id]] - [[unit.name]]</a> <a href="/unit/[[unit.name]]">標案檢索</a>
-			</li>
-		</ul>
-	</div>
-</div>
+                    <a href="javascript:void(0)" ng-show="unit.child.length" ng-click="load(unit._id)">[[unit._id]] - [[unit.name]]</a>
+                    <a href="/unit/[[unit.name]]">標案檢索</a>
+                </li>
+            </ul>
+        </div-->
+    </div>

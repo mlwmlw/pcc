@@ -1,0 +1,57 @@
+<% extend './views/template.html' %>
+    <script>
+        app.controller('page', function($scope, $http, $timeout, $filter, grid) {
+            $scope.items = null;
+            var year = $scope.year = '<%- @year %>';
+            var month = $scope.month = '<%- @month %>';
+						if(year && month) {
+							$http.get('/api/dates/?year=' + year + '&month=' + month).then(function(res) {
+									var dates = $scope.dates = res.data;
+									for (var i in dates) {
+											dates[i] = dates[i].replace(/T.+$/, '');
+									}
+									$scope.dates = dates = dates.sort().reverse();
+							});
+						}
+            if (year.length == 0 && month.length == 0) {
+                $http.get('/api/month').then(function(res) {
+                    res = res.data.sort(function(b, a) {
+                        if (a.year != b.year) {
+                            if (+a.year < +b.year) return -1;
+                            if (+a.year > +b.year) return 1;
+                            return 0;
+                        }
+                        if (+a.month < +b.month) return -1;
+                        if (+a.month > +b.month) return 1;
+                        return 0;
+                    });
+
+
+                    $scope.monthes = res;
+
+                });
+            }
+
+
+        });
+    </script>
+
+    <div class="starter-template">
+        <div ng-if="monthes">
+            <h1>歷月標案</h1>
+            <ul>
+                <li ng-repeat="month in monthes">
+                    <a href="/dates/[[month.year]]/[[month.month]]">檢視 [[month.name]] 標案</a>
+                </li>
+            </ul>
+        </div>
+        <div ng-if="dates.length">
+            <a href="/month"> 依月份瀏覽</a>
+            <h1>[[year]] 年 [[month]] 月標案</h1>
+            <ul>
+                <li ng-repeat="date in dates track by $index">
+                    <a href="/date/tender/[[date]]">檢視 [[date]] 標案</a>
+                </li>
+            </ul>
+        </div>
+    </div>

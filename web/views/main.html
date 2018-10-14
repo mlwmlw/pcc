@@ -1,309 +1,341 @@
 <% extend './views/template.html' %>
-<style>
-	.active a {
-		pointer-events: none;
-		cursor: default;
-		color: #777;
-	}
-</style>
-<script>
-	app.filter('range', function() {
-		  return function(input, min, max) {
-				min = parseInt(min); //Make string input int
-				max = parseInt(max);
-				for (var i = min; i <= max; i++)
-					input.push(i);
-				return input;
-			};
-	});
-	app.controller('page', function($scope, $http, $timeout, $location, grid, $timeout) {
-		$location.path('/');
-		$scope.grid = grid;
-		$scope.breadcrumb = ['全部'];
-		$scope.$watch(function () { 
-			return $location.url(); 
-		}, function (val, old) {
-			var unit = $location.search().unit;
-			if(unit)
-				setUnit(unit);
-		});
-		$http.get('/api/month').success(function(res) {
-			res = res.sort(function(b, a) {
-				if (a.year != b.year) {
-					if (+a.year < +b.year) return -1;
-					if (+a.year > +b.year) return 1;
-					return 0;
-				}
-				if (+a.month < +b.month) return -1;
-				if (+a.month > +b.month) return 1;
-				return 0;
-			});
-			$scope.month = res[0]
-			$scope.monthes = res;
-			$scope.stats();
-		});
-		$http.get('/api/units_stats/2014-08-01/2015-07-01', {cache: true}).success(function(res) {
-			$scope.raw = res;
-			$scope.line();
-		});
-		$scope.transform = function() {
-			$scope.chart_line.transform($scope.mode);
-		}
-		$scope.line = function(data, units) {
-			var res = $scope.raw;
-			var stats = {}, data = [], dates = {}, value, units = {};
-			for(var month in res) {
-				dates[month] = ''
-				for(var unit in res[month]) {
-					value = res[month][unit];
-					//todo some unit don't have parent 
-					if(value.parent == "")
-						continue;
+    <style>
+        .active a {
+            pointer-events: none;
+            cursor: default;
+            color: #777;
+        }
+    </style>
+    <script>
+        app.filter('range', function() {
+            return function(input, min, max) {
+                min = parseInt(min); //Make string input int
+                max = parseInt(max);
+                for (var i = min; i <= max; i++)
+                    input.push(i);
+                return input;
+            };
+        });
+        app.controller('page', function($scope, $http, $timeout, $location, grid, $timeout) {
+            $location.path('/');
+            $scope.grid = grid;
+            $scope.breadcrumb = ['全部'];
+            $scope.$watch(function() {
+                return $location.url();
+            }, function(val, old) {
+                var unit = $location.search().unit;
+                if (unit)
+                    setUnit(unit);
+            });
+            $http.get('/api/month').then(function(res) {
+                res = res.data.sort(function(b, a) {
+                    if (a.year != b.year) {
+                        if (+a.year < +b.year) return -1;
+                        if (+a.year > +b.year) return 1;
+                        return 0;
+                    }
+                    if (+a.month < +b.month) return -1;
+                    if (+a.month > +b.month) return 1;
+                    return 0;
+                });
 
-					if(!units[value.parent])
-						units[value.parent] = 0;
-					units[value.parent] += value.price;
-					if(!stats[value.parent])
-						stats[value.parent] = {};
-					if(!stats[value.parent][month])
-						stats[value.parent][month] = 0;
-					stats[value.parent][month] += value.price;
-				}
-			}
-			for(var date in dates) {
-				var row = {
-					date: date,
-				};
-				for(var unit in stats) {
-					if(stats[unit][date])
-						row[unit] = stats[unit][date];
-					else
-						row[unit] = 0;
-				}
-				data.push(row);
-			}
-			var timer;
-			$scope.chart_line = c3.generate({
-				bindto: '#chart_line',
-				size: {
-					height: 300
-				},
-				//xFormat: '%Y-%m',
-				data: {
-					onclick: function (d, i) { 
-						var m = d.x;
-						for(var i in $scope.monthes) {
-							var o = $scope.monthes[i];
-							if(o.year == m.getFullYear() && o.month == m.getMonth() + 1) {
-								$scope.month = $scope.monthes[i];
-								break;
-							}
-						}
-						if(timer) {
-							$timeout.cancel(timer);
-						}
-						timer = $timeout(function() {
-							$scope.stats(function() {
-								$scope.chart.focus([d.id]);
-							});
-							timer = null;
-						}, 50);
-					},
-					json: data,
-					keys: {
-						x: 'date',
-						value: Object.keys(units).sort(function(a, b) { return units[b] - units[a];}).slice(0, $scope.limit)
-					},
-					axes: {
-						'行政院': 'y'
-					}
-				},
-				grid: {
-					y: {show: true}
-				},
-				axis: {
-						x: {
-							type: "timeseries",
-							tick: {
-								format: '%Y-%m'
-							}
-						},
-						y: {
-							tick: {
-								format: grid.money
-							}
-						}
-				},
-				tooltip: {
-					grouped: false,
-					format: {
-						value: function (value, ratio, id) {
-							return $scope.type == 'price' ? '$' + d3.format(',')(value): d3.format(',')(value);
-						}
-					}
+                $scope.month = res[0]
+                $scope.monthes = res;
+                $scope.stats();
+            });
 
-				}/*, 
-				subchart: {
-					show: true
-				}*/
-			});
-		}
-		$scope.stats = function(cb) {
+            $http.get('/api/units_stats/2017-01-01/2018-10-01', {
+                cache: true
+            }).then(function(res) {
+                $scope.raw = res.data;
+                $scope.line();
+            });
+            $scope.transform = function() {
+                $scope.chart_line.transform($scope.mode);
+            }
+            $scope.line = function(data, units) {
+                var res = $scope.raw;
+                var stats = {},
+                    data = [],
+                    dates = {},
+                    value, units = {};
+                for (var month in res) {
+                    dates[month] = ''
+                    for (var unit in res[month]) {
+                        value = res[month][unit];
+                        //todo some unit don't have parent 
+                        if (value.parent == "")
+                            continue;
 
-			$scope.line();
-			var year = $scope.month.year,
-				month = $scope.month.month;
-			var key = year + '-' + (month < 10 ? '0' + month: month) + '-01';
-			if($scope.raw && $scope.raw[key]) {
-				$scope.data = $scope.raw[key];
-				setUnit($location.search().unit, undefined, cb);
-				return ;
-			}
-			$http.get('/api/units_stats/' + key, {cache: true}).success(function(res) {
-				$scope.data = res;
-				setUnit($location.search().unit, undefined, cb);
-			});
-		}
-		$scope.chart = c3.generate({
-			bindto: '#chart',
-			size: {
-				height: 700
-			},
-			legend: {
-				position: 'right'
-			},
-			pie: {
-				label: {
-					format: function (value, ratio, id) {
-						return id;// ($scope.type == 'price' ? '$' +  d3.format(',')(value): d3.format(',')(value));
-					}
-				}
-			},
-			tooltip: {
-				format: {
-					title: function (d) { return d; },
-					value: function (value, ratio, id) {
-						return $scope.type == 'price' ? '$' + d3.format(',')(value): d3.format(',')(value);
-					}
-				}
-			},
-			data: {
-				columns: [],
-				type : 'pie',
-				onclick: function (d, i) { 
-					if($scope.breadcrumb.length >= 2) {
-						$scope.breadcrumb.splice(2);
-						$scope.breadcrumb.push(d.id);
-						loadUnit(d.id);	
-					}
-					else {
-						$scope.$apply(function() {
-							$location.search('unit', d.id);
-						});
-					}
-				}
-			}
-		});
+                        if (!units[value.parent])
+                            units[value.parent] = 0;
+                        units[value.parent] += value.price;
+                        if (!stats[value.parent])
+                            stats[value.parent] = {};
+                        if (!stats[value.parent][month])
+                            stats[value.parent][month] = 0;
+                        stats[value.parent][month] += value.price;
+                    }
+                }
+                for (var date in dates) {
+                    var row = {
+                        date: date,
+                    };
+                    for (var unit in stats) {
+                        if (stats[unit][date])
+                            row[unit] = stats[unit][date];
+                        else
+                            row[unit] = 0;
+                    }
+                    data.push(row);
+                }
+                var timer;
+                if (data.length)
+                    var group = Object.keys(data[0])
+                else
+                    var group = [];
+                $scope.chart_line = c3.generate({
+                    bindto: '#chart_line',
+                    size: {
+                        height: 300
+                    },
+                    //xFormat: '%Y-%m',
+                    data: {
+                        type: 'area',
+                        groups: [
+                            group
 
-		var setUnit = $scope.setUnit = function(unit, level, cb) {
-			var units = $scope.data;
-			var stats = {};
-			var data = [];
-			if(!units)
-				return;
-			if(/\d+/.test(level)) {
-				$scope.breadcrumb.splice(level + 1);
-				if(level == 0)
-					unit = null;
-				$location.search('unit', unit);
-			}
-			else if(unit) {
-				$scope.breadcrumb.push(unit);
-			}
-			
-			for(var i in units) {
-				var u = units[i];
-				if(unit == undefined)
-					stats[u.parent] = stats[u.parent] ? stats[u.parent] + +u[$scope.type] : +u[$scope.type];
-				else if(unit == u.parent)
-					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u[$scope.type]: +u[$scope.type];
-				else if(unit == u.unit)
-					stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u[$scope.type]: +u[$scope.type];
-			}
-			for(var i in stats) {
-				if(i == '')	continue;
-				data.push([i, stats[i]]);
-			}
-			data.sort(function(b, a) {
-				return a[1] - b[1];
-			});
-			data = data.slice(0, $scope.limit);
-			chart(data, cb);
-		}
-		function loadUnit(unit) {
-			var year = $scope.month.year,
-			month = $scope.month.month;
-			month = year + '-' + (month < 10 ? '0' + month: month);
-			$http.get('/api/unit/' + unit + '/' + month).success(function(res) {
-				$scope.grid.data = res;
-			});
-		}
-		function chart(data, cb) {
-			$scope.chart.unload();
-			$timeout(function() {
-				$scope.chart.load({
-					columns: data
-				});
-				cb && cb();
-			}, 1000);
-		}
-	});
-</script>
+                        ],
+                        onclick: function(d, i) {
+                            var m = d.x;
+                            for (var i in $scope.monthes) {
+                                var o = $scope.monthes[i];
+                                if (o.year == m.getFullYear() && o.month == m.getMonth() + 1) {
+                                    $scope.month = $scope.monthes[i];
+                                    break;
+                                }
+                            }
 
-<div class="starter-template">
-	<h2>各月招標資料統計</h2>
-	<p>此功能用來大致分析每個單位所得到的資源數量，各單位可以再點擊進去看詳細。</p>
-	<p>目前相同標案再不同月重新發標會被重複計算，很多標案也沒有發標金額，所以應該參考標案數量來比較。</p>
-		
-	<div class="row" id="chart_line">
-	</div>
-	<div >
-		<form class="form-inline">
-			<div class="form-group">
-				請選擇月份：<select class="form-control" ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
-			</div>
-			<div class="form-group">
-				統計類型：<select class="form-control" ng-change="stats()" ng-model="type" ng-init="type = 'price'">
+                            if (timer) {
+                                $timeout.cancel(timer);
+                            }
+                            timer = $timeout(function() {
+
+                                $scope.stats(function() {
+
+                                    $scope.chart.focus([d.id]);
+                                });
+                                timer = null;
+                            }, 50);
+                        },
+                        json: data,
+                        keys: {
+                            x: 'date',
+                            value: Object.keys(units).sort(function(a, b) {
+                                return units[b] - units[a];
+                            }).slice(0, $scope.limit)
+                        },
+                        axes: {
+                            '行政院': 'y'
+                        }
+                    },
+                    grid: {
+                        y: {
+                            show: true
+                        }
+                    },
+                    axis: {
+                        x: {
+                            type: "timeseries",
+                            tick: {
+                                format: '%Y-%m'
+                            }
+                        },
+                        y: {
+                            tick: {
+                                format: grid.money
+                            }
+                        }
+                    },
+                    tooltip: {
+                        grouped: false,
+                        format: {
+                            value: function(value, ratio, id) {
+                                return $scope.type == 'price' ? '$' + d3.format(',')(value) : d3.format(',')(value);
+                            }
+                        }
+
+                    }
+                    /*, 
+                    				subchart: {
+                    					show: true
+                    				}*/
+                });
+            }
+            $scope.stats = function(cb) {
+
+                $scope.line();
+                var year = $scope.month.year,
+                    month = $scope.month.month;
+                //$location.search('unit', '');
+                var key = year + '-' + (month < 10 ? '0' + month : month) + '-01';
+                if ($scope.raw && $scope.raw[key]) {
+                    $scope.data = $scope.raw[key];
+                    setUnit(null, undefined, cb);
+                    return;
+                }
+                $http.get('/api/units_stats/' + key, {
+                    cache: true
+                }).then(function(res) {
+                    $scope.data = res.data;
+                    setUnit($location.search().unit, undefined, cb);
+                });
+            }
+            $scope.chart = c3.generate({
+                bindto: '#chart',
+                size: {
+                    height: 700
+                },
+                legend: {
+                    position: 'right'
+                },
+                pie: {
+                    label: {
+                        format: function(value, ratio, id) {
+                            return id; // ($scope.type == 'price' ? '$' +  d3.format(',')(value): d3.format(',')(value));
+                        }
+                    }
+                },
+                tooltip: {
+                    format: {
+                        title: function(d) {
+                            return d;
+                        },
+                        value: function(value, ratio, id) {
+                            return $scope.type == 'price' ? '$' + d3.format(',')(value) : d3.format(',')(value);
+                        }
+                    }
+                },
+                data: {
+                    columns: [],
+                    type: 'pie',
+                    onclick: function(d, i) {
+                        if ($scope.breadcrumb.length >= 2) {
+                            $scope.breadcrumb.splice(2);
+                            $scope.breadcrumb.push(d.id);
+                            loadUnit(d.id);
+                        } else {
+                            $scope.$apply(function() {
+                                $location.search('unit', d.id);
+                            });
+                        }
+                    }
+                }
+            });
+
+            var setUnit = $scope.setUnit = function(unit, level, cb) {
+                var units = $scope.data;
+                var stats = {};
+                var data = [];
+                if (!units)
+                    return;
+
+                if (/\d+/.test(level)) {
+                    $scope.breadcrumb.splice(level + 1);
+                    if (level == 0)
+                        unit = null;
+                    $location.search('unit', unit);
+                } else if (unit) {
+                    $scope.breadcrumb.push(unit);
+                } else {
+                    $scope.breadcrumb = ["全部"];
+                }
+
+                for (var i in units) {
+                    var u = units[i];
+                    if (unit == undefined)
+                        stats[u.parent] = stats[u.parent] ? stats[u.parent] + +u[$scope.type] : +u[$scope.type];
+                    else if (unit == u.parent)
+                        stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u[$scope.type] : +u[$scope.type];
+                    else if (unit == u.unit)
+                        stats[u.unit] = stats[u.unit] ? stats[u.unit] + +u[$scope.type] : +u[$scope.type];
+                }
+                for (var i in stats) {
+                    if (i == '') continue;
+                    data.push([i, stats[i]]);
+                }
+                data.sort(function(b, a) {
+                    return a[1] - b[1];
+                });
+                data = data.slice(0, $scope.limit);
+                chart(data, cb);
+            }
+
+            function loadUnit(unit) {
+                var year = $scope.month.year,
+                    month = $scope.month.month;
+                month = year + '-' + (month < 10 ? '0' + month : month);
+                $http.get('/api/unit/' + unit + '/' + month).then(function(res) {
+                    $scope.grid.data = res.data;
+                });
+            }
+
+            function chart(data, cb) {
+                $scope.chart.unload();
+                $timeout(function() {
+                    $scope.chart.load({
+                        columns: data
+                    });
+                    cb && cb();
+                }, 1000);
+            }
+        });
+    </script>
+
+    <div class="starter-template">
+        <h2>各月招標資料統計</h2>
+        <p>此功能用來大致分析每個單位所得到的資源數量，各單位可以再點擊進去看詳細。</p>
+        <p>目前相同標案再不同月重新發標會被重複計算，很多標案也沒有發標金額，所以應該參考標案數量來比較。</p>
+
+        <div class="row" id="chart_line">
+        </div>
+        <div>
+            <form class="form-inline">
+                <div class="form-group">
+                    請選擇月份：<select class="form-control" ng-change="stats()" ng-model="month" ng-options="m.name for m in monthes"></select>
+                </div>
+                <div class="form-group">
+                    統計類型：<select class="form-control" ng-change="stats()" ng-model="type" ng-init="type = 'price'">
 					<option value="price">金額</option>
 					<option value="count">標案數量</option>
 				</select>
-			</div>
-			<div class="form-group">
-				顯示單位數量（依照金額排序）：
-				<select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 15" ng-options="n for n in [] | range:5:40">
+                </div>
+                <div class="form-group">
+                    顯示單位數量（依照金額排序）：
+                    <select class="form-control" ng-change="stats()" ng-model="limit" ng-init="limit = 15" ng-options="n for n in [] | range:5:40">
 				</select>
-			</div>
-			<div class="form-group">
-				圖形：
-				<select class="form-control" ng-change="transform()" ng-model="mode" ng-init="mode='line'">
+                </div>
+                <div class="form-group">
+                    圖形：
+                    <select class="form-control" ng-change="transform()" ng-model="mode" ng-init="mode='line'">
 					<option value="line">折線</option>
 					<option value="bar">直方</option>
 				</select>
-			</div>
+                </div>
 
-		</form>
-	</div>
-	<div>
-		<ol class="breadcrumb">
-			<li ng-repeat="(key, bread) in breadcrumb track by $index" ng-class="{active: $last}">
-				<a ng-click="setUnit(bread, $index)" href="javascript:void(0)">
+            </form>
+        </div>
+        <div>
+            <ol class="breadcrumb">
+                <li ng-repeat="(key, bread) in breadcrumb track by $index" ng-class="{active: $last}">
+                    <a ng-click="setUnit(bread, $index)" href="javascript:void(0)">
 				[[bread]]
 				</a>
-			</li>
-		</ol>
-	</div>
-	<div class="row" id="chart">
-	</div>
-		
-	<ng-react-grid grid="grid"></ng-react-grid>
-</div>
+                </li>
+            </ol>
+        </div>
+        <div class="row" id="chart">
+        </div>
+
+        <ng-react-grid grid="grid"></ng-react-grid>
+    </div>

@@ -6,7 +6,7 @@
 		$http.get('/api/tender/<%- @id %>/<%- @unit %>').then(function(res) {
 			var tenders = $scope.tenders = res.data;
 			for(var i in tenders) {
-				if(tenders[i].award.merchants && tenders[i].award.merchants.length) {
+				if(tenders[i].award && tenders[i].award.merchants && tenders[i].award.merchants.length) {
 					$scope.award = tenders[i].award.merchants;
 				}
 				if(tenders[i].merchants)

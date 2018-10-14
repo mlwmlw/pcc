@@ -1,177 +1,237 @@
 <% extend './views/template.html' %>
-<script>
-	app.controller('page', function($scope, $http, $filter, grid) {
-		var type = $scope.type = '<%- @type %>';
-		$scope.date = new Date();
-		$scope.range = {
-			min: new Date(2012, 05),
-			max: new Date()
-		};
-		if(type == 'tender') {
-			$scope.picker = {
-				mode: 'month',
-				min: 'month'
-			};
-		}
-		else {
-			$scope.picker = {
-				mode: 'year',
-				min: 'year'
-			};
-		}
-		$scope.bar = function(chart, items) {
-			if($scope[chart]) {
-				$scope[chart].load({
-					json: items,
-					keys: {
-						x: 'name',
-						value: [chart]
-					}
-				});
-				return;
-			}
-			
-			$scope[chart] = c3.generate({
-				bindto: '#' + chart,
-				data: {
-					json: items,
-					keys: {
-							x: 'name',
-							value: [chart]
-					},
-					type: 'bar',
-					color: grid.color
-				},
-				axis: {
-					rotated: true,
-					x: {
-						tick: {
-							multiline: false
-						},
-						type:　'category'
-					},
-					y: {
-						tick: {
-							format: grid.money
-						}
-					}
-				},
-				legend: {
-					show: false
-				}
-			});
-		}
-		$scope.update = function() {
-			var d = $scope.date;
-			var year = d.getFullYear();
-			var month = d.getFullYear() + '-' + (+d.getMonth()+101+"").slice(-2);
-			if(type == 'merchant') {
-				$http.get('/api/rank/merchants/sum/' + year).then(function(res) {
-					var items = $scope.grid_sum.data = res.data;
-					items.sort(function(a, b) {
-						return +b.sum - +a.sum;
-					});
-					for(var i in items) {
-						items[i].name = items[i].merchant.name;
-					}
-					items = items.slice(0, 12);
-					$scope.bar('sum', items);
-				});
-				$http.get('/api/rank/merchants/count/' + year).then(function(res) {
-					$scope.grid_count.data = res.data;
-				});
-			}
-			else if(type == 'tender') {
-				$scope.grid_price = grid;
-				$http.get('/api/rank/tender/' + month).then(function(res) {
-					$scope.grid_price.data = res.data;
-				});
-			}
-			else {
-				$scope.grid_price = grid;
-				$http.get('/api/partner/' + year).then(function(res) {
-					$scope.grid_partner.data = res.data;
-				});
-			}
-		}
-		$scope.update();	
-		$scope.grid_sum = {
-			data: [], 
-			height: 1500,
-			columnDefs: [
-				{ field: "name", displayName: "廠商", render: function(row) {
-					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row._id, target: '_blank'}, row.merchant.name);
-				}},
-				{ field: "address", displayName: "公司所在地", render: function(row) {
-					return row.merchant.address;	
-				}},
-				{ field: "sum", displayName: "總金額", render: function(row) {
-					return $filter('money')($filter('currency')(row.sum));
-				}}, 
-				{ field: "count", displayName: "得標數", render: function(row) {
-					return row.count;	
-				}},
-				{ field: "name", displayName: "標案檢索", render: function(row) {
-					return React.DOM.a({href:"/merchants/" + row._id, target: '_blank'}, '前往');
-				}}
-		]};
-		$scope.grid_count = {
-			data: [], 
-			height: 1500,
-			columnDefs: [
-				{ field: "name", displayName: "廠商", render: function(row) {
-					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row._id, target: '_blank'}, row.merchant.name);
-				}},
-				{ field: "address", displayName: "公司所在地", render: function(row) {
-					return row.merchant.address;	
-				}},
-				{ field: "count", displayName: "得標數", render: function(row) {
-					return row.count;	
-				}},
-				{ field: "sum", displayName: "總金額", render: function(row) {
-					return $filter('money')($filter('currency')(row.sum));
-				}},
-				{ field: "name", displayName: "標案檢索", render: function(row) {
-					return React.DOM.a({href:"/merchants/" + row._id, target: '_blank'}, '前往');
-				}}
-		]};
-		$scope.grid_partner = {
-			data: [], 
-			height: 1500,
-			columnDefs: [
-				{ field: "unit", displayName: "單位", render: function(row) {
-					return React.DOM.a({href:"/unit/" + row.unit}, row.unit);
-				}},
-				{ field: "merchant", displayName: "廠商", render: function(row) {
-					return React.DOM.a({href:"http://company.g0v.ronny.tw/id/" + row.merchant._id, target: '_blank'}, row.merchant.name);
-				}},
-				{ field: "count", displayName: "得標數", render: function(row) {
-					return row.count;	
-				}},
-				{ field: "price", displayName: "總金額", render: function(row) {
-					return $filter('money')($filter('currency')(row.price));
-				}},
-				{ field: "name", displayName: "標案檢索", render: function(row) {
-					return React.DOM.a({href:"/merchants/" + row.merchant._id}, '前往');
-				}}
-		]};
-	});
-	
-</script>
-<div class="starter-template">
-	<datepicker year-range="5" ng-model="date" max-date="range.max" min-date="range.min" ng-change="update()" min-mode="[[picker.min]]" datepicker-mode="picker.mode"></datepicker>
-	<% if @type == 'merchant' : %>
-		<div class="row" id="sum"></div>
-		<h1>標案總金額排行</h1>
-		<ng-react-grid grid="grid_sum"></ng-react-grid>
-		<h1>標案數量排行</h1>
-		<ng-react-grid grid="grid_count"></ng-react-grid>
-	<% else if @type == 'tender': %>
-		<h1>每月標案金額排行</h1>
-		<ng-react-grid grid="grid_price"></ng-react-grid>
-	<% else: %>
-		<h1>廠商與單位得標關聯</h1>
-		<ng-react-grid grid="grid_partner"></ng-react-grid>
-	<% end %>
+    <script>
+        app.controller('page', function($scope, $http, $filter, grid) {
+            var type = $scope.type = '<%- @type %>';
+            $scope.date = new Date();
+            $scope.range = {
+                min: new Date(2012, 05),
+                max: new Date()
+            };
+            if (type == 'tender') {
+                $scope.picker = {
+                    mode: 'month',
+                    min: 'month'
+                };
+            } else {
+                $scope.picker = {
+                    mode: 'year',
+                    min: 'year'
+                };
+            }
+            $scope.bar = function(chart, items) {
+                if ($scope[chart]) {
+                    $scope[chart].load({
+                        json: items,
+                        keys: {
+                            x: 'name',
+                            value: [chart]
+                        }
+                    });
+                    return;
+                }
 
-</div>
+                $scope[chart] = c3.generate({
+                    bindto: '#' + chart,
+                    data: {
+                        json: items,
+                        keys: {
+                            x: 'name',
+                            value: [chart]
+                        },
+                        type: 'bar',
+                        color: grid.color
+                    },
+                    axis: {
+                        rotated: true,
+                        x: {
+                            tick: {
+                                multiline: false
+                            },
+                            type: 　 'category'
+                        },
+                        y: {
+                            tick: {
+                                format: grid.money
+                            }
+                        }
+                    },
+                    legend: {
+                        show: false
+                    }
+                });
+            }
+            $scope.update = function() {
+                var d = $scope.date;
+                var year = d.getFullYear();
+                var month = d.getFullYear() + '-' + (+d.getMonth() + 101 + "").slice(-2);
+                if (type == 'merchant') {
+                    $http.get('/api/rank/merchants/sum/' + year).then(function(res) {
+                        var items = $scope.grid_sum.data = res.data;
+                        items.sort(function(a, b) {
+                            return +b.sum - +a.sum;
+                        });
+                        for (var i in items) {
+                            items[i].name = items[i].merchant.name;
+                        }
+                        items = items.slice(0, 12);
+                        $scope.bar('sum', items);
+                    });
+                    $http.get('/api/rank/merchants/count/' + year).then(function(res) {
+                        $scope.grid_count.data = res.data;
+                    });
+                } else if (type == 'tender') {
+                    $scope.grid_price = grid;
+                    $http.get('/api/rank/tender/' + month).then(function(res) {
+                        $scope.grid_price.data = res.data;
+                    });
+                } else {
+                    $scope.grid_price = grid;
+                    $http.get('/api/partner/' + year).then(function(res) {
+                        $scope.grid_partner.data = res.data;
+                    });
+                }
+            }
+            $scope.update();
+            $scope.grid_sum = {
+                data: [],
+                height: 1500,
+                columnDefs: [{
+                    field: "name",
+                    displayName: "廠商",
+                    render: function(row) {
+                        return React.DOM.a({
+                            href: "http://company.g0v.ronny.tw/id/" + row._id,
+                            target: '_blank'
+                        }, row.merchant.name);
+                    }
+                }, {
+                    field: "address",
+                    displayName: "公司所在地",
+                    render: function(row) {
+                        return row.merchant.address || '';
+                    }
+                }, {
+                    field: "sum",
+                    displayName: "總金額",
+                    render: function(row) {
+                        return '$' + row.sum.numberFormat(0) //$filter('money')($filter('currency')(row.sum));
+                    }
+                }, {
+                    field: "count",
+                    displayName: "得標數",
+                    render: function(row) {
+                        return row.count;
+                    }
+                }, {
+                    field: "name",
+                    displayName: "標案檢索",
+                    render: function(row) {
+                        return React.DOM.a({
+                            href: "/merchants/" + row._id,
+                            target: '_blank'
+                        }, '前往');
+                    }
+                }]
+            };
+            $scope.grid_count = {
+                data: [],
+                height: 1500,
+                columnDefs: [{
+                    field: "name",
+                    displayName: "廠商",
+                    render: function(row) {
+                        return React.DOM.a({
+                            href: "http://company.g0v.ronny.tw/id/" + row._id,
+                            target: '_blank'
+                        }, row.merchant.name);
+                    }
+                }, {
+                    field: "address",
+                    displayName: "公司所在地",
+                    render: function(row) {
+                        return row.merchant.address || '';
+                    }
+                }, {
+                    field: "count",
+                    displayName: "得標數",
+                    render: function(row) {
+                        return row.count;
+                    }
+                }, {
+                    field: "sum",
+                    displayName: "總金額",
+                    render: function(row) {
+                        return '$' + row.sum.numberFormat(0); //$filter('money')($filter('currency')(row.sum));
+                    }
+                }, {
+                    field: "name",
+                    displayName: "標案檢索",
+                    render: function(row) {
+                        return React.DOM.a({
+                            href: "/merchants/" + row._id,
+                            target: '_blank'
+                        }, '前往');
+                    }
+                }]
+            };
+            $scope.grid_partner = {
+                data: [],
+                height: 1500,
+                columnDefs: [{
+                    field: "unit",
+                    displayName: "單位",
+                    render: function(row) {
+                        return React.DOM.a({
+                            href: "/unit/" + row.unit
+                        }, row.unit);
+                    }
+                }, {
+                    field: "merchant",
+                    displayName: "廠商",
+                    render: function(row) {
+                        return React.DOM.a({
+                            href: "http://company.g0v.ronny.tw/id/" + row.merchant._id,
+                            target: '_blank'
+                        }, row.merchant.name);
+                    }
+                }, {
+                    field: "count",
+                    displayName: "得標數",
+                    render: function(row) {
+                        return row.count;
+                    }
+                }, {
+                    field: "price",
+                    displayName: "總金額",
+                    render: function(row) {
+                        return '$' + row.price.numberFormat(0) //$filter('money')($filter('currency')(row.price));
+                    }
+                }, {
+                    field: "name",
+                    displayName: "標案檢索",
+                    render: function(row) {
+                        return React.DOM.a({
+                            href: "/merchants/" + row.merchant._id
+                        }, '前往');
+                    }
+                }]
+            };
+        });
+    </script>
+    <div class="starter-template">
+        <datepicker year-range="5" ng-model="date" max-date="range.max" min-date="range.min" ng-change="update()" min-mode="[[picker.min]]" datepicker-mode="picker.mode"></datepicker>
+        <% if @type == 'merchant' : %>
+            <div class="row" id="sum"></div>
+            <h1>標案總金額排行</h1>
+            <ng-react-grid grid="grid_sum"></ng-react-grid>
+            <h1>標案數量排行</h1>
+            <ng-react-grid grid="grid_count"></ng-react-grid>
+            <% else if @type == 'tender': %>
+                <h1>每月標案金額排行</h1>
+                <ng-react-grid grid="grid_price"></ng-react-grid>
+                <% else: %>
+                    <h1>各單位得標廠商統計</h1>
+                    <ng-react-grid grid="grid_partner"></ng-react-grid>
+                    <% end %>
+
+    </div>
