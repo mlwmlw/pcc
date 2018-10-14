@@ -1,7 +1,9 @@
-require! <[ fs express http mongodb q moment redis compression]>
+require! <[ fs express http mongodb q moment redis compression unified]>
 _ = require 'lodash'
-Hackpad = require 'hackpad'
-Hackpad.config = require './hackpad'
+createStream = require 'unified-stream'
+markdown = require 'remark-parse'
+html = require 'remark-html'
+
 uri = require \./database
 app = express!
 express.static __dirname + '/public' |> app.use
@@ -25,7 +27,7 @@ getAll = !->
 app.use compression!
 app.use (req, res, next) ->
 	res.setHeader 'Content-Type', 'application/json'
-	if /merchants|rank|units|month|categories|units_stats/.test req.path
+	if /keyword|rank|units|month|categories|units_stats/.test req.path
 		send = res.send
 		res.send = (result) ->
 			cache.set req.path, result
@@ -57,6 +59,15 @@ app.get '/keyword/:keyword', (req, res) ->
 		db.collection 'search_log' .insert {keyword: req.params.keyword, ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, ts: new Date!}, (err, res) ->
 		if err
 			console.log err
+app.get '/keywords', (req, res) -> 
+	db.collection 'search_log' .aggregate [
+	{$match: {ts: {$gt: moment().subtract(3, 'months').toDate! }}},
+	{$group: {_id: "$keyword", count: {$sum: 1}}},
+	{$sort: {count: -1}},
+	{$limit: 20},
+	{ $sample : { size: 10 } }
+	] .toArray (err, docs) -> 
+		res.send _.pluck docs, '_id'
 
 app.get '/date/:type/:date', (req, res) ->
 	date = new Date req.params.date
@@ -64,7 +75,7 @@ app.get '/date/:type/:date', (req, res) ->
 	tomorrow = new Date req.params.date
 	tomorrow.setDate date.getDate! + 1
 	c = if req.params.type=='tender' then 'pcc' else 'award'
-	db.collection c .find {publish: { $gte: date, $lt: tomorrow }} .sort {price: -1} .toArray (err, docs) ->
+	db.collection c .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
 		res.send docs
 
 app.get '/month', (req, res) ->
@@ -77,7 +88,22 @@ app.get '/month', (req, res) ->
 		res.send monthes
 
 app.get '/dates', (req, res) ->
-	db.collection 'pcc' .aggregate { $group: { _id: '$publish'}}, (err, docs) ->
+	start = moment "20110101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
+	end = moment "20300101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
+	year = req.query.year
+	month = req.query.month
+	if month && month < 10
+		month = '0' + month
+	if year && month
+		start = moment year + month + "01 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
+		end = moment year + month + "31 23:59:59", 'YYYYMMDD hh:mm:ss' .toDate!
+	else if year 
+		start = moment year + "0101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
+		end = moment year + "1231 23:59:59", 'YYYYMMDD hh:mm:ss' .toDate!
+	db.collection 'pcc' .aggregate [
+		{ $match: {publish: {$gte: start, $lt: end}}},
+		{ $group: { _id: '$publish'}}
+		], (err, docs) ->
 		dates = _.pluck docs, '_id'
 		dates = dates.map (val) ->
 			moment val .zone '+0800' .format!
@@ -104,7 +130,7 @@ app.get '/rank/merchants/:order?/:year?', (req, res) ->
 	err, merchants <- db.collection 'pcc' .aggregate [
 	{ $unwind: "$award.merchants" }, 
 	{ $match: $match},
-	{ $group : {_id: "$award.merchants._id", merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
+	{ $group : {_id: {$ifNull: ["$award.merchants._id", "$award.merchants.name"]}, merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
 	$sort, 
 	{ $limit: 100}]
 	for i,m of merchants
@@ -170,6 +196,7 @@ app.get '/merchant/:id?', (req, res) ->
 	else
 		filter = {"award.merchants.name": id}
 	err, docs <- db.collection 'pcc' .find filter .toArray
+	docs = _.values(_.keyBy(docs, 'job_number'))
 	res.send docs
 
 app.get '/tender/:id/:unit?', (req, res) ->
@@ -204,7 +231,7 @@ app.get '/partner/:year?', (req, res) ->
 	db.collection 'award' .aggregate [
 		{$match: $match},
 		{$unwind: "$merchants"},
-		{$group: {_id: {unit: "$unit", merchant:"$merchants.name", merchant_id: "$merchants._id"}, price: {$sum: "$price"}, count: {$sum: 1}}},
+		{$group: {_id: {unit: "$unit", merchant:"$merchants.name", merchant_id: "$merchants._id"}, price: {$sum: {$add: ["$merchants.amount", {$ifNull: ["$price", 0]}]}}, count: {$sum: 1}}},
 		{$sort: {count: -1}},
 		{$limit: 50},
 		{$project: {unit: "$_id.unit", merchant: {_id: "$_id.merchant_id", name: "$_id.merchant"}, price: "$price", count: "$count"}}
@@ -215,11 +242,54 @@ app.get '/units/:id?', (req, res) ->
 	if req.params.id == 'all'
 		err, docs <- db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}
 		units = _.pluck docs, '_id'
+		units = units.filter (v) ->
+			v
+		units = units.map (row) ->
+			row.trim!
+		
+		units = units.filter (v, i, a) -> 
+			a.indexOf(v) === i
 		units.sort!
+		
 		res.send units	
 	else
 		parent = req.params.id
-		err, units <- db.collection 'unit' .find { parent: parent } .toArray
+		err, units <- db.collection 'unit' .aggregate [
+			{$match: {parent: parent}},
+			{$lookup:
+				{
+					from: 'unit',
+					localField: '_id',
+					foreignField: 'parent',
+					as: 'child'
+				}
+			},
+			{$lookup:
+				{
+					from: 'unit',
+					localField: 'parent',
+					foreignField: '_id',
+					as: 'parents'
+				}
+			},
+			{$lookup:
+				{
+					from: 'pcc',
+					localField: 'name',
+					foreignField: 'unit',
+					as: 'tenders'
+				}
+			},
+			{$project: {
+				_id: 1, 
+				parent_name: {$arrayElemAt: ["$parents.name", 0]},
+				parent: 1, 
+				name: 1, 
+				childs: {$size: "$child"}, 
+				tenders: {$size: "$tenders"}
+				}
+			}
+			] .toArray
 		units.sort (a, b) ->
 			a._id.replace('.', '') - b._id.replace('.', '')
 		res.send units
@@ -365,9 +435,12 @@ app.get '/month/:month', (req, res) ->
 			console.log err
 		res.send result
 app.get '/news', (req, res) ->
-	client = new Hackpad Hackpad.config.id, Hackpad.config.secret
-	err, pad <- client.export 'wIwtdBU33fU', 'latest', 'html'
-	res.send pad.match(/<\/h1>([^]+)<\/body>/)[1]
+	processor = unified()
+	.use(markdown, {commonmark: true})
+	.use(html)
+	fs.createReadStream './web/views/news.md'	
+	.pipe createStream(processor)
+	.pipe res
 	/*
 memwatch = require 'memwatch'
 hd = null
