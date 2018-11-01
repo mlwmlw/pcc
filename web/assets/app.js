@@ -1,7 +1,18 @@
 var app = angular.module('myapp', ['ui.bootstrap', 'ngRoute', 'ngReactGrid', 'angular-loading-bar']);
-app.config(function($interpolateProvider, $locationProvider) {
+app.config(function($interpolateProvider, $locationProvider, $httpProvider) {
     $interpolateProvider.startSymbol('[[');
     $interpolateProvider.endSymbol(']]');
+    var interceptor = function($q, $rootScope) {  
+        var service = {
+            'request': function(config) {
+                config.url = 'http://pcc.mlwmlw.org' + config.url;
+                return config;
+            }
+        };
+        return service;  
+    };
+
+    $httpProvider.interceptors.push(interceptor);
 });
 app.run(function($rootScope, $http, $window, $location) {
     $rootScope.desc = "貼近民眾的標案檢索平台";
@@ -15,6 +26,9 @@ app.run(function($rootScope, $http, $window, $location) {
         $window.location.href = '/search/' + keyword;
     }
 });
+app.controller('page', function($scope) {
+
+})
 app.filter('money', function() {
     return function(input) {
         input = input + "";
@@ -36,6 +50,7 @@ Number.prototype.numberFormat = function(c, d, t) {
         s = n < 0 ? "-" : "",
         i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c))),
         j = (j = i.length) > 3 ? j % 3 : 0;
+
     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
 };
 app.filter('gmt', function() {
@@ -77,9 +92,10 @@ app.service('grid', function($filter) {
                 amount = row.award && row.award.merchants && row.award.merchants.reduce(function(total, row) {
                     return total + row.amount;
                 }, 0);
-
-                if (amount || row.price)
-                    return '$' + (amount || row.price).numberFormat(0, '.', ',') //$filter('money')($filter('currency')(row.price));
+                if(!amount || amount < 0)
+                    amount = row.price
+                if(amount)
+                    return '$' + amount.numberFormat(0, '.', ',') //$filter('money')($filter('currency')(row.price));
                 else
                     return '不公開';
             }
