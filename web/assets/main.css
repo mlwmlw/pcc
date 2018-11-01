@@ -73,10 +73,12 @@ ul {
 }
 
 .intro-header {
+    
     padding-top: 278px;
     padding-bottom: 40px;
     text-align: center;
     color: #fff;
+    
     background: url(landing.jpg) no-repeat center center;
     background-size: cover;
     text-align: left;
