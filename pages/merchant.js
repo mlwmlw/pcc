@@ -72,11 +72,11 @@ export default class extends React.Component {
     return (
       <div className="starter-template">
         <Head>
-        <title>{title}</title>
+        <title>{title} - 開放政府標案</title>
         <meta property="og:description"
         content={desc}/>
         </Head>
-        <h1>鵬群營造工程有限公司 廠商得標案件檢索</h1>
+        <h1>{title} 檢索 </h1>
         <div className="form-group">
             <label className="control-label">統計年份</label>
             <div>
