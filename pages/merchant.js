@@ -6,6 +6,7 @@ import ReactPaginate from 'react-paginate';
 import Router from 'next/router'
 import dayjs from 'dayjs'
 import C3Chart from 'react-c3js';
+import Head from 'next/head';
 import 'c3/c3.css';
 export default class extends React.Component {
    constructor(props) {
@@ -35,28 +36,29 @@ export default class extends React.Component {
       data: {
         columns: [],
         type: 'pie',
-
       },
       legend: {
         position: 'right'
      }
    };
+  var desc = '近期得標案件：', title;
+  for (var i in data) {
+    if(i < 5)
+      desc += dayjs(data[i].publish).format('YYYY-MM-DD') + " " + data[i].name + "、";
+    title = data[i].award.merchants[0].name + '得標案件';
+    var d = new Date(data[i].publish);
+    if (year != '全部' && year != d.getFullYear())
+        continue;
+    if (data[i].unit == null)
+        continue;
 
-    for (var i in data) {
-      
-        var d = new Date(data[i].publish);
-        if (year != '全部' && year != d.getFullYear())
-            continue;
-        if (data[i].unit == null)
-            continue;
-
-        if (+data[i].price == 0)
-            continue;
-        var unit = data[i].unit.replace(/\s/g, '')
-        if (!units[unit])
-            units[unit] = 0;
-        units[unit] += +data[i].price;
-    }
+    if (+data[i].price == 0)
+        continue;
+    var unit = data[i].unit.replace(/\s/g, '')
+    if (!units[unit])
+        units[unit] = 0;
+    units[unit] += +data[i].price;
+  }
 
     var stats = [];
     for (var i in units) {
@@ -69,7 +71,12 @@ export default class extends React.Component {
 
     return (
       <div className="starter-template">
-        <h1>廠商列表</h1>
+        <Head>
+        <title>{title}</title>
+        <meta property="og:description"
+        content={desc}/>
+        </Head>
+        <h1>鵬群營造工程有限公司 廠商得標案件檢索</h1>
         <div className="form-group">
             <label className="control-label">統計年份</label>
             <div>
@@ -152,7 +159,7 @@ export default class extends React.Component {
           
           
           
-          pageSizeOptions={[100]}
+          pageSizeOptions={[500]}
           className="-striped -highlight"
         />
         
