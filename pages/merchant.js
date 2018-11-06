@@ -14,7 +14,7 @@ export default class extends React.Component {
       this.state = {year: "全部"}
    }
   static async getInitialProps({ req, query, params }) {
-    const res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + query.id);
+    const res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
     const data = await res.json()
     const years = ['全部'].concat(data.map(function(row) {
         var d = new Date(row.publish);
