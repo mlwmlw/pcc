@@ -170,3 +170,6 @@ ul {
     content: " ";
     display: table;
 }
+.ReactTable .rt-tbody .rt-td {
+    white-space: unset;
+}
