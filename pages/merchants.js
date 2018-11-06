@@ -5,6 +5,7 @@ import "react-table/react-table.css";
 import ReactPaginate from 'react-paginate';
 import Router from 'next/router'
 import _ from 'lodash'
+import Head from 'next/head';
 export default class extends React.Component {
    constructor(props) {
       super(props);
@@ -42,6 +43,11 @@ export default class extends React.Component {
       data = this.state.merchants;
     return (
       <div className="starter-template">
+       <Head>
+        <title>廠商列表</title>
+        <meta property="og:description"
+        content="開放標案廠商列表" />
+        </Head>
         <h1>廠商列表</h1>
         <ReactTable
           data={data}
