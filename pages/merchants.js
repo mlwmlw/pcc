@@ -45,6 +45,7 @@ export default class extends React.Component {
       <div className="starter-template">
        <Head>
         <title>廠商列表 - 開放政府標案</title>
+        
         <meta property="og:description"
         content="開放標案廠商列表" />
         </Head>

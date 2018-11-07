@@ -15,6 +15,7 @@ export default class MyDocument extends Document {
     return (
       <html>
         <Head>
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
         <script src="/static/lib/jquery/dist/jquery.min.js"></script>
         <script src="/static/lib/angular/angular.min.js"></script>
         <script src="/static/lib/react/react.min.js"></script>
@@ -45,6 +46,7 @@ export default class MyDocument extends Document {
             ga('send', 'pageview');
           `}}>
          </script>
+         
         </Head>
         <body  ng-app="myapp" ng-controller="page" className="adaw">
           <div className="navbar navbar-inverse navbar-fixed-top" role="navigation">
