@@ -19,12 +19,16 @@
     margin: 14px 0;
     overflow: hidden;
     white-space: nowrap;
-    width: 30em;
+    
     max-width: 37%;
     text-overflow: ellipsis;
     color: gray;
 }
-
+@media screen and (max-width: 992px) {
+    #keywords {
+        max-width:100%;
+    }
+}
 #keywords ul {
     margin: 0;
     display: inline;

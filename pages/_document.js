@@ -3,12 +3,14 @@
 
 // ./pages/_document.js
 import Document, { Head, Main, NextScript } from 'next/document'
-
+const fetch = require("node-fetch");
 
 export default class MyDocument extends Document {
   static async getInitialProps(ctx) {
     const initialProps = await Document.getInitialProps(ctx)
-    return { ...initialProps }
+    let keywords = await fetch("http://pcc.mlwmlw.org/api/keywords");
+    keywords = await keywords.json()
+    return { keywords, ...initialProps }
   }
 
   render() {
@@ -94,8 +96,8 @@ export default class MyDocument extends Document {
                     </li>
                 </ul>
 
-                <form className="navbar-form navbar-right" >
-                    <input type="text" className="form-control search" placeholder="標案搜尋（名稱、機構、廠商）" />
+                <form className="navbar-form navbar-right" ng-submit="search(keyword)">
+                    <input type="text" ng-model="keyword" className="form-control search" placeholder="標案搜尋（名稱、機構、廠商）" />
                     <button type="button" className="btn btn-primary">
                       <span className="glyphicon glyphicon-search"></span>
                     </button>
@@ -103,9 +105,9 @@ export default class MyDocument extends Document {
                 <div id="keywords" className="navbar-form navbar-right">
                     <span>熱門關鍵字：</span>
                     <ul>
-                        <li>
-                            <a href="/search/[[keyword]]" ></a>
-                        </li>
+                        {this.props.keywords.map( keyword => <li key={keyword}>
+                            <a href="/search/{{keyword}}">{keyword}</a>
+                        </li>)}
                     </ul>
                 </div>
             </div>
