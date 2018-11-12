@@ -145,7 +145,7 @@ export default class extends React.Component {
                 
                 if(row._original.award.url) {
                   title = "決標公告";
-                  url = row._original.url;
+                  url = row._original.award.url;
                 }
                 else {
                   let date = dayjs(row.publish).format('YYYYMMDD');
