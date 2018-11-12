@@ -46,7 +46,7 @@ export default class extends React.Component {
     if(i < 5)
       desc += dayjs(data[i].publish).format('YYYY-MM-DD') + " " + data[i].name + "、";
     for(var j in data[i].award.merchants) {
-      if(data[i].award.merchants[j]._id == this.props.id)
+      if(data[i].award.merchants[j]._id == this.props.id || data[i].award.merchants[j].name == this.props.id)
         title = data[i].award.merchants[j].name + '得標案件';
     }
     var d = new Date(data[i].publish);
