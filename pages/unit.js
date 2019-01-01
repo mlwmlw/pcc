@@ -138,7 +138,10 @@ export default class extends React.Component {
         <ReactTable
           data={data}
           columns={[
-            
+            {
+              Header: "單位",
+              accessor: "unit"
+            },
             {
               Header: "標案名稱",
               accessor: "name"
