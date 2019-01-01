@@ -75,7 +75,6 @@ export default class MyDocument extends Document {
                     <li className="dropdown"><a className="dropdown-toggle" href="javascript:void(0)">相關單位<span className="caret"></span></a>
                         <ul className="dropdown-menu" role="menu">
                             <li><a href="/units">機關組織檢索</a></li>
-                            <li><a href="/unit">標案檢索依機關</a></li>
                             <li><a href="/merchants">廠商檢索</a></li>
                             <li><a href="/merchant_type">廠商檢索依營業類型</a></li>
                         </ul>

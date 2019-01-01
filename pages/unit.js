@@ -12,6 +12,13 @@ import dayjs from 'dayjs'
 import C3Chart from 'react-c3js';
 import Head from 'next/head';
 import 'c3/c3.css';
+Number.prototype.format = function(n, x, s, c) {
+  var re = '\\d(?=(\\d{' + (x || 3) + '})+' + (n > 0 ? '\\D' : '$') + ')',
+      num = this.toFixed(Math.max(0, ~~n));
+
+  return (c ? num.replace('.', c) : num).replace(new RegExp(re, 'g'), '$&' + (s || ','));
+};
+
 export default class extends React.Component {
    constructor(props) {
       super(props);      
@@ -54,12 +61,14 @@ export default class extends React.Component {
   render() {
     let { data, unit, stats }= this.props;
    let title = unit + '標案檢索'
-   let desc = unit + "標案列表與得標排行榜"
+   let desc = unit + " 最新標案 ";
    var inc = 0;
-   for(var i in stats.slice(0, 5)) {
-    inc++;
-    desc += (inc) + ". " + stats[i].name + ' 得標金額：$' + stats[i].price + ' ';
-   }
+
+   data.slice(0, 5).map(function(row) {
+     
+    desc += dayjs(row.publish).format('YYYY-MM-DD') + " " + row.name + " 金額 $" + row.price.format(0, 3, ',') +"、";
+   })
+    
     return (
       <div className="starter-template">
         <Head>
@@ -129,10 +138,7 @@ export default class extends React.Component {
         <ReactTable
           data={data}
           columns={[
-            {
-              Header: "單位",
-              accessor: "unit"
-            },
+            
             {
               Header: "標案名稱",
               accessor: "name"
