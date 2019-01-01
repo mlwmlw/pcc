@@ -3,7 +3,12 @@ _ = require 'lodash'
 createStream = require 'unified-stream'
 markdown = require 'remark-parse'
 html = require 'remark-html'
-
+cors = require 'cors'
+corsOptions = {
+	origin: 'http://pcc.mlwmlw.org:3000',
+	optionsSuccessStatus: 200
+}
+qs = require 'qs'
 uri = require \./database
 app = express!
 express.static __dirname + '/public' |> app.use
@@ -24,16 +29,20 @@ getAll = !->
 		deferred.resolve docs
 	deferred.promise
 
+app.use cors(corsOptions)
+
 app.use compression!
 app.use (req, res, next) ->
 	res.setHeader 'Content-Type', 'application/json'
-	if /keyword|rank|units|month|categories|units_stats/.test req.path
+	if /merchants|keyword|rank|units|month|categories|units_stats/.test req.path
+		key = req.path;
+		key = key + "?" + qs.stringify(req.query);
 		send = res.send
 		res.send = (result) ->
-			cache.set req.path, result
-			cache.expire req.path, 3600*6
+			cache.set key, result
+			cache.expire key, 3600*6
 			send.call res, result
-		err, reply <- cache.get req.path
+		err, reply <- cache.get key
 		if reply
 			res.setHeader 'cache', 'HIT'
 			send.call res, reply
@@ -56,9 +65,14 @@ app.get '/keyword/:keyword', (req, res) ->
 	reg = new RegExp req.params.keyword
 	db.collection 'pcc' .find {$or: [{name: reg}, {unit: reg}, {'award.merchants.name': reg}]} .sort {publish: -1} .toArray (err, docs) ->
 		res.send docs
-		db.collection 'search_log' .insert {keyword: req.params.keyword, ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, ts: new Date!}, (err, res) ->
+		db.collection 'search_log' .insert {
+			keyword: req.params.keyword, 
+			ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+			ts: new Date!
+		}, (err, res) ->
 		if err
 			console.log err
+
 app.get '/keywords', (req, res) -> 
 	db.collection 'search_log' .aggregate [
 	{$match: {ts: {$gt: moment().subtract(3, 'months').toDate! }}},
@@ -96,10 +110,12 @@ app.get '/dates', (req, res) ->
 		month = '0' + month
 	if year && month
 		start = moment year + month + "01 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
-		end = moment year + month + "31 23:59:59", 'YYYYMMDD hh:mm:ss' .toDate!
+		end = moment year + month + "01", 'YYYYMMDD hh:mm:ss' .add 1, 'M' .toDate!
 	else if year 
 		start = moment year + "0101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
 		end = moment year + "1231 23:59:59", 'YYYYMMDD hh:mm:ss' .toDate!
+
+	console.log(start, end)
 	db.collection 'pcc' .aggregate [
 		{ $match: {publish: {$gte: start, $lt: end}}},
 		{ $group: { _id: '$publish'}}
@@ -176,12 +192,24 @@ app.get '/merchant_type/:id?', (req, res) ->
 
 app.get '/merchants/:id?', (req, res) ->
 	id = req.params.id
+	query = req.query.filter && JSON.parse(req.query.filter)
+	if !query
+		query = []
 	filter = {}
 	if /\d+/.test id 
 		filter = {_id: id} 
 	else if id
 		filter = {name: id}
+	for i in query
+		filter[i.id] = new RegExp(i.value)
+	
 	err, merchants <- db.collection 'merchants' .find filter, {name: 1, address: 1, phone: 1, org: 1, _id: 1} .toArray
+	if(req.query.count) 
+		res.send merchants.length
+	page = req.query.page
+	if page 
+		page -= 1
+		merchants = merchants.slice(page * 100, page * 100 + 100)
 	if id 
 		res.send merchants[0]
 	else
@@ -197,6 +225,8 @@ app.get '/merchant/:id?', (req, res) ->
 		filter = {"award.merchants.name": id}
 	err, docs <- db.collection 'pcc' .find filter .toArray
 	docs = _.values(_.keyBy(docs, 'job_number'))
+	docs.sort (a, b) ->
+		return b.publish - a.publish
 	res.send docs
 
 app.get '/tender/:id/:unit?', (req, res) ->
@@ -207,6 +237,7 @@ app.get '/tender/:id/:unit?', (req, res) ->
 	filter = {id: id}
 	if unit
 		filter.unit = new RegExp(unit - /\s+/g)
+
 	err, tenders <- db.collection 'pcc' .find filter .sort {publish: -1} .toArray
 	res.send tenders
 
@@ -216,7 +247,7 @@ app.get '/rank/tender/:month?', (req, res) ->
 	start = moment m .startOf 'month' .toDate!
 	end = moment m .endOf 'month' .toDate!
 	err, tenders <- db.collection 'pcc' .find {publish: {$gte: start, $lte: end}} .sort {price: -1} .limit 100 .toArray
-	tenders = _.indexBy tenders, 'id'
+	tenders = _.keyBy tenders, 'id'
 	tenders = _.toArray tenders
 	tenders.sort (a, b) ->
 		b.price - a.price
@@ -239,7 +270,7 @@ app.get '/partner/:year?', (req, res) ->
 		res.send docs
 
 app.get '/units/:id?', (req, res) ->
-	if req.params.id == 'all'
+	if req.params.id == 'all' 
 		err, docs <- db.collection 'pcc' .aggregate { $group: { _id: '$unit'}}
 		units = _.map docs, '_id'
 		units = units.filter (v) ->
@@ -258,10 +289,21 @@ app.get '/units/:id?', (req, res) ->
 			{$match: {parent: parent}},
 			{$lookup:
 				{
+					as: 'child',
 					from: 'unit',
-					localField: '_id',
-					foreignField: 'parent',
-					as: 'child'
+					let: { 
+						unit: "$_id"
+					},
+					pipeline: [{
+						$match: {
+							$expr: {
+								$eq: [ "$parent",  "$$unit" ]
+							}
+						},
+					}, {
+						$group: {_id: 1, count: {$sum: 1}}
+					}]
+
 				}
 			},
 			{$lookup:
@@ -274,34 +316,56 @@ app.get '/units/:id?', (req, res) ->
 			},
 			{$lookup:
 				{
+					as: 'tenders',
 					from: 'pcc',
-					localField: 'name',
-					foreignField: 'unit',
-					as: 'tenders'
+					let: { 
+						unit: "$name",
+						job_number: "$job_number"
+					},
+					pipeline: [{
+						$match: {
+							$expr: {
+								$eq: [ "$unit",  "$$unit" ]
+							}
+						},
+					}, {
+						$group: {_id: "$job_number"}
+					}, {
+						$group: {_id: 1, count: {$sum: 1}}
+					}]
+
 				}
 			},
-			{$project: {
+			{$project: 
+				{
 				_id: 1, 
 				parent_name: {$arrayElemAt: ["$parents.name", 0]},
 				parent: 1, 
 				name: 1, 
-				childs: {$size: "$child"}, 
-				tenders: {$size: "$tenders"}
+				childs: {$sum: "$child.count"}, 
+				tenders: {$sum: "$tenders.count"}
 				}
 			}
-			] .toArray
+		] .toArray!
 		units.sort (a, b) ->
 			a._id.replace('.', '') - b._id.replace('.', '')
 		res.send units
 
 app.get '/unit/:unit/:month?', (req, res) ->
-	filter = { unit: {"$regex": "^" + req.params.unit + ".{0,1}$"}}
+	unit = req.params.unit.replace(/\s+/g, '')
+	filter = {}
 	if req.params.month
 		start = new Date req.params.month + "-01"
 		end = new Date req.params.month + "-01"
 		end.setMonth end.getMonth!+1 
 		filter.publish = {$gte: start, $lt: end}
-	db.collection 'pcc' .find filter .toArray (err, docs) ->
+	err, units <- db.collection 'unit' .find {parent: unit} .toArray
+	units = _.map units, 'name'
+	units = [].concat(units).concat([unit])
+	filter.unit = {$in: units}
+	db.collection 'pcc' .find filter .sort {publish: -1} .limit 2000 .toArray (err, docs) ->
+		
+		docs = _.values(_.keyBy(docs, 'job_number'))
 		docs.sort (a, b) ->
 			return b.publish - a.publish
 		res.send docs
