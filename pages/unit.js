@@ -64,7 +64,10 @@ export default class extends React.Component {
     let title = unit.name + '標案檢索'
     let desc = unit.name + " 最新標案 ";
     data.slice(0, 5).map(function(row) {  
-    desc += dayjs(row.publish).format('YYYY-MM-DD') + " " + row.name + " 金額 $" + row.price.format(0, 3, ',') +"、";
+      desc += dayjs(row.publish).format('YYYY-MM-DD') + " " + row.name;
+      if(row.price)
+        desc += " 金額 $" + row.price.format(0, 3, ',') 
+      desc += "、";
     })
     let more = null;
     if(unit.parent.name)
