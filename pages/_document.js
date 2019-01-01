@@ -105,7 +105,7 @@ export default class MyDocument extends Document {
                     <span>熱門關鍵字：</span>
                     <ul>
                         {this.props.keywords.map( keyword => <li key={keyword}>
-                            <a href="/search/{{keyword}}">{keyword}</a>
+                            <a href={"/search/" + keyword}>{keyword}</a>
                         </li>)}
                     </ul>
                 </div>

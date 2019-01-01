@@ -9,7 +9,7 @@
     "web": "cd web ; pm2 start index.js --node-args=\"--harmony\" --watch --name=\"pcc-web\"",
     "dev": "next",
     "build": "next build",
-    "next": "next start -p 8890",
+    "next": "NODE_ENV=production node next.js -p 8890",
     "next-pm2": "pm2 start npm --name 'next' -- run next"
   },
   "repository": {
