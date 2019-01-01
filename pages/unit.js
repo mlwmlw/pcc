@@ -25,7 +25,8 @@ export default class extends React.Component {
       this.state = {year: null}
    }
   static async getInitialProps({ req, query, params }) {
-
+    const unit_res = await fetch("http://pcc.mlwmlw.org/api/unit_info/" + encodeURIComponent(query.unit));
+    const unit = await unit_res.json()
     const res = await fetch("http://pcc.mlwmlw.org/api/unit/" + encodeURIComponent(query.unit));
     const data = await res.json()
 
@@ -55,20 +56,19 @@ export default class extends React.Component {
         return b.price - a.price;
     });
     
-    return { stats: stats.slice(0, 13), data, unit: query.unit };
+    return { stats: stats.slice(0, 13), data, unit: unit };
   }
  
   render() {
     let { data, unit, stats }= this.props;
-   let title = unit + '標案檢索'
-   let desc = unit + " 最新標案 ";
-   var inc = 0;
-
-   data.slice(0, 5).map(function(row) {
-     
+    let title = unit.name + '標案檢索'
+    let desc = unit.name + " 最新標案 ";
+    data.slice(0, 5).map(function(row) {  
     desc += dayjs(row.publish).format('YYYY-MM-DD') + " " + row.name + " 金額 $" + row.price.format(0, 3, ',') +"、";
-   })
-    
+    })
+    let more = null;
+    if(unit.parent.name)
+      more = <h3>查詢更多 <a href={"/unit/" + unit.parent.name}>{unit.parent.name}相關標案</a> <a href={"/units/#!/?parent=" + unit.parent._id}>{unit.parent.name}相關機關</a> </h3>
     return (
       <div className="starter-template">
         <Head>
@@ -77,8 +77,8 @@ export default class extends React.Component {
         content={desc}/>
         </Head>
         <h1>{title}</h1>
-
-        <h2>累積得標金額廠商排行</h2>
+        {more}
+        <b>累積得標金額廠商排行</b>
         <div style={{width: "100%", height: "400px"}}>
         <ResponsiveBar data={stats}
 
@@ -140,7 +140,12 @@ export default class extends React.Component {
           columns={[
             {
               Header: "單位",
-              accessor: "unit"
+              accessor: "unit",
+              Cell: ({ row }) => {
+                return <a href={"/unit/" + row.unit}>
+                  {row.unit}
+                </a>
+              }
             },
             {
               Header: "標案名稱",
