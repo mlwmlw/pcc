@@ -77,6 +77,7 @@ export default class extends React.Component {
     }
     
     let stats = this.getStats(data, units);
+    
     /*
 <div className="form-group">
             <label className="control-label">統計年份</label>
@@ -119,13 +120,14 @@ export default class extends React.Component {
           indexBy="year"
           keys={[].concat.apply([], Object.keys(units).map(function(i) {
             return Object.keys(units[i]);
-          }))}
+          })).filter((v, i, a) => a.indexOf(v) === i) }
           margin={{
               "top": 30,
               "right": 120,
               "bottom": 100,
               "left": 0
           }}
+          
           sortByValue={true}
           innerRadius={0.5}
           padAngle={0.7}
