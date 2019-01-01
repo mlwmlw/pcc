@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/mlwmlw/pcc",
   "dependencies": {
+    "@nivo/bar": "^0.52.0",
+    "@nivo/pie": "^0.52.0",
     "@zeit/next-css": "^1.0.1",
     "cheerio": "^0.22.0",
     "co-body": "~1.0.0",

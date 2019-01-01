@@ -99,6 +99,7 @@ export default class extends React.Component {
             Router.push('/merchants?page=' + (pageIndex + 1))
             this.setState({page: pageIndex})
           }}
+          layout="horizontal"
           filtered={this.state.filtered}
           page={this.state.page || this.props.page}
           pages={this.state.pages || this.props.pages}

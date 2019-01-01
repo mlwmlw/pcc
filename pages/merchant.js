@@ -1,5 +1,9 @@
 const fetch = require("node-fetch");
 import React from "react";
+
+
+import { ResponsiveBar } from '@nivo/bar'
+
 import ReactTable from "react-table";
 import "react-table/react-table.css";
 import ReactPaginate from 'react-paginate';
@@ -11,7 +15,7 @@ import 'c3/c3.css';
 export default class extends React.Component {
    constructor(props) {
       super(props);      
-      this.state = {year: "全部"}
+      this.state = {year: null}
    }
   static async getInitialProps({ req, query, params }) {
     const res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
@@ -28,50 +32,61 @@ export default class extends React.Component {
   changeYear(event) {
     this.setState({year: event.target.value});
   }
-  render() {
-    let { data, years = []}= this.props;
-    let year = this.state.year;
-    var units = {};
-    const c3 = {
-      data: {
-        columns: [],
-        type: 'pie',
-      },
-      legend: {
-        position: 'right'
-     }
-   };
-  var desc = '近期得標案件：', title;
-  for (var i in data) {
-    if(i < 5)
-      desc += dayjs(data[i].publish).format('YYYY-MM-DD') + " " + data[i].name + "、";
-    for(var j in data[i].award.merchants) {
-      if(data[i].award.merchants[j]._id == this.props.id || data[i].award.merchants[j].name == this.props.id)
-        title = data[i].award.merchants[j].name + '得標案件';
-    }
-    var d = new Date(data[i].publish);
-    if (year != '全部' && year != d.getFullYear())
-        continue;
-    if (data[i].unit == null)
-        continue;
-
-    if (+data[i].price == 0)
-        continue;
-    var unit = data[i].unit.replace(/\s/g, '')
-    if (!units[unit])
-        units[unit] = 0;
-    units[unit] += +data[i].price;
-  }
-
+  getStats(data, units) {
+    
     var stats = [];
-    for (var i in units) {
-        stats.push([i, units[i]]);
+    for (var year in units) {
+      var row = units[year]
+      row.year = year;
+      stats.push(row);
     }
     stats.sort(function(a, b) {
         return b[1] - a[1];
     });
-    c3.data.columns = stats.slice(0, 30)
+    return stats;
+  }
+  
+  render() {
+    let { data, years = []}= this.props;
+    let year = this.state.year || years[1];
 
+    
+    var units = {};
+    var desc = '近期得標案件：', title;
+    for (var i in data) {
+      if(i < 5)
+        desc += dayjs(data[i].publish).format('YYYY-MM-DD') + " " + data[i].name + "、";
+      for(var j in data[i].award.merchants) {
+        if(data[i].award.merchants[j]._id == this.props.id || data[i].award.merchants[j].name == this.props.id)
+          title = data[i].award.merchants[j].name + '得標案件';
+      }
+      var d = new Date(data[i].publish);
+      //if (year != '全部' && year != d.getFullYear())
+      //    continue;
+      if (data[i].unit == null)
+          continue;
+
+      if (+data[i].price == 0)
+          continue;
+        var unit = data[i].unit.replace(/\s/g, '')
+        if (!units[d.getFullYear()])
+            units[d.getFullYear()] = {};
+        if(!units[d.getFullYear()][unit])
+          units[d.getFullYear()][unit] = 0;
+        units[d.getFullYear()][unit] += +data[i].price;
+    }
+    
+    let stats = this.getStats(data, units);
+    /*
+<div className="form-group">
+            <label className="control-label">統計年份</label>
+            <div>
+                <select className="form-control" value={year} onChange={event => this.changeYear(event)}>
+                {years.map((row, i) => <option key={row}>{row}</option>)}
+                </select>
+            </div>
+        </div>
+    */
     return (
       <div className="starter-template">
         <Head>
@@ -80,22 +95,80 @@ export default class extends React.Component {
         content={desc}/>
         </Head>
         <h1>{title} 檢索 </h1>
-        <div className="form-group">
-            <label className="control-label">統計年份</label>
-            <div>
-                <select className="form-control" onChange={event => this.changeYear(event)}>
-                {years.map(row => <option key={row}>{row}</option>)}
-                </select>
-            </div>
+        
+        
+        <div style={{width: "100%", height: "400px"}}>
+        <ResponsiveBar data={stats/*.slice(0, 10).map(function(row, i) {
+            return {
+              id: row[0],
+              label: row[0],
+              value: row[1],
+              index: i,
+              year: "2018"
+            }
+          })*/}
+          axisBottom={{
+            "tickSize": 5,
+            "tickPadding": 5,
+            "tickRotation": 45,
+            
+            "legendPosition": "middle",
+            "legendOffset": 32
+          }}
+          indexBy="year"
+          keys={Object.keys(units['2018'])}
+          margin={{
+              "top": 30,
+              "right": 120,
+              "bottom": 100,
+              "left": 0
+          }}
+          sortByValue={true}
+          innerRadius={0.5}
+          padAngle={0.7}
+          cornerRadius={3}
+          colors="paired"
+          colorBy="id"
+          borderWidth={1}
+          borderColor="inherit:darker(0.2)"
+          animate={true}
+          motionStiffness={90}
+          motionDamping={15}
+          legends={[
+            {
+                "dataFrom": "keys",
+                "anchor": "bottom-right",
+                "direction": "column",
+                "translateX": 120,
+                "itemWidth": 120,
+                "itemHeight": 14,
+                "itemsSpacing": 2,
+                "itemTextColor": "#999",
+                "symbolSize": 14,
+                "symbolShape": "circle",
+                "effects": [
+                    {
+                        "on": "hover",
+                        "style": {
+                            "itemTextColor": "#000"
+                        }
+                    }
+                ]
+            }
+          ]}
+        />
         </div>
-
-        <C3Chart unloadBeforeLoad {...c3} />
         <ReactTable
           data={data}
           columns={[
             {
               Header: "單位",
-              accessor: "unit"
+              accessor: "unit",
+              Cell: ({ row }) => {
+                return <a href={"/unit/" + row.unit}>
+                  {row.unit}
+                </a>
+              }
             },
             {
               Header: "標案名稱",
@@ -162,8 +235,8 @@ export default class extends React.Component {
          
           
           
-          
-          pageSizeOptions={[500]}
+          defaultPageSize={100}
+          pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />
         
