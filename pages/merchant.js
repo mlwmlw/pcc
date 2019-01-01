@@ -87,6 +87,7 @@ export default class extends React.Component {
             </div>
         </div>
     */
+   
     return (
       <div className="starter-template">
         <Head>
@@ -116,7 +117,9 @@ export default class extends React.Component {
             "legendOffset": 32
           }}
           indexBy="year"
-          keys={Object.keys(units['2018'])}
+          keys={[].concat.apply([], Object.keys(units).map(function(i) {
+            return Object.keys(units[i]);
+          }))}
           margin={{
               "top": 30,
               "right": 120,
