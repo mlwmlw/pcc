@@ -237,6 +237,21 @@ app.get '/partner/:year?', (req, res) ->
 		{$project: {unit: "$_id.unit", merchant: {_id: "$_id.merchant_id", name: "$_id.merchant"}, price: "$price", count: "$count"}}
 	], (err, docs) ->
 		res.send docs
+app.get '/unit_info/:id?', (req, res) ->
+	unit = req.params.id
+	err, docs <- db.collection 'unit' .aggregate [
+		{$match: {$or: [{name: unit}, {_id: unit}]}},
+		{$lookup: {
+			as: 'parent',
+			from: 'unit',
+			localField: "parent",
+			foreignField: "_id"
+		}}
+	]
+	if docs.length > 0
+		res.send docs[0]
+	else
+		res.send {}
 
 app.get '/units/:id?', (req, res) ->
 	if req.params.id == 'all'
