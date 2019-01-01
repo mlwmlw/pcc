@@ -71,7 +71,16 @@ export default class extends React.Component {
     })
     let more = null;
     if(unit.parent.name)
-      more = <h3>查詢更多 <a href={"/unit/" + unit.parent.name}>{unit.parent.name}相關標案</a> <a href={"/units/#!/?parent=" + unit.parent._id}>{unit.parent.name}相關機關</a> </h3>
+      more = [
+        <span>查詢更多</span>,
+        <span> </span>,
+        <a href={"/unit/" + unit.parent.name}>{unit.parent.name}相關標案</a>, 
+        <span> </span>,
+        <a href={"/units/#!/?parent=" + unit.parent._id}>{unit.parent.name}子機關</a>,
+        <span> </span>
+      ]
+    if(unit.childs.length > 0)
+      more.push(<a href={"/units/#!/?parent=" + unit._id}>{unit.name}相關機關</a>)
     return (
       <div className="starter-template">
         <Head>
@@ -80,7 +89,7 @@ export default class extends React.Component {
         content={desc}/>
         </Head>
         <h1>{title}</h1>
-        {more}
+        <h3>{more}</h3>
         <b>累積得標金額廠商排行</b>
         <div style={{width: "100%", height: "400px"}}>
         <ResponsiveBar data={stats}
