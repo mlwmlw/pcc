@@ -76,11 +76,11 @@ export default class extends React.Component {
         <span> </span>,
         <a href={"/unit/" + unit.parent.name}>{unit.parent.name}相關標案</a>, 
         <span> </span>,
-        <a href={"/units/#!/?parent=" + unit.parent._id}>{unit.parent.name}子機關</a>,
+        <a href={"/units/#!/?parent=" + unit.parent._id}>{unit.parent.name}相關機關</a>,
         <span> </span>
       ]
     if(unit.childs.length > 0)
-      more.push(<a href={"/units/#!/?parent=" + unit._id}>{unit.name}相關機關</a>)
+      more.push(<a href={"/units/#!/?parent=" + unit._id}>{unit.name}子機關</a>)
     return (
       <div className="starter-template">
         <Head>
