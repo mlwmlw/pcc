@@ -69,7 +69,7 @@ export default class extends React.Component {
         desc += " 金額 $" + row.price.format(0, 3, ',') 
       desc += "、";
     })
-    let more = null;
+    let more = [];
     if(unit.parent.name)
       more = [
         <span>查詢更多</span>,
