@@ -5,6 +5,8 @@ app.config(function($interpolateProvider, $locationProvider, $httpProvider) {
     var interceptor = function($q, $rootScope) {  
         var service = {
             'request': function(config) {
+								if(/template/.test(config.url))
+									return config;
                 config.url = 'http://pcc.mlwmlw.org' + config.url;
                 return config;
             }
