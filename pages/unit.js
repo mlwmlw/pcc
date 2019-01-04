@@ -70,7 +70,7 @@ export default class extends React.Component {
       desc += "、";
     })
     let more = [];
-    if(unit.parent.name)
+    if(unit.parent && unit.parent.name)
       more = [
         <span key={1}>查詢更多</span>,
         <span key={2}> </span>,
@@ -79,7 +79,7 @@ export default class extends React.Component {
         <a key={5} href={"/units/#!/?parent=" + unit.parent._id}>{unit.parent.name}相關機關</a>,
         <span key={6}> </span>
       ]
-    if(unit.childs.length > 0)
+    if(unit.childs && unit.childs.length > 0)
       more.push(<a key={7} href={"/units/#!/?parent=" + unit._id}>{unit.name}子機關</a>)
     return (
       <div className="starter-template">
