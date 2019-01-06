@@ -21,9 +21,14 @@ export default class extends React.Component {
       this.state = {year: null}
    }
   static async getInitialProps({ req, query, params }) {
-    const unit_res = await fetch("http://pcc.mlwmlw.org/api/unit_info/" + encodeURIComponent(query.parent));
-    const unit = await unit_res.json()
-    const res = await fetch("http://pcc.mlwmlw.org/api/units/" + encodeURIComponent(query.parent));
+    let parent = query.parent || '';
+    let unit = {name: '所有'};
+    if(parent) {
+      const unit_res = await fetch("http://pcc.mlwmlw.org/api/unit_info/" + encodeURIComponent(parent));
+      unit = await unit_res.json()
+    }
+    
+    const res = await fetch("http://pcc.mlwmlw.org/api/units/" + encodeURIComponent(parent));
     const units = await res.json()
 
     units.sort(function(a, b) {
@@ -36,7 +41,9 @@ export default class extends React.Component {
     let { units, unit }= this.props;
     let title = unit.name + '機關檢索'
     let desc = unit.name + " 相關機關列表";
-    
+    var link = null;
+    if(unit.name != '所有')
+      link = <h3><a href={"/unit/" + unit.name} target="_blank">{unit.name} 標案查詢</a></h3>
     let more = [];
     
     return (
@@ -47,7 +54,7 @@ export default class extends React.Component {
         content={desc}/>
         </Head>
         <h1>{title}</h1>
-        <h3><a href={"/unit/" + unit.name} target="_blank">{unit.name} 標案查詢</a></h3>
+        {link}
         <ReactTable
           data={units}
           columns={[
