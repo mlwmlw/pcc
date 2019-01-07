@@ -53,13 +53,15 @@ export default class extends React.Component {
     
     var units = {};
     var desc = '近期得標案件：', title;
+		var merchant = {name: '', _id: ''};
     for (var i in data) {
       if(i < 5)
         desc += dayjs(data[i].publish).format('YYYY-MM-DD') + " " + data[i].name + "、";
       for(var j in data[i].award.merchants) {
         if(data[i].award.merchants[j]._id == this.props.id || data[i].award.merchants[j].name == this.props.id)
-          title = data[i].award.merchants[j].name + '得標案件';
+					merchant = data[i].award.merchants[j];
       }
+			title = merchant.name + '得標案件';
       var d = new Date(data[i].publish);
       //if (year != '全部' && year != d.getFullYear())
       //    continue;
@@ -96,19 +98,11 @@ export default class extends React.Component {
         <meta property="og:description"
         content={desc}/>
         </Head>
-        <h1>{title} 檢索 </h1>
+        <h1><a href={"https://company.g0v.ronny.tw/index/search?q=" + merchant._id} target="_blank">{merchant.name}</a>得標案件 檢索</h1>
         
         
         <div style={{width: "100%", height: "400px"}}>
-        <ResponsiveBar data={stats/*.slice(0, 10).map(function(row, i) {
-            return {
-              id: row[0],
-              label: row[0],
-              value: row[1],
-              index: i,
-              year: "2018"
-            }
-          })*/}
+        <ResponsiveBar data={stats}
           axisBottom={{
             "tickSize": 5,
             "tickPadding": 5,
@@ -120,7 +114,7 @@ export default class extends React.Component {
           indexBy="year"
           keys={[].concat.apply([], Object.keys(units).map(function(i) {
             return Object.keys(units[i]);
-          })).filter((v, i, a) => a.indexOf(v) === i) }
+          })).filter((v, i, a) => a.indexOf(v) === i).filter((v, i) => v != 'year') }
           margin={{
               "top": 30,
               "right": 120,
