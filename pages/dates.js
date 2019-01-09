@@ -26,7 +26,7 @@ export default class extends React.Component {
          </Head>
          <h1>{this.props.year} 年 {this.props.month} 月標案</h1>
           <ul>
-          {this.props.dates.map(d => <li key={d.date}><a target="_blank" href={"/dates/tender/" + d.date }>檢視 {d.date} 標案 </a></li> )}
+          {this.props.dates.map(d => <li key={d.date}><a target="_blank" href={"/date/tender/" + d.date }>檢視 {d.date} 標案 </a></li> )}
           </ul>
        </div>
      )

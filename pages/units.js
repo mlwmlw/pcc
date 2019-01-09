@@ -71,7 +71,7 @@ export default class extends React.Component {
               Header: "子機關數",
               accessor: 'childs',
               Cell: ({ row }) => {                
-               return row.childs ? <a target="_blank" href={"/units/" + row._id}>
+               return row.childs ? <a href={"/units/" + row._id}>
                  {row.childs}
                </a>: '無'
              }
@@ -84,9 +84,9 @@ export default class extends React.Component {
               Header: "檢索標案",
               accessor: 'tenders',
               Cell: ({ row }) => {                
-                return row.tenders ? <a  target="_blank" href={"/unit/" + encodeURIComponent(row.name)}>
+                return <a href={"/unit/" + encodeURIComponent(row.name)}>
                   查詢{row.name}標案
-                </a>: ''
+                </a>
               }
             }
           ]}
