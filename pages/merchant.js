@@ -20,13 +20,15 @@ export default class extends React.Component {
   static async getInitialProps({ req, query, params }) {
     const res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
     const data = await res.json()
+    const lookalike = await fetch("http://pcc.mlwmlw.org/api/lookalike/" + encodeURIComponent(query.id));
+    const merchants = await lookalike.json()
     const years = ['全部'].concat(data.map(function(row) {
         var d = new Date(row.publish);
         return d.getFullYear()
     }).filter(function onlyUnique(value, index, self) {
         return self.indexOf(value) === index;
     }).sort().reverse());
-    return { data, years, id: query.id };
+    return { data, years, id: query.id, merchants };
   }
  
   changeYear(event) {
@@ -47,7 +49,7 @@ export default class extends React.Component {
   }
   
   render() {
-    let { data, years = []}= this.props;
+    let { data, years = [], merchants }= this.props;
     let year = this.state.year || years[1];
 
     
@@ -157,6 +159,7 @@ export default class extends React.Component {
           ]}
         />
         </div>
+				<h3>相關得標案件</h3>
         <ReactTable
           data={data}
           columns={[
@@ -234,11 +237,52 @@ export default class extends React.Component {
          
           
           
-          defaultPageSize={100}
+          defaultPageSize={Math.min(100, data.length)}
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />
-        
+				<h3>查看更多相似廠商</h3>
+ 				<ReactTable
+          data={merchants}
+          columns={[
+            {
+              Header: "單位",
+              accessor: "name"
+            },
+						/*
+						{
+              Header: "共同投標標案數",
+              accessor: "count",
+            },
+						{
+              Header: "共同投標得標數",
+              accessor: "award",
+            },
+						{
+              Header: "得標率",
+              accessor: "award",
+							Cell: ({ row }) => {
+                return <span>{Math.round(row.award/row.count * 100)}%</span>
+             }
+            },
+						*/
+						{
+              Header: "單位",
+              accessor: "_id",
+              Cell: ({ row }) => {
+                return <a href={"/merchants/" + row._id}>
+									查看相關標案
+                </a>
+              }
+            },
+           ]} 
+         
+          
+          
+          defaultPageSize={30}
+          pageSizeOptions={[100, 500]}
+          className="-striped -highlight"
+        />       
         
       </div>
     );
