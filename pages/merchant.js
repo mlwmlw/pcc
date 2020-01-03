@@ -2,15 +2,45 @@ const fetch = require("node-fetch");
 import React from "react";
 
 import { ResponsiveBar } from '@nivo/bar'
+import { ResponsivePie } from '@nivo/pie'
+import { ResponsiveLine } from '@nivo/line'
 
 import ReactTable from "react-table";
 import "react-table/react-table.css";
-import ReactPaginate from 'react-paginate';
-import Router from 'next/router'
 import dayjs from 'dayjs'
-import C3Chart from 'react-c3js';
 import Head from 'next/head';
 import 'c3/c3.css';
+function chart(data) {
+  
+  return (
+    <ResponsiveLine
+      data={data}
+      margin={{
+        top: 30,
+        right: 50,
+        bottom: 50,
+        left: 100
+      }}
+      yScale={{
+        type: "linear",
+        
+      }}
+      axisLeft={{ format: v => new Intl.NumberFormat('zh-TW', { notation: "compact" }).format(v) }}
+      
+      
+      xScale={{
+        type: "point",
+        //precision: "year",
+        //format: "%Y"
+        //format: "native"
+      }}
+      axisBottom={{
+        //format: "%Y"
+      }}
+    />
+  );
+}
+
 export default class extends React.Component {
    constructor(props) {
       super(props);      
@@ -51,8 +81,6 @@ export default class extends React.Component {
     let { data, years = [], merchants }= this.props;
     let year = this.state.year || years[1];
 
-    
-    var units = {};
     var desc = '近期得標案件：', title;
 		var merchant = {name: '', _id: ''};
     for (var i in data) {
@@ -63,35 +91,46 @@ export default class extends React.Component {
 					merchant = data[i].award.merchants[j];
       }
 			title = merchant.name + '得標案件';
-      var d = new Date(data[i].publish);
-      //if (year != '全部' && year != d.getFullYear())
-      //    continue;
-      if (data[i].unit == null)
-          continue;
-
-      if (+data[i].price == 0)
-          continue;
-        var unit = data[i].unit.replace(/\s/g, '')
-        if (!units[d.getFullYear()])
-            units[d.getFullYear()] = {};
-        if(!units[d.getFullYear()][unit])
-          units[d.getFullYear()][unit] = 0;
-        units[d.getFullYear()][unit] += +data[i].price;
+      
     }
+    let stats = data.reduce(function(total, row) {
+      if(!row.unit)
+        return total;
+      var unit = row.unit.replace(/\s/g, '')
+      if(!total[unit])
+        total[unit] = 0;
+      total[unit] += +row.price;
+      return total;
+    }, {});
     
-    let stats = this.getStats(data, units);
     
-    /*
-<div className="form-group">
-            <label className="control-label">統計年份</label>
-            <div>
-                <select className="form-control" value={year} onChange={event => this.changeYear(event)}>
-                {years.map((row, i) => <option key={row}>{row}</option>)}
-                </select>
-            </div>
-        </div>
-    */
-   
+    let line_data = data.reduce(function(total, row) {
+      var d = new Date(row.publish);
+      if(!total[d.getFullYear()])
+          total[d.getFullYear()] = 0;
+      total[d.getFullYear()] += +row.price;
+      return total;
+    }, {});
+    
+    stats = Object.keys(stats).map((key) => {
+      return {
+        id: key,
+        label: key,
+        value: stats[key]
+      }
+    })
+    
+    let line = [{
+      id: "spend", 
+      data: Object.keys(line_data).map(function(key) {
+        return {
+          x: key,
+          y: line_data[key]
+        }
+      })
+    }]
+    
+    
     return (
       <div className="starter-template">
         <Head>
@@ -103,9 +142,11 @@ export default class extends React.Component {
         </Head>
         <h1><a href={"https://company.g0v.ronny.tw/index/search?q=" + merchant._id} target="_blank">{merchant.name}</a>得標案件 檢索</h1>
         
-        
-        <div style={{width: "100%", height: "400px"}}>
-        <ResponsiveBar data={stats}
+        <div style={{width: "100%", height: line[0].data.length > 1 ? "400px": 0}}>
+          {chart(line)}
+        </div>;
+        <div style={{width: "100%", height: stats.length > 1 ? "400px": 0}}>
+        <ResponsivePie data={stats}
           axisBottom={{
             "tickSize": 5,
             "tickPadding": 5,
@@ -115,9 +156,7 @@ export default class extends React.Component {
             "legendOffset": 32
           }}
           indexBy="year"
-          keys={[].concat.apply([], Object.keys(units).map(function(i) {
-            return Object.keys(units[i]);
-          })).filter((v, i, a) => a.indexOf(v) === i).filter((v, i) => v != 'year') }
+          
           margin={{
               "top": 30,
               "right": 120,
@@ -160,6 +199,7 @@ export default class extends React.Component {
           ]}
         />
         </div>
+        
 				<h3>相關得標案件</h3>
         <ReactTable
           data={data}
@@ -260,9 +300,6 @@ export default class extends React.Component {
               }
             },
            ]} 
-         
-          
-          
           defaultPageSize={Math.min(30, merchants.length)}
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
