@@ -1,7 +1,6 @@
 const fetch = require("node-fetch");
 import React from "react";
 
-
 import { ResponsiveBar } from '@nivo/bar'
 
 import ReactTable from "react-table";
@@ -97,6 +96,8 @@ export default class extends React.Component {
       <div className="starter-template">
         <Head>
         <title>{title} - 開放政府標案</title>
+        <meta name="description"
+        content={desc}/>
         <meta property="og:description"
         content={desc}/>
         </Head>
@@ -246,28 +247,11 @@ export default class extends React.Component {
           data={merchants}
           columns={[
             {
-              Header: "單位",
+              Header: "廠商名稱",
               accessor: "name"
             },
-						/*
 						{
-              Header: "共同投標標案數",
-              accessor: "count",
-            },
-						{
-              Header: "共同投標得標數",
-              accessor: "award",
-            },
-						{
-              Header: "得標率",
-              accessor: "award",
-							Cell: ({ row }) => {
-                return <span>{Math.round(row.award/row.count * 100)}%</span>
-             }
-            },
-						*/
-						{
-              Header: "單位",
+              Header: "相關標案",
               accessor: "_id",
               Cell: ({ row }) => {
                 return <a href={"/merchants/" + row._id}>
@@ -279,12 +263,23 @@ export default class extends React.Component {
          
           
           
-          defaultPageSize={30}
+          defaultPageSize={Math.min(30, merchants.length)}
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />       
-        
+				<div id="disqus_thread"></div>
+				<script dangerouslySetInnerHTML={{
+				__html: `
+				(function() { // DON'T EDIT BELOW THIS LINE
+				var d = document, s = d.createElement('script');
+				s.src = 'https://pcc-g0v.disqus.com/embed.js';
+				s.setAttribute('data-timestamp', +new Date());
+				(d.head || d.body).appendChild(s);
+				})();
+				`}}>
+				</script>  
       </div>
+			
     );
   }
 }

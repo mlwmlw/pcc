@@ -40,7 +40,7 @@ app.use (req, res, next) ->
 		send = res.send
 		res.send = (result) ->
 			cache.set key, result
-			cache.expire key, 3600*6
+			cache.expire key, 3600*24
 			send.call res, result
 		err, reply <- cache.get key
 		if reply
@@ -236,7 +236,7 @@ app.get '/tender/:id/:unit?', (req, res) ->
 		return res.send {}
 	filter = {id: id}
 	if unit
-		filter.unit = new RegExp(unit - /\s+/g)
+		filter['$or'] = [{unit: new RegExp(unit - /\s+/g)}, {unit_id: unit}]
 
 	err, tenders <- db.collection 'pcc' .find filter .sort {publish: -1} .toArray
 	res.send tenders
@@ -258,18 +258,19 @@ app.get '/partner/:year?', (req, res) ->
 	start = new Date year, 0, 1
 	end = new Date year, 11, 31
 	$match = {merchants: {$exists: 1}}
-	$match.publish = {$gte: start, $lte: end}
+	#$match.publish = {$gte: start, $lte: end}
+	$match.end_date = {$gte: start, $lte: end}
 	db.collection 'award' .aggregate [
 		{$match: $match},
 		{$unwind: "$merchants"},
 		{$group: {_id: {unit: "$unit", merchant:"$merchants.name", merchant_id: "$merchants._id"}, price: {$sum: {$add: ["$merchants.amount", {$ifNull: ["$price", 0]}]}}, count: {$sum: 1}}},
 		{$sort: {count: -1}},
 		{$limit: 50},
-		{$project: {unit: "$_id.unit", merchant: {_id: "$_id.merchant_id", name: "$_id.merchant"}, price: "$price", count: "$count"}}
+	{$project: {unit: "$_id.unit", merchant: {_id: "$_id.merchant_id", name: "$_id.merchant"}, price: "$price", count: "$count"}}
 	], (err, docs) ->
 		res.send docs
 app.get '/unit_info/:id?', (req, res) ->
-	unit = req.params.id
+	unit = req.params.id.replace(/\s+/g, '')
 	err, docs <- db.collection 'unit' .aggregate [
 		{$match: {$or: [{name: unit}, {_id: unit}]}},
 		{$lookup: {
@@ -277,9 +278,17 @@ app.get '/unit_info/:id?', (req, res) ->
 			from: 'unit',
 			localField: "parent",
 			foreignField: "_id"
+		}},
+		{$lookup: {
+			as: 'childs',
+			from: 'unit',
+			localField: "_id",
+			foreignField: "parent"
 		}}
 	]
 	if docs.length > 0
+		if docs[0].parent.length > 0
+			docs[0].parent = docs[0].parent[0]
 		res.send docs[0]
 	else
 		res.send {}
@@ -301,7 +310,7 @@ app.get '/units/:id?', (req, res) ->
 	else
 		parent = req.params.id
 		err, units <- db.collection 'unit' .aggregate [
-			{$match: {parent: parent}},
+			{$match: {$and: [{parent: parent}, {parent: {$exists: 1}}]}},
 			{$lookup:
 				{
 					as: 'child',
@@ -374,7 +383,18 @@ app.get '/unit/:unit/:month?', (req, res) ->
 		end = new Date req.params.month + "-01"
 		end.setMonth end.getMonth!+1 
 		filter.publish = {$gte: start, $lt: end}
-	err, units <- db.collection 'unit' .find {parent: unit} .toArray
+	#err, units <- db.collection 'unit' .find {parent: unit} .toArray
+	err, units <- db.collection 'unit' .aggregate [
+		{$lookup: {
+			as: 'parent',
+			from: 'unit',
+			localField: "parent",
+			foreignField: "_id"
+		}},
+		{$match: {"parent.name": unit}},
+		{$project: {name: 1}}
+	]
+
 	units = _.map units, 'name'
 	units = [].concat(units).concat([unit])
 	filter.unit = {$in: units}
@@ -383,6 +403,44 @@ app.get '/unit/:unit/:month?', (req, res) ->
 		docs = _.values(_.keyBy(docs, 'job_number'))
 		docs.sort (a, b) ->
 			return b.publish - a.publish
+		res.send docs
+
+app.get '/lookalike/:merchant', (req, res) ->
+	db.collection 'pcc' .aggregate [
+		{$match: {"award.candidates._id": req.params.merchant}},
+		{$project: {candidates: "$award.candidates"}},
+		{$unwind: "$candidates"},
+		{$group: {_id: "$candidates._id", name: {$max: "$candidates.name"}, count: {$sum: 1}}},
+		{$match: {"_id": {$ne: req.params.merchant}}},
+		{$sort: {count: -1}},
+		{$limit: 30}
+	] .toArray (err, docs) -> 
+		if err
+			console.log err
+		res.send docs
+
+app.get '/unit_lookalike/:unit', (req, res) ->
+	db.collection 'pcc' .aggregate [
+		{$match: {"unit": req.params.unit, publish: {$gt: moment().subtract(1, 'months').toDate!}}},
+		{$project: {candidates: "$award.candidates"}},
+		{$unwind: "$candidates"},
+		{$group: {_id: "$candidates._id", count: {$sum: 1}}},
+		{$sort: {count: -1}},
+		{$lookup: {       
+				as: 'pcc',
+				from: 'pcc',
+				localField: "_id",
+				foreignField: "award.candidates._id"  
+		}},
+		{$unwind: "$pcc"},
+		{$group: {_id: "$pcc.unit", count: {$sum: 1}}},
+		{$match: {"_id": {$ne: req.params.unit}}},
+		{$sort: {count: -1}},	
+		{$limit: 10}
+	], {maxTimeMS: 2000} .toArray (err, docs) -> 
+		if err
+			console.log err
+			res.send []
 		res.send docs
 
 app.get '/units_stats/:start/:end?', (req, res) ->

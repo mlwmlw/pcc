@@ -55,7 +55,7 @@
 							</dd>
 						</dl>
 						<p class="lead" style="text-align:right">
-							<a target="_blank" ng-href="//web.pcc.gov.tw/tps/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode=common&scope=F&primaryKey=[[t.key]]"><button class="btn btn-info">招標公告</button></a>
+							<a target="_blank" ng-href="//web.pcc.gov.tw/prkms/prms-viewTenderDetailClient.do?ds=[[t.publish | gmt]]&fn=[[t.filename]].xml"><button class="btn btn-info">招標公告</button></a>
 							<a target="_blank" ng-if="t.award.url" ng-href="[[t.award.url]]"><button class="btn" ng-class="{'btn-danger': t.award.merchants.length == 0, 'btn-success': t.award.merchants.length}">決標公告</button></a>
 						</p>
 						<hr />

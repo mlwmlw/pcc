@@ -44,7 +44,7 @@
                 $scope.stats();
             });
 
-            $http.get('/api/units_stats/2017-01-01/2018-10-01', {
+            $http.get('/api/units_stats/2018-01-01/' + (new Date()).toISOString().slice(0, 10), {
                 cache: true
             }).then(function(res) {
                 $scope.raw = res.data;

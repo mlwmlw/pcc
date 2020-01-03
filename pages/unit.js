@@ -29,6 +29,8 @@ export default class extends React.Component {
     const unit = await unit_res.json()
     const res = await fetch("http://pcc.mlwmlw.org/api/unit/" + encodeURIComponent(query.unit));
     const data = await res.json()
+		const lookalike = await fetch("http://pcc.mlwmlw.org/api/unit_lookalike/" + encodeURIComponent(query.unit));
+    const lookalike_units = await lookalike.json()
 
   
     let units = {}
@@ -56,11 +58,11 @@ export default class extends React.Component {
         return b.price - a.price;
     });
     
-    return { stats: stats.slice(0, 13), data, unit: unit };
+    return { stats: stats.slice(0, 13), data, unit: unit, lookalike_units: lookalike_units };
   }
  
   render() {
-    let { data, unit, stats }= this.props;
+    let { data, unit, stats, lookalike_units}= this.props;
     let title = unit.name + '標案檢索'
     let desc = unit.name + " 最新標案 ";
     data.slice(0, 5).map(function(row) {  
@@ -85,6 +87,9 @@ export default class extends React.Component {
       <div className="starter-template">
         <Head>
         <title>{title} - 開放政府標案</title>
+				<meta name="description"
+        content={desc}/>
+
         <meta property="og:description"
         content={desc}/>
         </Head>
@@ -147,6 +152,7 @@ export default class extends React.Component {
           ]}
         />
         </div>
+ 				<h3>相關標案</h3>
         <ReactTable
           data={data}
           columns={[
@@ -214,12 +220,36 @@ export default class extends React.Component {
             }
           ]}
          
-          defaultPageSize={100}
+          defaultPageSize={Math.min(100, data.length)}
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />
         
+ 				<h3>相似單位</h3>
+ 				<ReactTable
+          data={lookalike_units}
+          columns={[
+            {
+              Header: "單位",
+              accessor: "_id"
+            },
+						{
+              Header: "相關標案",
+              accessor: "_id",
+              Cell: ({ row }) => {
+                return <a href={"/unit/" + row._id}>
+									查看相關標案
+                </a>
+              }
+            },
+           ]} 
+          
+          defaultPageSize={Math.min(30, lookalike_units.length)}
+          pageSizeOptions={[100, 500]}
+          className="-striped -highlight"
+        />       
         
+       
       </div>
     );
   }

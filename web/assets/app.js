@@ -77,14 +77,14 @@ app.service('grid', function($filter) {
             field: "unit",
             displayName: "單位",
             render: function(row) {
-                return React.DOM.a({ href: "/unit/" + row.unit }, row.unit);
+                return React.DOM.a({ href: "/unit/" + row.unit  || row.unit_id}, row.unit || row.unit_id);
             }
         },
         name: {
             field: "name",
             displayName: "標案名稱",
             render: function(row) {
-                return React.DOM.a({ target: "_blank", href: '/tender/' + (row.unit && row.unit.replace(/\s+/g, '')) + '/' + row.id }, row.name);
+                return React.DOM.a({ target: "_blank", href: '/tender/' + ((row.unit && row.unit.replace(/\s+/g, '')) || row.unit_id) + '/' + row.id }, row.name);
             }
         },
         price: {

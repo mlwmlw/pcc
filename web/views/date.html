@@ -24,8 +24,13 @@
 									$scope.dates.unshift(date);
 									$scope.date = date;
 								}
-								else
+								else {
 									$scope.date = dates[0];
+									if (type == 'tender')
+										$rootScope.title = $scope.date + ' 招標標案檢索';
+									else
+										$rootScope.title = $scope.date + ' 決標標案檢索';
+								}
 								if(data)
 									$scope.grid.data = data;
 								else

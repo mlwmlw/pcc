@@ -35,6 +35,9 @@
                 $http.get('/api/units/' + val).then(function(res) {
                     $scope.units = res.data;
                     $scope.grid.data = res.data;
+										$scope.grid.data.sort(function(a, b) {
+											return b.tenders - a.tenders;
+										});
                     $scope.parent = res.data[0].parent_name;
                 });
             })
@@ -66,7 +69,7 @@
                         if (row.childs == 0)
                             return '無';
                         return React.DOM.a({
-                            href: "/units/#?parent=" + row._id
+                            href: "/units/#!/?parent=" + row._id
                         }, row.childs + '');
                         return
                     }

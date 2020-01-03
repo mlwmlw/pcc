@@ -21,6 +21,8 @@ export default class extends React.Component {
         <div className="starter-template">
          <Head>
          <title>{this.props.year} 年 {this.props.month} 月標案 - 開放政府標案</title>
+         <meta name="description"
+         content={desc}/>
          <meta property="og:description"
          content={desc}/>
          </Head>

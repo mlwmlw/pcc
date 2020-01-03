@@ -74,6 +74,9 @@ app.use(route.get('/hackpad', function*(next) {
 app.use(route.get('/tender/:unit/:id', function*(unit, id, next) {
     this.body = yield render('tender', { unit: unit, id: id })
 }));
+app.use(route.get('/robots.txt', function* (next) {
+		this.body = "User-agent: *\nAllow: /";
+}));
 
 app.use(mount('/assets', serve('assets')));
 app.listen(8889);
