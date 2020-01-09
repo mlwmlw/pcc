@@ -48,52 +48,34 @@ export default class extends React.Component {
    }
   static async getInitialProps({ req, query, params }) {
     const res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
-    const data = await res.json()
+    const merchant = await res.json()
     const lookalike = await fetch("http://pcc.mlwmlw.org/api/lookalike/" + encodeURIComponent(query.id));
     const merchants = await lookalike.json()
-    const years = ['全部'].concat(data.map(function(row) {
+    const years = ['全部'].concat(merchant.tenders.map(function(row) {
         var d = new Date(row.publish);
         return d.getFullYear()
     }).filter(function onlyUnique(value, index, self) {
         return self.indexOf(value) === index;
     }).sort().reverse());
-    return { data, years, id: query.id, merchants };
+    return { merchant, years, id: query.id, merchants };
   }
  
   changeYear(event) {
     this.setState({year: event.target.value});
   }
-  getStats(data, units) {
-    
-    var stats = [];
-    for (var year in units) {
-      var row = units[year]
-      row.year = year;
-      stats.push(row);
-    }
-    stats.sort(function(a, b) {
-        return b[1] - a[1];
-    });
-    return stats;
-  }
+ 
   
   render() {
-    let { data, years = [], merchants }= this.props;
+    let { merchant, years = [], merchants }= this.props;
     let year = this.state.year || years[1];
-
-    var desc = '近期得標案件：', title;
-		var merchant = {name: '', _id: ''};
-    for (var i in data) {
+  
+    var desc = '近期得標案件：', title = merchant.name + '得標案件';
+		
+    for (var i in merchant.tenders) {
       if(i < 5)
-        desc += dayjs(data[i].publish).format('YYYY-MM-DD') + " " + data[i].name + "、";
-      for(var j in data[i].award.merchants) {
-        if(data[i].award.merchants[j]._id == this.props.id || data[i].award.merchants[j].name == this.props.id)
-					merchant = data[i].award.merchants[j];
-      }
-			title = merchant.name + '得標案件';
-      
+        desc += dayjs(merchant.tenders[i].publish).format('YYYY-MM-DD') + " " + merchant.tenders[i].name + "、";
     }
-    let stats = data.reduce(function(total, row) {
+    let stats = merchant.tenders.reduce(function(total, row) {
       if(!row.unit)
         return total;
       var unit = row.unit.replace(/\s/g, '')
@@ -104,7 +86,7 @@ export default class extends React.Component {
     }, {});
     
     
-    let line_data = data.reduce(function(total, row) {
+    let line_data = merchant.tenders.reduce(function(total, row) {
       var d = new Date(row.publish);
       if(!total[d.getFullYear()])
           total[d.getFullYear()] = 0;
@@ -202,7 +184,7 @@ export default class extends React.Component {
         
 				<h3>相關得標案件</h3>
         <ReactTable
-          data={data}
+          data={merchant.tenders}
           columns={[
             {
               Header: "單位",
@@ -278,7 +260,7 @@ export default class extends React.Component {
          
           
           
-          defaultPageSize={Math.min(100, data.length)}
+          defaultPageSize={Math.min(100, merchant.tenders.length)}
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />
