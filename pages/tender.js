@@ -13,15 +13,23 @@ export default class extends React.Component {
          if(tender.award && tender.award.merchants && tender.award.merchants.length) {
             award = tender.award.merchants;
          }
-         if(tender.merchants) {
-            merchants = tender.merchants;
+         if(tender.award && tender.award.candidates) {
+            merchants = tender.award.candidates;
          }
+         
          return tender;
       });
-      award.map(async function (award) {
-         const res = await fetch('http://pcc.mlwmlw.org//api/merchants/' + award.name)
-         return res.json();
-      });
+      /*
+      const fetchAward = async () => {
+         return Promise.all(award.map(async a =>
+            fetch('http://pcc.mlwmlw.org//api/merchants/' + encodeURIComponent(a.name))
+            )
+         )
+      }
+      var awards = await fetchAward()
+      award = await Promise.all(awards.map(async r => await r.json()))
+      */
+      
       return {tenders: tenders, award: award, merchants: merchants, unit: query.unit};
    }
  
