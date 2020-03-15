@@ -167,7 +167,14 @@ export default class extends React.Component {
             },
             {
               Header: "標案名稱",
-              accessor: "name"
+              accessor: "name",
+							Cell: ({ row }) => { 
+								let url = ''
+                url = `/tender/${row.unit}/${row._original.job_number}`
+                return <a target="_blank" href={url}>
+                  {row.name}
+                </a>
+              }
             },
             {
               Header: "標案金額",
