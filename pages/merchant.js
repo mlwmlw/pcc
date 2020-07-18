@@ -200,8 +200,19 @@ export default class extends React.Component {
               accessor: "name"
             },
             {
+              Header: "類型",
+              accessor: "type",
+              Cell: ({row}) => {
+                return row.type.replace(/\(.+\)公告/, '')
+              }
+            },
+            {
               Header: "標案金額",
-              accessor: "price"
+              accessor: "price",
+              align: 'right',
+              Cell: ({row}) => {
+                return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW', { maximumSignificantDigits: 1 }).format(row.price)}</div>;
+              }
             },
             {
               Header: "招標/決標日期",
