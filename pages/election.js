@@ -112,7 +112,7 @@ export default class extends React.Component {
                   }
                ]}
 
-               defaultPageSize={Math.min(100, election.length)}
+               defaultPageSize={Math.min(1000, election.length)}
                pageSizeOptions={[1000, 2000]}
                className="-striped -highlight"
             />
