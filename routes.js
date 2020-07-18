@@ -1,7 +1,8 @@
 const routes = require('next-routes')
 
 module.exports = routes()
-.add('merchants')                     
+.add('merchants')
+.add('election')
 .add('month')
 .add('tender', '/tender/:unit/:id', 'tender')
 .add('unit', '/unit/:unit', 'unit')
