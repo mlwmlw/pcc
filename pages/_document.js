@@ -95,6 +95,7 @@ export default class MyDocument extends Document {
                             <li><a href="/rank/merchant">得標廠商排行</a></li>
                             <li><a href="/rank/tender">高額標案排行</a></li>
                             <li><a href="/rank/partner">各單位得標廠商統計</a></li>
+                            <li><a href="/election">2019 總統候選人 政治獻金查詢</a></li>
                         </ul>
                     </li>
                     <li className="dropdown"><a className="dropdown-toggle" href="javascript:void(0)">關於<span className="caret"></span></a>

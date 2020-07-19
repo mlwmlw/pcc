@@ -34,7 +34,7 @@ export default class extends React.Component {
    }
  
    render() {
-      const desc = "招標金額：" + this.props.tenders[0].price + "，招標日期：" + dayjs(this.props.tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + this.props.tenders[0].id + "，分類：" + this.props.tenders[0].category;
+      const desc = "招標單位：" + this.props.unit + "，招標金額：" + this.props.tenders[0].price + "，招標日期：" + dayjs(this.props.tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + this.props.tenders[0].id + "，分類：" + this.props.tenders[0].category;
       return (
         <div className="starter-template">
          <Head>
@@ -97,7 +97,7 @@ export default class extends React.Component {
          <div className="col-sm-4">
             <div className="panel panel-default">
                <div className="panel-heading">機關資訊</div>
-               <div className="panel-body"><a href="/unit/{ this.props.unit }" target="_blank">{this.props.unit}</a></div>
+               <div className="panel-body"><a href={"/unit/" + this.props.unit} target="_blank">{this.props.unit}</a></div>
             </div>
             <div className="panel panel-default">
                <div className="panel-heading">得標廠商</div>
