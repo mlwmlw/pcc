@@ -116,7 +116,7 @@ export default class MyDocument extends Document {
                     <span>熱門關鍵字：</span>
                     <ul>
                         {this.props.keywords.map( keyword => <li key={keyword}>
-                          <a ng-click={"search("+keyword+")"} style={{cursor:"pointer"}}>{keyword}</a>
+                          <a ng-click={"search('"+keyword+"')"} style={{cursor:"pointer"}}>{keyword}</a>
                         </li>)}
                     </ul>
                 </div>
