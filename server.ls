@@ -59,6 +59,15 @@ app.get '/page/:page', (req, res) ->
 		perPage = 30
 		res.send pcc.slice page * perPage, (+page+1) * perPage
 
+app.post '/keyword/:keyword', (req, res) ->
+	db.collection 'search_log' .insert {
+		keyword: req.params.keyword, 
+		ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+		ts: new Date!
+	}, (err, res) ->
+		if err
+			console.log err
+
 app.get '/keyword/:keyword', (req, res) ->
 	if(!req.params.keyword)
 		return res.send \failed

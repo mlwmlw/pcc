@@ -25,7 +25,8 @@ app.run(function($rootScope, $http, $window, $location) {
         $rootScope.keywords = res.data;
     });
     $rootScope.search = function(keyword) {
-        $window.location.href = 'https://www.google.com/search?q=site%3Apcc.mlwmlw.org+' + encodeURIComponent(keyword) + '+inurl%3Atender';
+        $http.post('/api/keyword/' + keyword)
+        window.open('https://www.google.com/search?q=site%3Apcc.mlwmlw.org+' + encodeURIComponent(keyword) + '+inurl%3Atender')
     }
 });
 app.controller('page', function($scope) {
