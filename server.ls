@@ -219,6 +219,15 @@ app.get '/merchant/:id?', (req, res) ->
 	id = req.params.id
 	if !id
 		return res.send {}
+
+	if /\d+/.test id 
+		filter = {"_id": id} 
+	else
+		filter = {"name": id}
+	err, result <- db.collection 'merchants' .find filter .toArray
+	result = result.pop!
+	if !result
+		result = {}
 	if /\d+/.test id 
 		filter = {"award.merchants._id": id} 
 	else
@@ -227,7 +236,8 @@ app.get '/merchant/:id?', (req, res) ->
 	docs = _.values(_.keyBy(docs, 'job_number'))
 	docs.sort (a, b) ->
 		return b.publish - a.publish
-	res.send docs
+	result.tenders = docs
+	res.send result
 
 app.get '/tender/:id/:unit?', (req, res) ->
 	id = req.params.id
@@ -467,6 +477,18 @@ app.get '/units_stats/:start/:end?', (req, res) ->
 				result[value._id] = value.res
 			res.send result
 				
+app.get '/election', (req, res) ->
+	filter = {
+		unique_id: {
+			"$gt": 0
+		}
+	}
+	err, data <- db.collection 'election' .find filter .sort {expense: -1} .toArray
+	if err
+		console.log err
+		res.send []
+	else
+		res.send data
 
 #app.get '/units_stats/:date?/:days?', (req, res) ->
 #	db <- connectDB
