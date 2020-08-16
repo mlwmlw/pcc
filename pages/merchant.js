@@ -78,7 +78,7 @@ export default class extends React.Component {
     let stats = merchant.tenders.reduce(function(total, row) {
       if(!row.unit)
         return total;
-      var unit = row.unit.replace(/\s/g, '')
+      var unit = row.parent_unit.name.replace(/\s/g, '')
       if(!total[unit])
         total[unit] = 0;
       total[unit] += +row.price;
@@ -181,7 +181,12 @@ export default class extends React.Component {
           ]}
         />
         </div>
-        
+      	<ins className="adsbygoogle"
+					 style={{"display":"block"}}
+					 data-ad-client="ca-pub-9215576480847196"
+					 data-ad-slot="1304930582"
+					 data-ad-format="auto"
+					 data-full-width-responsive="true"></ins>  
 				<h3>相關得標案件</h3>
         <ReactTable
           data={merchant.tenders}
@@ -297,17 +302,7 @@ export default class extends React.Component {
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />       
-				<div id="disqus_thread"></div>
-				<script dangerouslySetInnerHTML={{
-				__html: `
-				(function() { // DON'T EDIT BELOW THIS LINE
-				var d = document, s = d.createElement('script');
-				s.src = 'https://pcc-g0v.disqus.com/embed.js';
-				s.setAttribute('data-timestamp', +new Date());
-				(d.head || d.body).appendChild(s);
-				})();
-				`}}>
-				</script>  
+				
       </div>
 			
     );

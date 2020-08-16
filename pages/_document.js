@@ -33,10 +33,7 @@ export default class MyDocument extends Document {
 				<script
             dangerouslySetInnerHTML={{
 							__html: `
-							(adsbygoogle = window.adsbygoogle || []).push({
-								google_ad_client: "ca-pub-9215576480847196",
-								enable_page_level_ads: true
-							});
+							(adsbygoogle = window.adsbygoogle || []).push({});
 						 `}}>
 				</script>
         <script
