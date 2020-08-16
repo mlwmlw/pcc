@@ -34,7 +34,7 @@ app.use cors(corsOptions)
 app.use compression!
 app.use (req, res, next) ->
 	res.setHeader 'Content-Type', 'application/json'
-	if /merchants|keyword|rank|units|month|categories|units_stats/.test req.path
+	if /merchants|rank|units|month|categories|units_stats/.test req.path
 		key = req.path;
 		key = key + "?" + qs.stringify(req.query);
 		send = res.send
@@ -62,11 +62,12 @@ app.get '/page/:page', (req, res) ->
 app.post '/keyword/:keyword', (req, res) ->
 	db.collection 'search_log' .insert {
 		keyword: req.params.keyword, 
-		ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+		ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
 		ts: new Date!
 	}, (err, res) ->
 		if err
 			console.log err
+	res.send true
 
 app.get '/keyword/:keyword', (req, res) ->
 	if(!req.params.keyword)
@@ -76,7 +77,7 @@ app.get '/keyword/:keyword', (req, res) ->
 		res.send docs
 		db.collection 'search_log' .insert {
 			keyword: req.params.keyword, 
-			ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+			ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
 			ts: new Date!
 		}, (err, res) ->
 		if err
@@ -84,7 +85,7 @@ app.get '/keyword/:keyword', (req, res) ->
 
 app.get '/keywords', (req, res) -> 
 	db.collection 'search_log' .aggregate [
-	{$match: {ts: {$gt: moment().subtract(3, 'months').toDate! }}},
+	{$match: {ts: {$gt: moment().subtract(1, 'months').toDate! }}},
 	{$group: {_id: "$keyword", count: {$sum: 1}}},
 	{$sort: {count: -1}},
 	{$limit: 20},
