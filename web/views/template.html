@@ -126,7 +126,7 @@
                     <span>熱門關鍵字：</span>
                     <ul>
                         <li ng-repeat="keyword in keywords">
-                            <a href="/search/[[keyword]]" ng-bind="keyword"></a>
+                            <a ng-click="search(keyword)" style="cursor:pointer" ng-bind="keyword"></a>
                         </li>
                     </ul>
                 </div>

@@ -59,7 +59,7 @@ export default class extends React.Component {
           legend: '支出金額',
           legendPosition: 'middle',
           legendOffset: -40,
-          format: v => new Intl.NumberFormat('zh-TW', { maximumSignificantDigits: 1 }).format(v/100000000) + "億"
+          format: v => new Intl.NumberFormat('zh-TW').format(v/100000000) + "億"
         }}
         indexBy="name"
         keys={keys}
@@ -158,14 +158,14 @@ export default class extends React.Component {
                   Header: "收入",
                   accessor: "income",
                   Cell: ({row}) => {
-                     return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW', { maximumSignificantDigits: 1 }).format(row.income)}</div>;
+                     return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.income)}</div>;
                   }
                   },
                   {
                      Header: "支出",
                      accessor: "expense",
                      Cell: ({row}) => {
-                     return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW', { maximumSignificantDigits: 1 }).format(row.expense)}</div>;
+                     return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.expense)}</div>;
                      }
                   },
                   {
