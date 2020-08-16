@@ -76,8 +76,9 @@ export default class extends React.Component {
         desc += dayjs(merchant.tenders[i].publish).format('YYYY-MM-DD') + " " + merchant.tenders[i].name + "、";
     }
     let stats = merchant.tenders.reduce(function(total, row) {
-      if(!row.unit)
+      if(!row.parent_unit) {
         return total;
+			}
       var unit = row.parent_unit.name.replace(/\s/g, '')
       if(!total[unit])
         total[unit] = 0;

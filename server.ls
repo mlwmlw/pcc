@@ -269,6 +269,7 @@ app.get '/merchant/:id?', (req, res) ->
 				]
 			}
 		}},
+		{$unwind: "$parent_unit"},
 		{$project: {_unit: 0, _root: 0, _parent: 0}}
 	] .toArray
 	docs = _.values(_.keyBy(docs, 'job_number'))
