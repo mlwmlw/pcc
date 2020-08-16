@@ -242,7 +242,35 @@ app.get '/merchant/:id?', (req, res) ->
 		filter = {"award.merchants._id": id} 
 	else
 		filter = {"award.merchants.name": id}
-	err, docs <- db.collection 'pcc' .find filter .toArray
+	err, docs <- db.collection 'pcc' .aggregate [
+		{$match: filter},
+		{$lookup: {
+			as: '_unit',
+			from: 'unit',
+			localField: "unit_id",
+			foreignField: "_id"
+		}},
+		{$lookup: {
+			as: '_parent',
+			from: 'unit',
+			localField: "_unit.parent",
+			foreignField: "_id"
+		}},
+		{$lookup: {
+			as: '_root',
+			from: 'unit',
+			localField: "_parent.parent",
+			foreignField: "_id"
+		}},
+		{$addFields: {
+			parent_unit: {
+				$cond: [ {$gt: [{$size: "$_root"}, 0] }, "$_root", 
+					{$cond: [ {$gt: [{$size: "$_parent"}, 0] }, "$_parent", "$_unit"]}
+				]
+			}
+		}},
+		{$project: {_unit: 0, _root: 0, _parent: 0}}
+	] .toArray
 	docs = _.values(_.keyBy(docs, 'job_number'))
 	docs.sort (a, b) ->
 		return b.publish - a.publish
