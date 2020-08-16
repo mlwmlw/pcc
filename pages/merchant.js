@@ -217,7 +217,7 @@ export default class extends React.Component {
               accessor: "price",
               align: 'right',
               Cell: ({row}) => {
-                return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW', { maximumSignificantDigits: 1 }).format(row.price)}</div>;
+                return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.price)}</div>;
               }
             },
             {
