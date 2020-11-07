@@ -48,7 +48,7 @@
     "koa-static": "~1.4.7",
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
-    "mongodb": "^2.2.36",
+    "mongodb": "^3.6.1",
     "next": "^9.3.3",
     "next-routes": "^1.4.2",
     "node-fetch": "^2.2.0",
