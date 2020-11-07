@@ -68,8 +68,10 @@ export default class extends React.Component {
   render() {
     let { merchant, years = [], merchants }= this.props;
     let year = this.state.year || years[1];
+   	let currentYear = new Date().getFullYear(); 
   
-    var desc = '近期得標案件：', title = merchant.name + '得標案件';
+    var desc = '近期得標案件：';
+		var title = currentYear + '年 ' + merchant.name + '得標案件';
 		
     for (var i in merchant.tenders) {
       if(i < 5)
@@ -85,7 +87,6 @@ export default class extends React.Component {
       total[unit] += +row.price;
       return total;
     }, {});
-    
     
     let line_data = merchant.tenders.reduce(function(total, row) {
       var d = new Date(row.publish);
@@ -123,8 +124,8 @@ export default class extends React.Component {
         <meta property="og:description"
         content={desc}/>
         </Head>
-        <h1><a href={"https://company.g0v.ronny.tw/index/search?q=" + merchant._id} target="_blank">{merchant.name}</a>得標案件 檢索</h1>
-        
+        <h1>{currentYear}年{merchant.name}得標案件</h1>
+        <a href={"https://company.g0v.ronny.tw/index/search?q=" + merchant._id} target="_blank">查看公司資料</a>
         <div style={{width: "100%", height: line[0].data.length > 1 ? "400px": 0}}>
           {chart(line)}
         </div>;
