@@ -1,0 +1,74 @@
+const fetch = require("node-fetch");
+import React from "react";
+import ReactTable from "react-table";
+import "react-table/react-table.css";
+import ReactPaginate from 'react-paginate';
+import Router from 'next/router'
+import _ from 'lodash'
+import Head from 'next/head';
+export default class extends React.Component {
+   constructor(props) {
+      super(props);
+
+   }
+  static async getInitialProps({ req, query }) {
+    let keyword = query.keyword;
+    const result = await fetch("http://pcc.mlwmlw.org/api/keyword/" + encodeURIComponent(keyword));
+    let tenders = await result.json();
+    return { tenders, keyword };
+  }
+  
+  render() {
+    let {keyword, tenders} = this.props;
+    return (
+      <div className="starter-template">
+       <Head>
+        <title>搜尋 {keyword} 標案結果 - 開放政府標案</title>
+        
+        <meta property="og:description"
+        content="開放標案廠商列表" />
+        </Head>
+        <h1>搜尋 {keyword} 標案列表</h1>
+        <ReactTable
+          data={tenders}
+          columns={[
+            {
+              Header: "機關",
+              accessor: "unit"
+            },
+            {
+              Header: "標案名稱",
+              accessor: "name"
+            },
+            {
+              Header: "招標日期",
+              accessor: "publish",
+						},
+						{
+							Header: "連結",
+              filterable: false,
+              accessor: "job_number",
+              Cell: ({ row }) =>
+
+                <a target="_blank" href={`/tender/${row.unit}/${row.job_number}`}>
+                  前往
+                </a>
+            }
+          ]}
+          manual
+          onFilteredChange={(filtered, column) => {
+            
+          }}
+          layout="horizontal"
+          defaultPageSize={100}
+          showPagination={false}
+          showPaginationTop={false}
+          showPaginationBottom={false}
+          pageSizeOptions={[100]}
+          className="-striped -highlight"
+        />
+
+      </div>
+    );
+  }
+}
