@@ -17,7 +17,8 @@ app.set 'view engine' 'jade'
 app.set 'port' (process.env.PORT or 8888)
 cache = redis.createClient!
 client = mongodb.MongoClient
-err, db <- client.connect uri
+err, client <- client.connect uri
+db = client.db('pcc')
 deferred = null
 getAll = !->
 	if deferred
@@ -73,15 +74,28 @@ app.get '/keyword/:keyword', (req, res) ->
 	if(!req.params.keyword)
 		return res.send \failed
 	reg = new RegExp req.params.keyword
-	db.collection 'pcc' .find {$or: [{name: reg}, {unit: reg}, {'award.merchants.name': reg}]} .sort {publish: -1} .toArray (err, docs) ->
-		res.send docs
-		db.collection 'search_log' .insert {
-			keyword: req.params.keyword, 
-			ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
-			ts: new Date!
-		}, (err, res) ->
-		if err
-			console.log err
+	ClickHouse = require('@apla/clickhouse')
+	ch = new ClickHouse({ 
+		host: 'localhost', port: '7123', user: 'default', password: 'pcc.mlwmlw.org' ,
+		queryOptions: {
+			database: "pcc",
+		}
+	})
+	stream = ch.query("SELECT job_number, name, unit, toDate(publish) publish FROM pcc where name like '%" + req.params.keyword + "%' or unit like '%" + req.params.keyword + "%' FORMAT JSON")
+	rows = []
+	stream.on 'data', (row) ->
+		rows.push row
+
+	stream.on 'end', (end) ->
+		res.send rows
+
+	db.collection 'search_log' .insertOne {
+		keyword: req.params.keyword, 
+		ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+		ts: new Date!
+	}, (err, res) ->
+	if err
+		console.log err
 
 app.get '/keywords', (req, res) -> 
 	db.collection 'search_log' .aggregate [
