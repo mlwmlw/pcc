@@ -85,7 +85,7 @@ app.get '/keyword/:keyword', (req, res) ->
 
 app.get '/keywords', (req, res) -> 
 	db.collection 'search_log' .aggregate [
-	{$match: {ts: {$gt: moment().subtract(1, 'months').toDate! }}},
+	{$match: {ts: {$gt: moment().subtract(7, 'days').toDate! }}},
 	{$group: {_id: "$keyword", count: {$sum: 1}}},
 	{$sort: {count: -1}},
 	{$limit: 20},
