@@ -351,12 +351,13 @@ app.get '/unit_info/:id?', (req, res) ->
 			foreignField: "parent"
 		}}
 	]
-	if docs.length > 0
-		if docs[0].parent.length > 0
-			docs[0].parent = docs[0].parent[0]
-		res.send docs[0]
-	else
-		res.send {}
+	docs.toArray!.then (docs) ->
+		if docs.length > 0
+			if docs[0].parent.length > 0
+				docs[0].parent = docs[0].parent[0]
+			res.send docs[0]
+		else
+			res.send {}
 
 app.get '/units/:id?', (req, res) ->
 	if req.params.id == 'all' 
