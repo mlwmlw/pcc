@@ -457,10 +457,9 @@ app.get '/unit/:unit/:month?', (req, res) ->
 			localField: "parent",
 			foreignField: "_id"
 		}},
-		{$match: {"parent.name": unit}},
+		{$match: {$or: [{"parent.name": unit}, {"parent._id": unit}, {_id: unit}]}},
 		{$project: {name: 1}}
-	]
-
+	] .toArray()
 	units = _.map units, 'name'
 	units = [].concat(units).concat([unit])
 	filter.unit = {$in: units}
@@ -470,7 +469,6 @@ app.get '/unit/:unit/:month?', (req, res) ->
 		docs.sort (a, b) ->
 			return b.publish - a.publish
 		res.send docs
-
 app.get '/lookalike/:merchant', (req, res) ->
 	db.collection 'pcc' .aggregate [
 		{$match: {"award.candidates._id": req.params.merchant}},
