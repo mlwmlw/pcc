@@ -29,12 +29,15 @@ export default class extends React.Component {
         content="開放標案廠商列表" />
         </Head>
         <h1>搜尋 {keyword} 標案列表</h1>
+        { tenders.length == 0 ? <h3>找不到結果</h3>: null}
         <ReactTable
           data={tenders}
           columns={[
             {
               Header: "機關",
-              accessor: "unit"
+              accessor: "unit",
+              Cell: ({ row }) =>
+            <a target="_blank" href={`/unit/${row._original.unit_id}`}>{row.unit}</a>
             },
             {
               Header: "標案名稱",
@@ -43,13 +46,31 @@ export default class extends React.Component {
             {
               Header: "招標日期",
               accessor: "publish",
+            },
+            {
+              Header: "得標公司",
+              accessor: "merchants",
+              Cell: ({ row }) =>
+                { if (row.merchants.length == 0) {
+                  return null;
+                } else {
+                  return <ul style={{
+                      "list-style": "circle", 
+                      "padding-left": "20px"
+                  }}>
+                    {row.merchants.map(function(m) {
+                      return <li key={m}>
+                        <a target="_blank" href={`/merchants/${m}`}>{m}</a>
+                        </li>
+                    })}
+                  </ul>
+                }}
 						},
 						{
 							Header: "連結",
               filterable: false,
               accessor: "job_number",
               Cell: ({ row }) =>
-
                 <a target="_blank" href={`/tender/${row.unit}/${row.job_number}`}>
                   前往
                 </a>
@@ -60,7 +81,7 @@ export default class extends React.Component {
             
           }}
           layout="horizontal"
-          defaultPageSize={100}
+          defaultPageSize={tenders.length}
           showPagination={false}
           showPaginationTop={false}
           showPaginationBottom={false}
