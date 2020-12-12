@@ -81,8 +81,10 @@ app.get '/keyword/:keyword', (req, res) ->
 			database: "pcc",
 		}
 	})
-	stream = ch.query("SELECT job_number, name, unit, toDate(publish) publish FROM pcc where name like '%" + req.params.keyword + "%' or unit like '%" + req.params.keyword + "%' order by publish desc limit 100 FORMAT JSON")
+	stream = ch.query("SELECT job_number, name, unit, toDate(publish) publish, merchants FROM 
+pcc where name like '%" + req.params.keyword + "%' or unit like '%" + req.params.keyword + "%' or arrayStringConcat(merchants) like '%" + req.params.keyword + "%' order by publish desc limit 150 FORMAT JSON")
 	rows = []
+	
 	stream.on 'data', (row) ->
 		rows.push row
 
