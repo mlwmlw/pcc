@@ -1,10 +1,10 @@
 const fetch = require("node-fetch");
 import React from "react";
 
-import { ResponsiveBar } from '@nivo/bar'
+
 import { ResponsivePie } from '@nivo/pie'
 import { ResponsiveLine } from '@nivo/line'
-
+import Router from 'next/router'
 import ReactTable from "react-table";
 import "react-table/react-table.css";
 import dayjs from 'dayjs'
@@ -46,11 +46,16 @@ export default class extends React.Component {
       super(props);      
       this.state = {year: null}
    }
-  static async getInitialProps({ req, query, params }) {
-    const res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
-    const merchant = await res.json()
+  static async getInitialProps({ req, query, params, res}) {
+    const merchant_res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
+    const merchant = await merchant_res.json()
     const lookalike = await fetch("http://pcc.mlwmlw.org/api/lookalike/" + encodeURIComponent(query.id));
     const merchants = await lookalike.json()
+
+    if( typeof(window) === 'undefined' && merchant._id && merchant._id != query.id) {
+      res.redirect('/merchants/' + merchant._id);
+    }
+
     const years = ['全部'].concat(merchant.tenders.map(function(row) {
         var d = new Date(row.publish);
         return d.getFullYear()
