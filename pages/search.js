@@ -56,7 +56,7 @@ export default class extends React.Component {
                 } else {
                   return <ul style={{
                       "list-style": "circle", 
-                      "padding-left": "20px"
+                      "paddingLeft": "20px"
                   }}>
                     {row.merchants.map(function(m) {
                       return <li key={m}>

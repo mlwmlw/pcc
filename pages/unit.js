@@ -1,15 +1,11 @@
 const fetch = require("node-fetch");
 import React from "react";
 
-
 import { ResponsiveBar } from '@nivo/bar'
 
 import ReactTable from "react-table";
 import "react-table/react-table.css";
-import ReactPaginate from 'react-paginate';
-import Router from 'next/router'
 import dayjs from 'dayjs'
-import C3Chart from 'react-c3js';
 import Head from 'next/head';
 import 'c3/c3.css';
 Number.prototype.format = function(n, x, s, c) {
