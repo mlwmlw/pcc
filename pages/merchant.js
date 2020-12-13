@@ -184,7 +184,7 @@ export default class extends React.Component {
         />
         </div>
       	<ins className="adsbygoogle"
-					 style={{"display":"block", "height": 150}}
+					 style={{"display":"block", "height": "150px"}}
 					 data-ad-client="ca-pub-9215576480847196"
 					 data-ad-slot="1304930582"
 					 data-ad-format="auto"

@@ -152,7 +152,13 @@ export default class extends React.Component {
           ]}
         />
         </div>
- 				<h3>相關標案</h3>
+        <ins className="adsbygoogle"
+            style={{"display":"block", "height": "150px"}}
+            data-ad-client="ca-pub-9215576480847196"
+            data-ad-slot="1304930582"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+        <h3>相關標案</h3>
         <ReactTable
           data={data}
           columns={[
@@ -168,8 +174,8 @@ export default class extends React.Component {
             {
               Header: "標案名稱",
               accessor: "name",
-							Cell: ({ row }) => { 
-								let url = ''
+              Cell: ({ row }) => {
+                let url = ''
                 url = `/tender/${row.unit}/${row._original.job_number}`
                 return <a target="_blank" href={url}>
                   {row.name}
@@ -178,7 +184,11 @@ export default class extends React.Component {
             },
             {
               Header: "標案金額",
-              accessor: "price"
+              accessor: "price",
+              Cell: ({ row }) => {
+                return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.price)}</div>;
+              }
+
             },
             {
               Header: "招標/決標日期",
