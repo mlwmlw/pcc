@@ -288,7 +288,14 @@ app.get '/merchant/:id?', (req, res) ->
 		{$unwind: "$parent_unit"},
 		{$project: {_unit: 0, _root: 0, _parent: 0}}
 	] .toArray
-	docs = _.values(_.keyBy(docs, 'job_number'))
+	docs = _(docs).groupBy 'job_number'
+		.map (vals, key) ->
+			return _.assign(vals[0], {
+				publish: _.min(vals.map (val) ->
+					return val.publish;
+				)
+			})
+		.value()
 	docs.sort (a, b) ->
 		return b.publish - a.publish
 	result.tenders = docs
@@ -465,7 +472,14 @@ app.get '/unit/:unit/:month?', (req, res) ->
 	filter.unit = {$in: units}
 	db.collection 'pcc' .find filter .sort {publish: -1} .limit 2000 .toArray (err, docs) ->
 		
-		docs = _.values(_.keyBy(docs, 'job_number'))
+		docs = _(docs).groupBy 'job_number'
+		.map (vals, key) ->
+			return _.assign(vals[0], {
+				publish: _.min(vals.map (val) ->
+					return val.publish;
+				)
+			})
+		.value()
 		docs.sort (a, b) ->
 			return b.publish - a.publish
 		res.send docs

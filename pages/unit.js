@@ -177,13 +177,22 @@ export default class extends React.Component {
               accessor: "price"
             },
             {
-              Header: "招標/決標日期",
+              Header: "招標日期",
               accessor: "publish",
               Cell: ({row}) => {
                 let date = dayjs(row.publish).format('YYYY-MM-DD');
                 return date;
               }
             },
+						{
+              Header: "決標日期",
+              accessor: "end_date",
+              Cell: ({row}) => {
+                let date = dayjs(row.end_date).format('YYYY-MM-DD');
+                return date;
+              }
+            },
+
             {
               Header: "得標廠商",
               accessor: "award",
