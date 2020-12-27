@@ -4,6 +4,8 @@ createStream = require 'unified-stream'
 markdown = require 'remark-parse'
 html = require 'remark-html'
 cors = require 'cors'
+nodejieba = require("nodejieba");
+
 corsOptions = {
 	origin: 'http://pcc.mlwmlw.org:3000',
 	optionsSuccessStatus: 200
@@ -311,6 +313,16 @@ app.get '/tender/:id/:unit?', (req, res) ->
 		filter['$or'] = [{unit: new RegExp(unit - /\s+/g)}, {unit_id: unit}]
 
 	err, tenders <- db.collection 'pcc' .find filter .sort {publish: -1} .toArray
+	for value in tenders
+		value.tags = _.union(
+			nodejieba.cut(value.name), 
+			nodejieba.cut(value.unit),
+			nodejieba.cut(if value.award && value.award.merchants.length > 0 then value.award.merchants[0].name else "")
+		)
+		value.tags = _.filter(value.tags, (word) -> 
+			word.length > 1 
+		)
+
 	res.send tenders
 
 
