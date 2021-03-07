@@ -1,4 +1,6 @@
 <?php
+require 'vendor/autoload.php';
+
 #$tender = get_tender('3.13.31.81', '3500500072');
 if(isset($argv[1]))
 	$start = $argv[1];
@@ -7,7 +9,7 @@ else
 if(isset($argv[2]))
 	$range = $argv[2];
 else 
-	$range = 4;
+	$range = 7;
 for($i=0;$i < $range;$i++) {
 	$diff = $range - $i - 1;
 	$date = date('Ymd', strtotime("{$start} -{$diff} days"));
@@ -26,7 +28,12 @@ function pcc($date) {
 		return $row['brief']['type'];
 	}, $result));
 	$tenders = array_filter($result, function($row) {
-		return in_array($row['brief']['type'], array('公開招標更正公告', '公開招標公告', '公開取得報價單或企劃書更正公告', '限制性招標(經公開評選或公開徵求)公告'));
+		return in_array($row['brief']['type'], [
+			'公開招標更正公告',
+			'公開招標公告',
+			'公開取得報價單或企劃書更正公告',
+			'限制性招標(經公開評選或公開徵求)公告',
+			'限制性招標(經公開評選或公開徵求)更正公告']);
 	});
 
 	$tenders = array_map(function($row) use($date) {
@@ -54,29 +61,30 @@ function pcc($date) {
 			'type' => $row['brief']['type'],
 			'category' => $category,
 			'sub_category' => $sub_category,
-			'price' => $price ? new MongoInt64($price): null,
-			'publish' => new MongoDate(strtotime($date))
+			'price' => $price ? intval($price): null,
+			'publish' => new MongoDB\BSON\UTCDateTime(strtotime($date) * 1000)
 		);
 	}, $tenders);
 
-	$mc = new MongoClient();
-	$collection = $mc->selectCollection('pcc', 'pcc');
-	$batch = new MongoUpdateBatch($collection);
+	$batch = new MongoDB\Driver\BulkWrite(['ordered' => true]);
 	foreach($tenders as $tender) {
-		$update = array(
-			'q' => array('_id' => $tender['_id']),
-			'u' => array('$set' => $tender),
+		$batch->update([
+			'_id' => $tender['_id']
+		],[
+			'$set' => $tender
+		], [
 			'multi' => true,
 			'upsert' => true,
-		);
-		$batch->add((object) $update);
+		]);
 	}
 	try {
-		$r = $batch->execute();
+		$manager = new MongoDB\Driver\Manager();
+		$writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 1000);
+		$r = $manager->executeBulkWrite('pcc.pcc', $batch, $writeConcern);
 	} catch(Exception $e) {
 		$r = null;
 	}
-	echo $date . ' tender upserted ' . $r['nUpserted'], ' nModified ', $r['nModified'], "\n";
+	echo $date . ' tender upserted ' . $r->getInsertedCount(), ' nModified ', $r->getModifiedCount(), "\n";
 	$awards = array_filter($result, function($row) {
 		return in_array($row['brief']['type'], array('決標公告', '更正決標公告'));
 	});
@@ -98,9 +106,9 @@ function pcc($date) {
 
 		$award['end_date'] = null;
 		if(isset($award['detail']['決標資料:決標公告日期'])) {
-			$award['end_date'] = new MongoDate(strtotime(preg_replace_callback('/(\d+)\/(\d+)\/(\d+)/', function($row) {
+			$award['end_date'] = new MongoDB\BSON\UTCDateTime(strtotime(preg_replace_callback('/(\d+)\/(\d+)\/(\d+)/', function($row) {
 				return ($row[1] + 1911) . '-' . $row[2] . '-' . $row[3];
-			}, $award['detail']['決標資料:決標公告日期'])));
+			}, $award['detail']['決標資料:決標公告日期'])) * 1000);
 		}
 		
 		
@@ -112,13 +120,13 @@ function pcc($date) {
 			return array(
 				'_id' => @$row['廠商代碼']?:$row['廠商名稱'],
 				'name' => $row['廠商名稱'],
-				'awarding' => new MongoInt32($row['是否得標'] =='是' ? 1: 0),
+				'awarding' => intval($row['是否得標'] =='是' ? 1: 0),
 				'org' => @$row['組織型態'],
 				'industry'=> @$match_industry[1],
 				"address" => @$row['廠商地址'],
 				"phone" => @$row['廠商電話'],
 				"country" => @$row['得標廠商國別'],
-				"amount" => isset($row['決標金額']) ? new MongoInt32(intval(str_replace(",", "", @$row['決標金額']))): null
+				"amount" => isset($row['決標金額']) ? intval(str_replace(",", "", @$row['決標金額'])): null
 			);
 		}, isset($award['data']['投標廠商']) && is_array($award['data']['投標廠商']['投標廠商']) ? $award['data']['投標廠商']['投標廠商'] : array());
 		
@@ -143,52 +151,66 @@ function pcc($date) {
 			'merchants' => array_values(array_filter($candidates, function($row) {
 				return intval($row['awarding'] . '');
 			})),
-			//'publish' => new MongoDate(strtotime($date)),
+			//'publish' => new MongoDB\BSON\UTCDateTime(strtotime($date) * 1000),
 			'end_date' => $award['end_date']
 		);
 	}, $awards));
-	$mc = new MongoClient();
-	$collection = $mc->selectCollection('pcc', 'award');
-	$batch = new MongoUpdateBatch($collection);
+
+	$batch = new MongoDB\Driver\BulkWrite(['ordered' => true]);
 	foreach($awards as $award) {
-		$update = array(
-			'q' => array('_id' => $award['_id']),
-			'u' => array('$set' => $award),
+		$batch->update([
+			'_id' => $award['_id']
+		],[
+			'$set' => $award
+		], [
 			'multi' => true,
 			'upsert' => true,
-		);
-		$batch->add((object) $update);
+		]);
 	}
 	try {
-	$r = $batch->execute();
+		$manager = new MongoDB\Driver\Manager();
+		$writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 1000);
+		$r = $manager->executeBulkWrite('pcc.award', $batch, $writeConcern);
 	} catch(Exception $e) {
 		$r = null;
 	}
-	echo $date . ' award upserted ' . $r['nUpserted'], "\n";
-	$collection = $mc->selectCollection('pcc', 'pcc');
-	$batch = new MongoUpdateBatch($collection);
+	echo $date . ' award upserted ' . $r->getInsertedCount(), "\n";
+
+	$batch = new MongoDB\Driver\BulkWrite(['ordered' => true]);
 	foreach($awards as $award) {
 		if(empty($award['end_date']))
 			continue;
-		$update = array(
-			'q' => array('job_number' => $award['job_number'], 'unit_id' => $award['unit_id']),
-			'u' => array('$set' => array('end_date' => $award['end_date'], 'award' => $award)),
-			'multi' => true
-		);
-		$batch->add((object) $update);
+		$batch->update([
+			'job_number' => $award['job_number'],
+			'unit_id' => $award['unit_id']
+		],[
+			'$set' => ['end_date' => $award['end_date'], 'award' => $award]
+		], [
+			'multi' => true,
+			'upsert' => true,
+		]);
 	}
 	try {
-		$r = $batch->execute();
+		$manager = new MongoDB\Driver\Manager();
+		$writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 1000);
+		$r = $manager->executeBulkWrite('pcc.pcc', $batch, $writeConcern);
+
 	}
 	catch(Exception $e) {
 		$r = null;
 	}
-	echo $date . ' tender end_date upserted ' . $r['nUpserted'], "\n";
+	echo $date . ' tender end_date upserted ' . $r->getInsertedCount(), "\n";
 }
 function get_list($date) {
 	$base = "https://pcc.g0v.ronny.tw/api/listbydate?date=";
 	$api = $base . $date;
-	if(file_exists("list/{$date}.json")) {
+	$exists = file_exists("list/{$date}.json");
+	$size = NULL;
+	if($exists) {
+		$stat = stat("list/{$date}.json");
+		$size = $stat['size'];
+	}
+	if($size && $size > 2) {
 		$result = json_decode(file_get_contents("list/{$date}.json"), TRUE);
 	}
 	else {
@@ -231,20 +253,21 @@ function get_tender_api_real($unit_id, $job_number) {
 } 
 function get_tender($unit_id, $job_number, $date = FALSE) {
 	$result = get_tender_api($unit_id, $job_number, $date);
-	$record = array_pop(array_filter($result['records'], function($row) {
+	$records = array_filter($result['records'], function($row) {
 		return in_array($row['brief']['type'], array('公開招標更正公告', '公開招標公告', '公開取得報價單或企劃書更正公告', '限制性招標(經公開評選或公開徵求)公告'));
-	}));
+	});
+	$record = array_pop($records);
 	return $record;
 }
 
 function get_award($unit_id, $job_number, $date = FALSE) {
 	$result = get_tender_api($unit_id, $job_number, $date);
-
-	$record = array_pop(array_filter($result['records'], function($row) {
+	$records = array_filter($result['records'], function($row) {
 		return in_array($row['brief']['type'], array('決標公告', '無法決標公告'));
-	}));
+	});
+	$record = array_pop($records);
 	$data = [];
-	if(!is_array($record['detail']))
+	if(!$record || !is_array($record['detail']))
 		return NULL;
 	foreach($record['detail'] as $key => $value) {
 		if(preg_match('/remind/', $key) || preg_match('/:理由$/', $key) || preg_match('/目的事業主管機關核准文號/', $key))

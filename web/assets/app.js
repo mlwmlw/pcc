@@ -7,7 +7,7 @@ app.config(function($interpolateProvider, $locationProvider, $httpProvider) {
             'request': function(config) {
 								if(/template/.test(config.url))
 									return config;
-                config.url = 'http://pcc.mlwmlw.org' + config.url;
+                config.url = 'https://pcc.mlwmlw.org' + config.url;
                 return config;
             }
         };
@@ -25,8 +25,9 @@ app.run(function($rootScope, $http, $window, $location) {
         $rootScope.keywords = res.data;
     });
     $rootScope.search = function(keyword) {
-        $http.post('/api/keyword/' + keyword)
-        window.open('https://www.google.com/search?q=site%3Apcc.mlwmlw.org+' + encodeURIComponent(keyword) + '+inurl%3Atender')
+			$http.post('/api/keyword/' + keyword).then(function(res) {
+				$window.location.href = '/search/' + keyword;
+			});
     }
 });
 app.controller('page', function($scope) {

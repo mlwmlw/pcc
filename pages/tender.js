@@ -5,7 +5,7 @@ import Head from 'next/head';
 export default class extends React.Component {
    static async getInitialProps({ req, query, params }) {
       var unit = encodeURIComponent(query.unit);
-      const res = await fetch(`http://pcc.mlwmlw.org/api/tender/${query.id}/${unit}`);
+      const res = await fetch(`https://pcc.mlwmlw.org/api/tender/${query.id}/${unit}`);
       let tenders = await res.json();
       var award = []
       var merchants = []
@@ -93,6 +93,12 @@ export default class extends React.Component {
                   
                </div>
             </div>
+						<ins className="adsbygoogle"
+							style={{"display":"block", "height": "150px"}}
+							data-ad-client="ca-pub-9215576480847196"
+							data-ad-slot="1304930582"
+							data-ad-format="auto"
+							data-full-width-responsive="true"></ins>
          </div>
          <div className="col-sm-4">
             <div className="panel panel-default">

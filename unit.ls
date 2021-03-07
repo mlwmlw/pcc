@@ -4,7 +4,21 @@ base = \http://web.pcc.gov.tw/tps/main/pss/pblm/tender/basic/search/mainListComm
 request.defaults {
 	pool: { maxSockets: 4}
 }
+db.getCollection('pcc').aggregate(
+[
+{$match: {publish: {$gt: ISODate("2018-01-01")}}},
+{$project: {unit_id: 1, unit: 1}},
+{$lookup: {
+	     as: 'u',
+			      from: 'unit',
+						     localField: "unit_id",
+								      foreignField: "_id"
+}},
+{$project: {_id: "$unit_id", unit: 1, u: {$size: "$u"}}},
+{$match: {u: 0, unit: {$ne: null}}},
+{$group: {_id: "$_id", name: {$max: "$unit"}}},
 
+]).toArray()
 client = mongodb.MongoClient
 db = null
 client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, _db) ->

@@ -16,7 +16,8 @@ client = mongodb.MongoClient
 count = 0;
 total = 4000
 err, db <- client.connect uri
-err, rows <- db.collection 'merchants' .find {address: "分公司所在地"} .limit total .toArray
+#err, rows <- db.collection 'merchants' .find {address: "分公司所在地"} .limit total .toArray
+err, rows <- db.collection 'merchants' .find {owner: {$exists: 0}} .limit total .toArray
 #err, rows <- db.collection 'merchants' .find {_id: /^\d{8}$/, error: true, address: {$exists: 0}, org: '公司登記'} .limit total .toArray
 total = rows.length
 bulk = db.collection 'merchants' .initializeUnorderedBulkOp!

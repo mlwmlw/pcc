@@ -18,8 +18,12 @@ app.set 'views', __dirname+'/views'
 app.set 'view engine' 'jade'
 app.set 'port' (process.env.PORT or 8888)
 cache = redis.createClient!
-client = mongodb.MongoClient
-err, client <- client.connect uri
+client = mongodb.MongoClient uri, {
+	connectTimeoutMS: 10000,
+	serverSelectionTimeoutMS: 120000,
+	useUnifiedTopology: true
+}
+err <- client.connect
 db = client.db('pcc')
 deferred = null
 getAll = !->
@@ -66,6 +70,7 @@ app.post '/keyword/:keyword', (req, res) ->
 	db.collection 'search_log' .insert {
 		keyword: req.params.keyword, 
 		ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+		ua: req.get('User-Agent'),
 		ts: new Date!
 	}, (err, res) ->
 		if err
@@ -83,8 +88,8 @@ app.get '/keyword/:keyword', (req, res) ->
 			database: "pcc",
 		}
 	})
-	stream = ch.query("SELECT job_number, name, unit, unit_id, toDate(publish) publish, merchants FROM 
-pcc where name like '%" + req.params.keyword + "%' or unit like '%" + req.params.keyword + "%' or arrayStringConcat(merchants) like '%" + req.params.keyword + "%' order by publish desc limit 200 FORMAT JSON")
+	stream = ch.query("SELECT job_number, max(name) name, max(unit) unit, max(unit_id) unit_id, toDate(min(publish)) publish, max(merchants) merchants FROM 
+pcc where pcc.name like '%" + req.params.keyword + "%' or pcc.unit like '%" + req.params.keyword + "%' or arrayStringConcat(pcc.merchants) like '%" + req.params.keyword + "%' group by job_number order by publish desc limit 200 FORMAT JSON")
 	rows = []
 	
 	stream.on 'data', (row) ->
@@ -93,13 +98,13 @@ pcc where name like '%" + req.params.keyword + "%' or unit like '%" + req.params
 	stream.on 'end', (end) ->
 		res.send rows
 
-	db.collection 'search_log' .insertOne {
-		keyword: req.params.keyword, 
-		ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
-		ts: new Date!
-	}, (err, res) ->
-	if err
-		console.log err
+	#db.collection 'search_log' .insertOne {
+	#	keyword: req.params.keyword, 
+	#	ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+	#	ts: new Date!
+	#}, (err, res) ->
+	#if err
+	#	console.log err
 
 app.get '/keywords', (req, res) -> 
 	db.collection 'search_log' .aggregate [
@@ -117,12 +122,13 @@ app.get '/date/:type/:date', (req, res) ->
 	tomorrow = new Date req.params.date
 	tomorrow.setDate date.getDate! + 1
 	c = if req.params.type=='tender' then 'pcc' else 'award'
-	db.collection c .find {publish: { $gte: date, $lt: tomorrow }} .toArray (err, docs) ->
+	filter = if req.params.type=='tender' then {publish: { $gte: date, $lt: tomorrow }} else {end_date: { $gte: date, $lt: tomorrow}}
+	db.collection c .find filter .toArray (err, docs) ->
 		res.send docs
 
 app.get '/month', (req, res) ->
 	collection = db.collection 'pcc'
-	collection.aggregate { $group: { _id: { year: { $year: '$publish'}, month: { $month: '$publish'} } } }, (err, docs) ->
+	collection.aggregate [{ $group: { _id: { year: { $year: '$publish'}, month: { $month: '$publish'} } } }] .toArray (err, docs) ->
 		monthes = _.map docs, '_id'
 		monthes = monthes.map (val) ->
 			val.name = val.year + ' 年 ' + val.month + ' 月'
@@ -143,11 +149,10 @@ app.get '/dates', (req, res) ->
 		start = moment year + "0101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
 		end = moment year + "1231 23:59:59", 'YYYYMMDD hh:mm:ss' .toDate!
 
-	console.log(start, end)
 	db.collection 'pcc' .aggregate [
 		{ $match: {publish: {$gte: start, $lt: end}}},
 		{ $group: { _id: '$publish'}}
-		], (err, docs) ->
+		] .toArray (err, docs) ->
 		dates = _.map docs, '_id'
 		dates = dates.map (val) ->
 			moment val .zone '+0800' .format!
@@ -155,7 +160,7 @@ app.get '/dates', (req, res) ->
 		res.send dates
 
 app.get '/categories', (req, res) ->
-	db.collection 'pcc' .aggregate { $group: { _id: '$category'}}, (err, docs) ->
+	db.collection 'pcc' .aggregate [{ $group: { _id: '$category'}}] .toArray (err, docs) ->
 		res.send _.map docs, '_id'
 
 app.get '/category/:category', (req, res) ->
@@ -176,7 +181,7 @@ app.get '/rank/merchants/:order?/:year?', (req, res) ->
 	{ $match: $match},
 	{ $group : {_id: {$ifNull: ["$award.merchants._id", "$award.merchants.name"]}, merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
 	$sort, 
-	{ $limit: 100}]
+	{ $limit: 100}] .toArray!
 	for i,m of merchants
 		m.merchant = m.merchants.pop!
 		delete m.merchants
@@ -351,7 +356,7 @@ app.get '/partner/:year?', (req, res) ->
 		{$sort: {count: -1}},
 		{$limit: 50},
 	{$project: {unit: "$_id.unit", merchant: {_id: "$_id.merchant_id", name: "$_id.merchant"}, price: "$price", count: "$count"}}
-	], (err, docs) ->
+	] .toArray (err, docs) ->
 		res.send docs
 app.get '/unit_info/:id?', (req, res) ->
 	unit = req.params.id.replace(/\s+/g, '')

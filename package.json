@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "lsc -c server.ls && pm2 stop server || pm2 start server.js --max-memory-restart 150M  --log-date-format 'YYYY-MM-DD HH:mm:ss'",
+    "start": "lsc -c server.ls && pm2 stop server || pm2 start server.js --max-memory-restart 450M  --log-date-format 'YYYY-MM-DD HH:mm:ss'",
     "web": "cd web ; pm2 start index.js --node-args=\"--harmony\" --watch --name=\"pcc-web\"",
     "dev": "node next.js",
     "build": "next build",
@@ -41,6 +41,7 @@
     "express": "^4.16.4",
     "fetch": "^1.1.0",
     "hackpad": "0.0.3",
+    "isbot": "^3.0.21",
     "koa": "~0.8.1",
     "koa-gzip": "^0.1.0",
     "koa-logger": "~1.2.2",
@@ -50,12 +51,13 @@
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "mongodb": "^3.6.3",
-    "next": "^9.3.3",
+    "next": "^9.5.5",
     "next-routes": "^1.4.2",
     "node-fetch": "^2.2.0",
     "nodejieba": "^2.5.1",
     "nunjucks": "^2.4.3",
     "progress": "^1.1.8",
+    "puppeteer": "^5.5.0",
     "q": "~1.0.1",
     "qs": "^6.5.2",
     "react": "^16.12.0",
@@ -72,6 +74,7 @@
     "url-loader": "^1.1.2"
   },
   "devDependencies": {
+    "clickhouse": "^2.2.1",
     "file-loader": "^2.0.0"
   }
 }

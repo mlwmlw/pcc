@@ -1,4 +1,5 @@
 require! <[http querystring request cheerio q string moment]>
+request = request.defaults {headers: {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'}}
 export getDocsByDate = (date) ->
 	deferred = q.defer!
 	pcc = getDocs date
@@ -24,6 +25,7 @@ trim = (string) ->
 	string - /(^\s+|\s+$)/g
 parseFailed = (url, cb) ->
 	error, res <- request.get url
+	#console.log error, res
 	$ = cheerio.load res.body
 	cb {origin_publish: trim($ '.main tr' .eq(6) .find 'td' .text!).replace /(\d+)\/(\d+)\/(\d+)/, (date, year, month, day) ->
 		(+year + 1911) + "-" + month + "-" + day
@@ -35,6 +37,7 @@ parseAward = (url, cb, mode) ->
 	else
 		modeUrl = url+"&contentMode=0"
 	error, res <- request.get modeUrl
+	#console.log error, res
 	$ = cheerio.load res.body
 	merchants = {}
 	merchant = trim($ '.award_table_tr_4 tr' .eq 5 .find 'td' .text!)
@@ -109,8 +112,9 @@ getDocs = (date, page) ->
 		awardAnnounceEndDate: today
 	}
 	deferred = q.defer!
-	url = 'http://web.pcc.gov.tw/tps/pss/tender.do?searchMode=common&searchType=advance&pageIndex=' + page
+	url = 'http://webtest.pcc.gov.tw/tps/pss/tender.do?searchMode=common&searchType=advance&pageIndex=' + page
 	request.post url, {form: post}, (error, res) -> 
+		#console.log error, res
 		$ = cheerio.load res.body
 		data = []
 		promises = []
