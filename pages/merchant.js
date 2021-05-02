@@ -94,9 +94,14 @@ export default class extends React.Component {
     }, {});
     
     let line_data = merchant.tenders.reduce(function(total, row) {
+      
       var d = new Date(row.publish);
-      if(!total[d.getFullYear()])
-          total[d.getFullYear()] = 0;
+      if(!row.publish) {
+        return total;
+      } 
+      if(!total[d.getFullYear()]) {
+        total[d.getFullYear()] = 0;
+      }
       total[d.getFullYear()] += +row.price;
       return total;
     }, {});
@@ -118,7 +123,6 @@ export default class extends React.Component {
         }
       })
     }]
-    
     
     return (
       <div className="starter-template">
@@ -215,7 +219,7 @@ export default class extends React.Component {
               Header: "類型",
               accessor: "type",
               Cell: ({row}) => {
-                return row.type.replace(/\(.+\)公告/, '')
+                return row.type ? row.type.replace(/\(.+\)公告/, ''): null
               }
             },
             {
