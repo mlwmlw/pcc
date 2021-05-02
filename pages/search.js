@@ -19,11 +19,12 @@ export default class extends React.Component {
   }
   
   render() {
+    let currentYear = new Date().getFullYear();
     let {keyword, tenders} = this.props;
     return (
       <div className="starter-template">
        <Head>
-        <title>搜尋 {keyword} 標案結果 - 開放政府標案</title>
+        <title>{currentYear}年{keyword}標案查詢 - 開放政府標案</title>
         
         <meta property="og:description"
         content="開放標案廠商列表" />

@@ -1,6 +1,15 @@
 <% extend './views/template.html' %>
 <script>
 app.controller('page', function($scope, $http) {
+	$http.get('/api/hot/tenders').then(function(res) {
+		$scope.tenders = res.data;
+	})
+	$http.get('/api/hot/unit').then(function(res) {
+		$scope.units = res.data;
+	})
+	$http.get('/api/hot/merchant').then(function(res) {
+		$scope.merchants = res.data;
+	})
 });
 </script>
 		
@@ -8,7 +17,7 @@ app.controller('page', function($scope, $http) {
 		<div class="container">
 				<div class="row">
 						<div class="col-lg-12">
-								<div class="intro-message">
+								<div class="intro-message" style="background: rgba(0,0,0,0.7);padding: 0px 20px;">
 										<h1>開放標案</h1>
 										<h3>讓公民更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。</h3>
 								</div>
@@ -17,10 +26,69 @@ app.controller('page', function($scope, $http) {
 		</div>
 		<!-- /.container -->
 </div>
+<div class="content-section-a">
+		<div class="container">
+				<div class="row">
+						<div class="col-lg-5 col-sm-6">
+								<h2 class="section-heading">熱門瀏覽標案</h2>
+								<p class="lead">最近很多人關注的標案</p>
+						</div>
+						<div class="col-lg-5 col-lg-offset-2 col-sm-6">
+							<ul style="margin-left: 20px;list-style: circle;">
+								<li ng-repeat="tender in tenders">
+									<a target="_blank" href="/tender/[[tender.unit]]/[[tender.job_number]]">[[tender.name]]</a>
+								</li>
+							</ul>
+						</div>
+				</div>
+
+		</div>
+		<!-- /.container -->
+
+</div>
 <div class="content-section-b">
 		<div class="container">
 				<div class="row">
-						<div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
+						<div class="col-lg-5 col-lg-offset-1 col-sm-push-6 col-sm-6">
+								<h2 class="section-heading">熱門瀏覽單位</h2>
+								<p class="lead">最近很多人關注的單位</p>
+						</div>
+						<div class="col-lg-5 col-sm-pull-6 col-sm-6">
+							<ul style="margin-left: 20px;list-style: circle;">
+								<li ng-repeat="u in units">
+									<a target="_blank" href="/unit/[[u.unit]]">[[u.name]]</a>
+								</li>
+							</ul>
+						</div>
+				</div>
+		</div>
+		<!-- /.container -->
+</div>
+
+<div class="content-section-a">
+		<div class="container">
+				<div class="row">
+						<div class="col-lg-5 col-sm-6">
+								<h2 class="section-heading">熱門瀏覽公司</h2>
+								<p class="lead">最近很多人關注的公司</p>
+						</div>
+						<div class="col-lg-5 col-lg-offset-2 col-sm-6">
+							<ul style="margin-left: 20px;list-style: circle;">
+								<li ng-repeat="m in merchants">
+									<a target="_blank" href="/merchants/[[m.merchant]]">[[m.name]]</a>
+								</li>
+							</ul>
+						</div>
+				</div>
+
+		</div>
+		<!-- /.container -->
+
+</div>
+<div class="content-section-b">
+		<div class="container">
+				<div class="row">
+						<div class="col-lg-5 col-lg-offset-1 col-sm-push-6 col-sm-6">
 								<hr class="section-heading-spacer">
 								<div class="clearfix"></div>
 								<h2 class="section-heading"><a href="#">最新弊案</a></h2>

@@ -12,12 +12,17 @@ parse = (input, reg) ->
 		m = reg.exec input
 	return res
 uri = require \./database
-client = mongodb.MongoClient
+client = mongodb.MongoClient uri, {
+	connectTimeoutMS: 10000,
+	serverSelectionTimeoutMS: 120000,
+	useUnifiedTopology: true
+}
+err <- client.connect
+db = client.db('pcc')
 count = 0;
-total = 4000
-err, db <- client.connect uri
+total = 500
 #err, rows <- db.collection 'merchants' .find {address: "分公司所在地"} .limit total .toArray
-err, rows <- db.collection 'merchants' .find {owner: {$exists: 0}} .limit total .toArray
+err, rows <- db.collection 'merchants' .find {name: {$exists: true}, error: {$exists: false}, _id: /\d{8}/, owner: {$exists: 0}} .limit total .toArray
 #err, rows <- db.collection 'merchants' .find {_id: /^\d{8}$/, error: true, address: {$exists: 0}, org: '公司登記'} .limit total .toArray
 total = rows.length
 bulk = db.collection 'merchants' .initializeUnorderedBulkOp!
@@ -88,6 +93,6 @@ for row in rows
 			bulk.execute (err, res) ->
 				console.log err
 				console.log 'Done'
-				db.close!
+				client.close!
 
 

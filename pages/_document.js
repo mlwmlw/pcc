@@ -104,7 +104,7 @@ export default class MyDocument extends Document {
                 </ul>
 
                 <form className="navbar-form navbar-right" ng-submit="search(keyword)">
-                    <input type="text" ng-model="keyword" className="form-control search" placeholder="標案搜尋（名稱、機構、廠商）" />
+                    <input inputmode="search" type="search" ng-model="keyword" className="form-control search" placeholder="標案搜尋（名稱、機構、廠商）" />
                     <button type="submit" className="btn btn-primary">
                       <span className="glyphicon glyphicon-search"></span>
                     </button>

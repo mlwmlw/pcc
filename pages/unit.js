@@ -56,7 +56,13 @@ export default class extends React.Component {
     
     return { stats: stats.slice(0, 13), data, unit: unit, lookalike_units: lookalike_units };
   }
- 
+	componentDidMount() {
+		var unit = this.props.unit;
+		if(!unit) {
+			return
+		}
+		$.post('/api/pageview/unit/' + unit._id)
+	}
   render() {
     let { data, unit, stats, lookalike_units}= this.props;
     let title = unit.name + '標案檢索'

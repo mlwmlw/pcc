@@ -4,6 +4,7 @@ createStream = require 'unified-stream'
 markdown = require 'remark-parse'
 html = require 'remark-html'
 cors = require 'cors'
+isbot = require 'isbot'
 nodejieba = require("nodejieba");
 
 corsOptions = {
@@ -38,6 +39,10 @@ getAll = !->
 
 app.use cors(corsOptions)
 
+app.use (req, res, next) ->
+	res.set('Cache-control', 'public, max-age=3600')
+	next!
+
 app.use compression!
 app.use (req, res, next) ->
 	res.setHeader 'Content-Type', 'application/json'
@@ -67,7 +72,7 @@ app.get '/page/:page', (req, res) ->
 		res.send pcc.slice page * perPage, (+page+1) * perPage
 
 app.post '/keyword/:keyword', (req, res) ->
-	db.collection 'search_log' .insert {
+	db.collection 'search_log' .insertOne {
 		keyword: req.params.keyword, 
 		ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
 		ua: req.get('User-Agent'),
@@ -88,8 +93,15 @@ app.get '/keyword/:keyword', (req, res) ->
 			database: "pcc",
 		}
 	})
+	tags = nodejieba.cut(req.params.keyword, true).filter (str) ->
+		str.trim!
+
 	stream = ch.query("SELECT job_number, max(name) name, max(unit) unit, max(unit_id) unit_id, toDate(min(publish)) publish, max(merchants) merchants FROM 
-pcc where pcc.name like '%" + req.params.keyword + "%' or pcc.unit like '%" + req.params.keyword + "%' or arrayStringConcat(pcc.merchants) like '%" + req.params.keyword + "%' group by job_number order by publish desc limit 200 FORMAT JSON")
+pcc where 
+not(has(multiSearchAllPositionsCaseInsensitiveUTF8(concat(
+pcc.name, ' ', pcc.unit, ' ', arrayStringConcat(pcc.merchants)
+), ['" + tags.join("','") + "']), 0)) 
+group by job_number order by publish desc limit 200 FORMAT JSON")
 	rows = []
 	
 	stream.on 'data', (row) ->
@@ -108,7 +120,7 @@ pcc where pcc.name like '%" + req.params.keyword + "%' or pcc.unit like '%" + re
 
 app.get '/keywords', (req, res) -> 
 	db.collection 'search_log' .aggregate [
-	{$match: {ts: {$gt: moment().subtract(7, 'days').toDate! }}},
+	{$match: {ts: {$gt: moment().subtract(3, 'days').toDate! }, keyword: {$ne: "undefined"}}},
 	{$group: {_id: "$keyword", count: {$sum: 1}}},
 	{$sort: {count: -1}},
 	{$limit: 20},
@@ -155,7 +167,7 @@ app.get '/dates', (req, res) ->
 		] .toArray (err, docs) ->
 		dates = _.map docs, '_id'
 		dates = dates.map (val) ->
-			moment val .zone '+0800' .format!
+			moment val .utcOffset 8 .format!
 		dates.sort!
 		res.send dates
 
@@ -257,7 +269,7 @@ app.get '/merchant/:id?', (req, res) ->
 		filter = {"_id": id} 
 	else
 		filter = {"name": id}
-	err, result <- db.collection 'merchants' .find filter .toArray
+	err, result <- db.collection 'merchants' .find filter .sort {_id: -1} .toArray
 	result = result.pop!
 	if !result
 		result = {}
@@ -320,9 +332,9 @@ app.get '/tender/:id/:unit?', (req, res) ->
 	err, tenders <- db.collection 'pcc' .find filter .sort {publish: -1} .toArray
 	for value in tenders
 		value.tags = _.union(
-			nodejieba.cut(value.name), 
-			nodejieba.cut(value.unit),
-			nodejieba.cut(if value.award && value.award.merchants.length > 0 then value.award.merchants[0].name else "")
+			nodejieba.cutForSearch(value.name), 
+			nodejieba.cutForSearch(value.unit),
+			nodejieba.cutForSearch(if value.award && value.award.merchants.length > 0 then value.award.merchants[0].name else "")
 		)
 		value.tags = _.filter(value.tags, (word) -> 
 			word.length > 1 
@@ -694,7 +706,78 @@ memwatch.on 'leak', (info) ->
 	console.error util.inspect(diff, true, null) 
 	hd = null;
 */	
+app.post '/pageview/:type/:key', (req, res) ->
+	if isbot(req.get('user-agent'))
+		return res.send true
+	db.collection 'pageview' .insertOne {
+		type: req.params.type, 
+		id: req.params.key,
+		ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+		ua: req.get('User-Agent'),
+		ts: new Date!
+	}, (err, res) ->
+		if err
+			console.log err
+	res.send true
+
+app.get '/hot/tenders', (req, res) ->
+	db.collection 'pageview' .aggregate([
+	{$match: {type: "tender", ts: {$gt: moment().subtract(1, 'days').toDate!}}},
+	{$group: {_id: {id: "$id", ip: "$ip"}, count: {$sum: 1}}},
+	{$group: {_id: "$_id.id", count: {$sum: 1}}},
+	{$sort: {count: -1}},
+	{$lookup: {
+			as: 'tender',
+			from: 'pcc',
+			localField: "_id",
+			foreignField: "_id"
+	}},
+	{$unwind: "$tender"},
+	{$project: {_id: 1, name: "$tender.name", count: 1, unit: "$tender.unit", job_number: "$tender.job_number"}},
+	{$limit: 20}
+	{ $sample : { size: 10 } }
+	]).toArray (err, docs) -> 
+		res.send docs
+
+app.get '/hot/unit', (req, res) ->
+	db.collection 'pageview' .aggregate([
+	{$match: {type: "unit", ts: {$gt: moment().subtract(1, 'days').toDate!}}},
+	{$group: {_id: {id: "$id", ip: "$ip"}, count: {$sum: 1}}},
+	{$group: {_id: "$_id.id", count: {$sum: 1}}},
+	{$sort: {count: -1}},
+	{$lookup: {
+			as: 'unit',
+			from: 'unit',
+			localField: "_id",
+			foreignField: "_id"
+	}},
+	{$unwind: "$unit"},
+	{$project: {_id: 1, name: "$unit.name", count: 1, unit: "$unit._id"}},
+	{$limit: 15}
+	{ $sample : { size: 10 } }
+	]).toArray (err, docs) -> 
+		res.send docs
+
+app.get '/hot/merchant', (req, res) ->
+	db.collection 'pageview' .aggregate([
+	{$match: {type: "merchant", ts: {$gt: moment().subtract(1, 'days').toDate!}}},
+	{$group: {_id: {id: "$id", ip: "$ip"}, count: {$sum: 1}}},
+	{$group: {_id: "$_id.id", count: {$sum: 1}}},
+	{$sort: {count: -1}},
+	{$lookup: {
+			as: 'merchant',
+			from: 'merchants',
+			localField: "_id",
+			foreignField: "_id"
+	}},
+	{$unwind: "$merchant"},
+	{$project: {_id: 1, name: "$merchant.name", count: 1, merchant: "$merchant._id"}},
+	{$limit: 15}
+	{ $sample : { size: 10 } }
+	]).toArray (err, docs) -> 
+		res.send docs
 http.createServer app .listen (app.get 'port'), ->
 	console.log 'Express server listening on port ' + app.get 'port'
 
-
+process.on 'uncaughtException', (err) ->
+	console.error(err.stack);

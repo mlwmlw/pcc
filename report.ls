@@ -2,8 +2,14 @@ require! <[ fs express http mongodb q moment ]>
 _ = require 'lodash'
 uri = require \./database
 start_ts = +new Date! 
-client = mongodb.MongoClient
-err, db <-client.connect uri
+client = mongodb.MongoClient uri, {
+	connectTimeoutMS: 10000,
+	serverSelectionTimeoutMS: 120000,
+	useUnifiedTopology: true
+}
+err <- client.connect
+db = client.db('pcc')
+
 console.log 'connected', +new Date! - start_ts
 deferred = q.defer!
 db.collection 'unit' .find {} .toArray (err, units) ->
@@ -12,23 +18,21 @@ db.collection 'unit' .find {} .toArray (err, units) ->
 		res[unit._id] = unit
 		return res
 	, {}
-	deferred.resolve units
-
-start = moment process.argv[2] .utcOffset '+0800' 
-end = moment start .add {months: 1}
+	#deferred.resolve units
 
 
-console.log(start, end)
-pcc = db.collection('pcc')
-pcc.aggregate [
-{$match: {publish: {$gte: start.toDate!, $lte: end.toDate!}}},
-{$group: {_id: {unit_id: "$unit_id", job_number: "$job_number"}, price: {$max: "$price"}}},
-{$group: {_id: "$_id.unit_id", price: {$sum: "$price"}, count: {$sum: 1}}}
-], (err, result) ->
-	if err
-		console.log	err
+	start = moment process.argv[3], "YYYY-MM-DD" .utcOffset '+0800' 
+	end = moment start .add {months: 1}
 
-	deferred.promise.then (units) ->
+	pcc = db.collection('pcc')
+	pcc.aggregate [
+	{$match: {publish: {$gte: start.toDate!, $lte: end.toDate!}}},
+	{$group: {_id: {unit_id: "$unit_id", job_number: "$job_number"}, price: {$max: "$price"}}},
+	{$group: {_id: "$_id.unit_id", price: {$sum: "$price"}, count: {$sum: 1}}}
+	] .toArray (err, result) ->
+		if err
+			console.log	err
+
 		findParent = (id, unit)->
 			if units[id] && units[id].parent == null
 				return units[id].name
@@ -39,7 +43,7 @@ pcc.aggregate [
 			else
 				return ''
 
-		result := result.map (row) ->
+		result = result.map (row) ->
 			#name = units[row._id.replace(/\s+/, '')].name
 			if units[row._id.replace(/\s+/, '')]
 				name = units[row._id.replace(/\s+/, '')].name
@@ -54,12 +58,13 @@ pcc.aggregate [
 				count: row.count
 				price: row.price
 			}
-		db.collection \report .update {
-			_id: process.argv[2]
+		db.collection \report .updateOne {
+			_id: process.argv[3]
 		}, {
-			_id: process.argv[2],
-			updated_at: new Date(),
-			res: result
+			$set: {
+				updated_at: new Date(),
+				res: result
+			}
 		}, {upsert: true}, (err, res) ->
 			console.log err
 			#console.log res

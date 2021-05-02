@@ -2,6 +2,8 @@ const fetch = require('node-fetch');
 import React from 'react'
 import dayjs from 'dayjs'
 import Head from 'next/head';
+import ErrorPage from 'next/error'
+
 export default class extends React.Component {
    static async getInitialProps({ req, query, params }) {
       var unit = encodeURIComponent(query.unit);
@@ -19,6 +21,8 @@ export default class extends React.Component {
          
          return tender;
       });
+			
+
       /*
       const fetchAward = async () => {
          return Promise.all(award.map(async a =>
@@ -32,9 +36,19 @@ export default class extends React.Component {
       
       return {tenders: tenders, award: award, merchants: merchants, unit: query.unit};
    }
- 
+   componentDidMount() {
+		 var tenders = this.props.tenders;
+		 if(tenders.length == 0) {
+			 return;
+		 }
+		 $.post('/api/pageview/tender/' + tenders[0]._id)	
+	 }
    render() {
-      const desc = "招標單位：" + this.props.unit + "，招標金額：" + this.props.tenders[0].price + "，招標日期：" + dayjs(this.props.tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + this.props.tenders[0].id + "，分類：" + this.props.tenders[0].category;
+
+		 if(this.props.tenders.length == 0) {
+			 return <ErrorPage statusCode={404} />
+		 }
+      const desc = "招標單位：" + this.props.unit + "，招標金額：" + new Intl.NumberFormat('zh-TW').format(this.props.tenders[0].price) + "，招標日期：" + dayjs(this.props.tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + this.props.tenders[0].id + "，分類：" + this.props.tenders[0].category;
       return (
         <div className="starter-template">
          <Head>
@@ -56,7 +70,7 @@ export default class extends React.Component {
                         <dt>標案名稱</dt>
                         <dd>{t.name}</dd>
                         <dt>招標金額</dt>
-                        <dd>{t.price}</dd>
+                        <dd>{new Intl.NumberFormat('zh-TW').format(t.price)}</dd>
                         <dt>招標日期</dt>
                         <dd>{dayjs(t.publish).format('YYYY-MM-DD')}</dd>
                         <dt>決標日期</dt>
@@ -127,7 +141,7 @@ export default class extends React.Component {
             <div className="panel panel-default">
                <div className="panel-heading">投標廠商</div>
                <div className="panel-body">
-                  {this.props.merchants.map(m => 
+                  {(this.props.merchants || []).map(m => 
                   <div className="row col-xs-12">
                      <a href={"/merchants/" + m.name}>
                         {m.org} - {m.name}
@@ -138,8 +152,11 @@ export default class extends React.Component {
             </div>
 
             <div className="panel panel-default">
-               <div className="panel-heading">表達意見</div>
+               <div className="panel-heading">相關關鍵字</div>
                <div className="panel-body">
+									{(this.props.tenders[0].tags || []).map((word , i) => 
+										<span><a href={"/search/" + word}>{word}</a>{this.props.tenders[0].tags.length == i + 1 ? '': '、'}</span>
+									)}
                </div>
             </div>
        </div>

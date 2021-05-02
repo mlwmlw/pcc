@@ -68,7 +68,13 @@ export default class extends React.Component {
   changeYear(event) {
     this.setState({year: event.target.value});
   }
- 
+	componentDidMount() {
+		var merchant = this.props.merchant;
+		if(!merchant) {
+			return
+		}
+		$.post('/api/pageview/merchant/' + merchant._id)	
+	}
   
   render() {
     let { merchant, years = [], merchants }= this.props;
@@ -134,10 +140,11 @@ export default class extends React.Component {
         content={desc}/>
         </Head>
         <h1>{currentYear}年{merchant.name}得標案件</h1>
+        <span>公司統一編號：{merchant._id}</span><br />
         <a href={"https://company.g0v.ronny.tw/index/search?q=" + merchant._id} target="_blank">查看公司資料</a>
         <div style={{width: "100%", height: line[0].data.length > 1 ? "400px": 0}}>
           {chart(line)}
-        </div>;
+        </div>
         <div style={{width: "100%", height: stats.length > 1 ? "400px": 0}}>
         <ResponsivePie data={stats}
           axisBottom={{

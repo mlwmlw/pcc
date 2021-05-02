@@ -86,9 +86,8 @@ function pcc($date) {
 	}
 	echo $date . ' tender upserted ' . $r->getInsertedCount(), ' nModified ', $r->getModifiedCount(), "\n";
 	$awards = array_filter($result, function($row) {
-		return in_array($row['brief']['type'], array('決標公告', '更正決標公告'));
+		return in_array($row['brief']['type'], array('決標公告', '更正決標公告', '定期彙送'));
 	});
-	
 	$awards = array_filter(array_map(function($row) use($date) {
 		
 		$award = get_award($row['unit_id'], $row['job_number'], $date);
@@ -174,7 +173,7 @@ function pcc($date) {
 	} catch(Exception $e) {
 		$r = null;
 	}
-	echo $date . ' award upserted ' . $r->getInsertedCount(), "\n";
+	echo $date . ' award upserted ' . $r->getInsertedCount(), ' nModified ', $r->getModifiedCount(), "\n";
 
 	$batch = new MongoDB\Driver\BulkWrite(['ordered' => true]);
 	foreach($awards as $award) {
@@ -263,7 +262,7 @@ function get_tender($unit_id, $job_number, $date = FALSE) {
 function get_award($unit_id, $job_number, $date = FALSE) {
 	$result = get_tender_api($unit_id, $job_number, $date);
 	$records = array_filter($result['records'], function($row) {
-		return in_array($row['brief']['type'], array('決標公告', '無法決標公告'));
+		return in_array($row['brief']['type'], array('決標公告', '無法決標公告', '定期彙送'));
 	});
 	$record = array_pop($records);
 	$data = [];
