@@ -51,7 +51,7 @@
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "mongodb": "^3.6.3",
-    "next": "^9.5.5",
+    "next": "^11.1.0",
     "next-routes": "^1.4.2",
     "node-fetch": "^2.2.0",
     "nodejieba": "^2.5.1",
