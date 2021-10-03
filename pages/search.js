@@ -12,8 +12,21 @@ export default class extends React.Component {
 
    }
   static async getInitialProps({ req, query }) {
+
     let keyword = query.keyword;
-    const result = await fetch("http://pcc.mlwmlw.org/api/keyword/" + encodeURIComponent(keyword));
+		let options = {};
+		if(req.headers['user-agent']) {
+			options = {
+				headers: {
+					'user-agent': req.headers['user-agent'],
+					'X-Forwarded-For': req.connection.remoteAddress
+				}
+			};
+		} else {
+			console.log('no user-agent');
+			return {tenders: [], keyword: null}
+		}
+    const result = await fetch("http://pcc.mlwmlw.org/api/keyword/" + encodeURIComponent(keyword), options);
     let tenders = await result.json();
     return { tenders, keyword };
   }
