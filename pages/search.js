@@ -55,7 +55,11 @@ export default class extends React.Component {
             },
             {
               Header: "標案名稱",
-              accessor: "name"
+              accessor: "name",
+              Cell: ({ row }) =>
+                <a target="_blank" href={`/tender/${row.unit}/${row._original.job_number}`}>
+                  {row.name}
+                </a>
             },
             {
               Header: "招標日期",
@@ -64,6 +68,11 @@ export default class extends React.Component {
             {
               Header: "得標公司",
               accessor: "merchants",
+							filterMethod: (filter, row) => {
+								return row[filter.id].filter((val) => {
+									return val.indexOf(filter.value)  !== -1
+								}).length
+							},
               Cell: ({ row }) =>
                 { if (row.merchants.length == 0) {
                   return null;
@@ -79,27 +88,18 @@ export default class extends React.Component {
                     })}
                   </ul>
                 }}
-						},
-						{
-							Header: "連結",
-              filterable: false,
-              accessor: "job_number",
-              Cell: ({ row }) =>
-                <a target="_blank" href={`/tender/${row.unit}/${row.job_number}`}>
-                  前往
-                </a>
-            }
+						}
           ]}
-          manual
           onFilteredChange={(filtered, column) => {
             
           }}
           layout="horizontal"
-          defaultPageSize={tenders.length}
-          showPagination={false}
+          defaultPageSize={Math.min(200, tenders.length)}
+          showPagination={true}
           showPaginationTop={false}
-          showPaginationBottom={false}
-          pageSizeOptions={[100]}
+          showPaginationBottom={true}
+					filterable={true}
+          pageSizeOptions={[100, 200, 500]}
           className="-striped -highlight"
         />
 
