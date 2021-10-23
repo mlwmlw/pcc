@@ -17,7 +17,7 @@ import {
 
 function SearchDrawer(props) {
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const btnRef = React.useRef()
+	const inputRef = React.useRef();
 
 	return (
     <>
@@ -29,7 +29,6 @@ function SearchDrawer(props) {
         isOpen={isOpen}
         placement="top"
         onClose={onClose}
-        finalFocusRef={btnRef}
       >
         <DrawerOverlay />
         <DrawerContent >
@@ -37,12 +36,15 @@ function SearchDrawer(props) {
 
           <DrawerBody>
 
-						<form style={{margin: "0px 30px"}} ng-submit="search(keyword)">
+						<form onSubmit={(e) => {
+								location.href = "/search/" + inputRef.current.value
+								e.preventDefault();
+							}} style={{margin: "0px 30px"}} ng-submit="search(keyword)">
 							<div style={{width: "100%"}} className="input-group row">
 								<div className="form-outline">
-									<input inputMode="search" type="search" style={{width:"20em"}} ng-model="keyword" className="form-control search" placeholder="標案搜尋（名稱、機構、廠商）" />
+									<input ref={inputRef} inputMode="search" type="search" style={{width:"20em"}} ng-model="keyword" className="form-control search" placeholder="標案搜尋（名稱、機構、廠商）" />
 								</div>
-								<button  type="submit" className="btn btn-primary">
+								<button type="submit" className="btn btn-primary">
 									<span className="glyphicon glyphicon-search"></span>
 								</button>
 							</div>
