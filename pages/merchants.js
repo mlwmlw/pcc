@@ -14,10 +14,10 @@ export default class extends React.Component {
       this.debounce = _.debounce(this.fetchData.bind(this), 3000);
    }
   static async getInitialProps({ req, query }) {
-    const res = await fetch("http://pcc.mlwmlw.org/api/merchants?count=1");
+    const res = await fetch("https://pcc.mlwmlw.org/api/merchants?count=1");
     let count = await res.json();
     let page = query.page ? +query.page: 1;
-    const mres = await fetch("http://pcc.mlwmlw.org/api/merchants?page=" + page);
+    const mres = await fetch("https://pcc.mlwmlw.org/api/merchants?page=" + page);
     let merchants = await mres.json();
     
     return { page: page - 1, pages:  Math.ceil(parseFloat(count/100)), merchants: merchants };
@@ -25,7 +25,7 @@ export default class extends React.Component {
   async fetchData(state) {
     let {page, pageSize, sorted, filtered} = state;
     page = page || this.props.page;
-   const res = await fetch(`http://pcc.mlwmlw.org/api/merchants?page=${page + 1}`);
+   const res = await fetch(`https://pcc.mlwmlw.org/api/merchants?page=${page + 1}`);
    let merchants = await res.json();
    this.setState({
       merchants: merchants,
