@@ -147,7 +147,7 @@ app.get '/keywords', (req, res) ->
 	{$project: {count: 1, result: {$arrayElemAt: ["$result", 0]}}},
 	{$project: {count: 1, result: "$result.result"}},
 	{$match: {$or: [{result: {$gt: 0}}, {result: {$exists: false}}]}},
-	{ $sample : { size: 10 } }
+	{ $sample : { size: 15 } }
 
 	] .toArray (err, docs) -> 
 		res.send _.map docs, '_id'

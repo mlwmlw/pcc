@@ -252,32 +252,35 @@ export default class extends React.Component {
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />
-        
- 				<h3>相似單位</h3>
- 				<ReactTable
-          data={lookalike_units}
-          columns={[
-            {
-              Header: "單位",
-              accessor: "_id"
-            },
-						{
-              Header: "相關標案",
-              accessor: "_id",
-              Cell: ({ row }) => {
-                return <a href={"/unit/" + row._id}>
-									查看相關標案
-                </a>
-              }
-            },
-           ]} 
-          
-          defaultPageSize={Math.min(30, lookalike_units.length)}
-          pageSizeOptions={[100, 500]}
-          className="-striped -highlight"
-        />       
-        
-       
+        { () => {
+					if (lookalike_units.length) {
+          	return <div>
+							<h3>相似單位</h3>
+							<ReactTable
+							data={lookalike_units}
+							columns={[
+								{
+									Header: "單位",
+									accessor: "_id"
+								},
+								{
+									Header: "相關標案",
+									accessor: "_id",
+									Cell: ({ row }) => {
+										return <a href={"/unit/" + row._id}>
+											查看相關標案
+										</a>
+									}
+								},
+								]} 
+							
+							defaultPageSize={Math.min(30, lookalike_units.length)}
+							pageSizeOptions={[100, 500]}
+							className="-striped -highlight"
+							/>
+						</div>
+      		}
+				} }
       </div>
     );
   }

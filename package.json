@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "lsc -c server.ls && pm2 stop server || pm2 start server.js --max-memory-restart 450M  --log-date-format 'YYYY-MM-DD HH:mm:ss'",
     "web": "cd web ; pm2 start index.js --node-args=\"--harmony\" --watch --name=\"pcc-web\"",
-    "dev": "node next.js",
+    "dev": "PORT=3000 node next.js",
     "build": "next build",
     "next": "NODE_ENV=production node next.js -p 8890",
     "next-pm2": "pm2 start npm --name 'next' -- run next"
@@ -24,6 +24,9 @@
   "homepage": "https://github.com/mlwmlw/pcc",
   "dependencies": {
     "@apla/clickhouse": "^1.6.4",
+    "@chakra-ui/react": "^1.6.10",
+    "@emotion/react": "^11.5.0",
+    "@emotion/styled": "^11.3.0",
     "@nivo/bar": "^0.52.1",
     "@nivo/line": "^0.61.1",
     "@nivo/pie": "^0.52.1",
@@ -41,6 +44,7 @@
     "ect": "^0.5.9",
     "express": "^4.16.4",
     "fetch": "^1.1.0",
+    "framer-motion": "^4.1.17",
     "hackpad": "0.0.3",
     "isbot": "^3.0.21",
     "koa": "~0.8.1",
@@ -52,7 +56,7 @@
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "mongodb": "^3.6.6",
-    "next": "^11.1.0",
+    "next": "^9.5.5",
     "next-routes": "^1.4.2",
     "node-fetch": "^2.2.0",
     "nodejieba": "^2.5.1",
@@ -61,7 +65,7 @@
     "puppeteer": "^5.5.0",
     "q": "~1.0.1",
     "qs": "^6.5.2",
-    "react": "^16.12.0",
+    "react": "^16.14.0",
     "react-c3js": "^0.1.20",
     "react-dom": "^16.12.0",
     "react-paginate": "^5.2.4",
@@ -76,6 +80,10 @@
   },
   "devDependencies": {
     "clickhouse": "^2.2.1",
-    "file-loader": "^2.0.0"
+    "file-loader": "^2.0.0",
+    "html-webpack-plugin": "^5.4.0",
+    "http-proxy-middleware": "^2.0.1",
+    "webpack": "^4.46.0",
+    "webpack-dev-server": "^4.3.1"
   }
 }

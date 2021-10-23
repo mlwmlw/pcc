@@ -177,3 +177,21 @@ ul {
 .ReactTable .rt-tbody .rt-td {
     white-space: unset;
 }
+
+.navbar-form a, .starter-template a, .keywords a{
+    color: #428bca;
+}
+
+.starter-template h1 {
+    font-size:28px;
+    margin:10px 0;
+}
+
+.starter-template h2 {
+    font-size:24px;
+    margin:5px 0;
+}
+.starter-template h3 {
+    font-size:18px;
+    margin:3px 0;
+}

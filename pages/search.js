@@ -1,5 +1,5 @@
 const fetch = require("node-fetch");
-import React from "react";
+import React,{ useState, useEffect } from "react";
 import ReactTable from "react-table";
 import "react-table/react-table.css";
 import ReactPaginate from 'react-paginate';
@@ -26,7 +26,7 @@ export default class extends React.Component {
 			console.log('no user-agent');
 			return {tenders: [], keyword: null}
 		}
-    const result = await fetch("http://pcc.mlwmlw.org/api/keyword/" + encodeURIComponent(keyword), options);
+    const result = await fetch("https://pcc.mlwmlw.org/api/keyword/" + encodeURIComponent(keyword), options);
     let tenders = await result.json();
     return { tenders, keyword };
   }
