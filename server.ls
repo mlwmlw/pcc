@@ -6,6 +6,7 @@ html = require 'remark-html'
 cors = require 'cors'
 isbot = require 'isbot'
 nodejieba = require("nodejieba");
+const ch = require('./clickhouse').ch
 
 corsOptions = {
 	origin: 'http://pcc.mlwmlw.org:3000',
@@ -85,14 +86,6 @@ app.post '/keyword/:keyword', (req, res) ->
 app.get '/keyword/:keyword', (req, res) ->
 	if(!req.params.keyword)
 		return res.send \failed
-	reg = new RegExp req.params.keyword
-	ClickHouse = require('@apla/clickhouse')
-	ch = new ClickHouse({ 
-		host: 'localhost', port: '7123', user: 'default', password: 'pcc.mlwmlw.org' ,
-		queryOptions: {
-			database: "pcc",
-		}
-	})
 	tags = nodejieba.cut(req.params.keyword, true).filter (str) ->
 		str.trim!
 
@@ -101,13 +94,21 @@ pcc where
 not(has(multiSearchAllPositionsCaseInsensitiveUTF8(concat(
 pcc.name, ' ', pcc.unit, ' ', arrayStringConcat(pcc.merchants)
 ), ['" + tags.join("','") + "']), 0)) 
-group by job_number order by publish desc limit 200 FORMAT JSON")
+group by job_number order by publish desc limit 1000 FORMAT JSON")
 	rows = []
 	
 	stream.on 'data', (row) ->
 		rows.push row
 
 	stream.on 'end', (end) ->
+		db.collection 'search_result' .insertOne {
+			keyword: req.params.keyword, 
+			ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress, 
+			ua: req.get('User-Agent'),
+			tags: tags,
+			count: rows.length,
+			ts: new Date!
+		}
 		res.send rows
 
 	#db.collection 'search_log' .insertOne {
@@ -120,11 +121,34 @@ group by job_number order by publish desc limit 200 FORMAT JSON")
 
 app.get '/keywords', (req, res) -> 
 	db.collection 'search_log' .aggregate [
-	{$match: {ts: {$gt: moment().subtract(3, 'days').toDate! }, keyword: {$ne: "undefined"}}},
+	{$match: {ts: {$gt: moment().subtract(7, 'days').toDate! }, keyword: {$ne: "undefined"}}},
 	{$group: {_id: "$keyword", count: {$sum: 1}}},
 	{$sort: {count: -1}},
-	{$limit: 20},
+	{$limit: 30},
+	{$lookup:
+		{
+			as: 'result',
+			from: 'search_result',
+			let: {
+				keyword: "$_id"
+			},
+			pipeline: [{
+				$match: {
+					ts: {$gt: moment().subtract(7, 'days').toDate! },
+					$expr: {
+						$eq: [ "$keyword",  "$$keyword" ]
+					}
+				},
+			}, {
+				$group: {_id: "$$keyword", result: {$max: "$count"}}
+			}]
+		}
+	},
+	{$project: {count: 1, result: {$arrayElemAt: ["$result", 0]}}},
+	{$project: {count: 1, result: "$result.result"}},
+	{$match: {$or: [{result: {$gt: 0}}, {result: {$exists: false}}]}},
 	{ $sample : { size: 10 } }
+
 	] .toArray (err, docs) -> 
 		res.send _.map docs, '_id'
 
@@ -333,7 +357,7 @@ app.get '/tender/:id/:unit?', (req, res) ->
 	for value in tenders
 		value.tags = _.union(
 			nodejieba.cutForSearch(value.name), 
-			nodejieba.cutForSearch(value.unit),
+			nodejieba.cutForSearch(value.unit || ""),
 			nodejieba.cutForSearch(if value.award && value.award.merchants.length > 0 then value.award.merchants[0].name else "")
 		)
 		value.tags = _.filter(value.tags, (word) -> 
@@ -485,33 +509,24 @@ app.get '/unit/:unit/:month?', (req, res) ->
 		end = new Date req.params.month + "-01"
 		end.setMonth end.getMonth!+1 
 		filter.publish = {$gte: start, $lt: end}
-	#err, units <- db.collection 'unit' .find {parent: unit} .toArray
-	err, units <- db.collection 'unit' .aggregate [
-		{$lookup: {
-			as: 'parent',
-			from: 'unit',
-			localField: "parent",
-			foreignField: "_id"
-		}},
-		{$match: {$or: [{"parent.name": unit}, {"parent._id": unit}, {_id: unit}]}},
-		{$project: {name: 1}}
-	] .toArray()
-	units = _.map units, 'name'
-	units = [].concat(units).concat([unit])
-	filter.unit = {$in: units}
-	db.collection 'pcc' .find filter .sort {publish: -1} .limit 2000 .toArray (err, docs) ->
-		
-		docs = _(docs).groupBy 'job_number'
-		.map (vals, key) ->
-			return _.assign(vals[0], {
-				publish: _.min(vals.map (val) ->
-					return val.publish;
-				)
-			})
-		.value()
-		docs.sort (a, b) ->
-			return b.publish - a.publish
-		res.send docs
+	units = [unit]
+	stream = ch.query("SELECT distinct name FROM unit where _id like '" + unit + "' or parent_name like '" + unit + "' or parent_id like '" + unit+ "' limit 1000 FORMAT JSON")
+	stream.on 'data', (row) ->
+		units.push row.name
+	stream.on 'end', (end) ->
+		filter.unit = {$in: units}
+		db.collection 'pcc' .find filter .sort {publish: -1} .limit 2000 .toArray (err, docs) ->
+			docs = _(docs).groupBy 'job_number'
+			.map (vals, key) ->
+				return _.assign(vals[0], {
+					publish: _.min(vals.map (val) ->
+						return val.publish;
+					)
+				})
+			.value()
+			docs.sort (a, b) ->
+				return b.publish - a.publish
+			res.send docs
 app.get '/lookalike/:merchant', (req, res) ->
 	db.collection 'pcc' .aggregate [
 		{$match: {"award.candidates._id": req.params.merchant}},
