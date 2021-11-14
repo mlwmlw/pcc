@@ -28,9 +28,7 @@ export default class MyApp extends App {
       </Head>
       <ChakraProvider>
 				<Header keywords={this.props.keywords} />
-				<div className="container">
-					<Component {...pageProps} />
-				</div>
+        <Component {...pageProps} />
 				<div className="footer">
 						<div className="container">
 								@2018 開放標案，本站所有資料僅供參考，資料來源請見 <a target="_blank" href="http://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a>

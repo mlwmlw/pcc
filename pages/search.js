@@ -35,7 +35,7 @@ export default class extends React.Component {
     let currentYear = new Date().getFullYear();
     let {keyword, tenders} = this.props;
     return (
-      <div className="starter-template">
+      <div className="container starter-template">
        <Head>
         <title>{currentYear}年{keyword}標案查詢 - 開放政府標案</title>
         

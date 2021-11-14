@@ -47,7 +47,7 @@ export default class extends React.Component {
     let more = [];
     
     return (
-      <div className="starter-template">
+      <div className="container starter-template">
         <Head>
         <title>{title} - 開放政府標案</title>
         <meta name="description"

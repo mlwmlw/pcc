@@ -42,7 +42,7 @@ export default class extends React.Component {
     if(this.state && this.state.merchants) 
       data = this.state.merchants;
     return (
-      <div className="starter-template">
+      <div className="container starter-template">
        <Head>
         <title>廠商列表 - 開放政府標案</title>
         

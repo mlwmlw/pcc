@@ -1,8 +1,6 @@
 require! <[ fs express http mongodb q moment redis compression unified]>
 _ = require 'lodash'
-createStream = require 'unified-stream'
-markdown = require 'remark-parse'
-html = require 'remark-html'
+https = require('https');
 cors = require 'cors'
 isbot = require 'isbot'
 nodejieba = require("nodejieba");
@@ -19,7 +17,7 @@ express.static __dirname + '/public' |> app.use
 app.set 'views', __dirname+'/views'
 app.set 'view engine' 'jade'
 app.set 'port' (process.env.PORT or 8888)
-cache = redis.createClient!
+#cache = redis.createClient({url: 'redis://direct.mlwmlw.org'})
 client = mongodb.MongoClient uri, {
 	connectTimeoutMS: 10000,
 	serverSelectionTimeoutMS: 120000,
@@ -706,21 +704,25 @@ app.get '/month/:month', (req, res) ->
 			console.log err
 		res.send result
 app.get '/news', (req, res) ->
-	processor = unified()
-	.use(markdown, {commonmark: true})
-	.use(html)
-	fs.createReadStream './web/views/news.md'	
-	.pipe createStream(processor)
-	.pipe res
-	/*
-memwatch = require 'memwatch'
-hd = null
-memwatch.on 'leak', (info) ->	
-	console.error 'Memory leak detected: ', info
-	diff = hd.end!
-	console.error util.inspect(diff, true, null) 
-	hd = null;
-*/	
+	readStream = fs.readFile './web/views/news.md', 'utf8', (err, data) ->	
+		req = https.request {
+			host: 'api.github.com',
+			path: '/markdown'
+			method: 'POST',
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36'
+				'Content-Type': 'application/json'
+			}
+		}, (socket) ->
+			html = []
+			socket.on 'data', (data) ->
+				html.push(data)
+			socket.on 'end', (data) ->
+				res.send Buffer.concat(html).toString('utf8')
+
+		req.write(JSON.stringify({text: data}))
+		req.end()
+
 app.post '/pageview/:type/:key', (req, res) ->
 	if isbot(req.get('user-agent'))
 		return res.send true

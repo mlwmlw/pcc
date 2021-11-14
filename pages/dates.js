@@ -18,7 +18,7 @@ export default class extends React.Component {
      let desc = this.props.year + " 年 " + this.props.month + "月每日標案列表";
      return (
         
-        <div className="starter-template">
+        <div className="container starter-template">
          <Head>
          <title>{this.props.year} 年 {this.props.month} 月標案 - 開放政府標案</title>
          <meta name="description"

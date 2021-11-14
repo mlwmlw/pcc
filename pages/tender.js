@@ -50,7 +50,7 @@ export default class extends React.Component {
 		 }
       const desc = "招標單位：" + this.props.unit + "，招標金額：" + new Intl.NumberFormat('zh-TW').format(this.props.tenders[0].price) + "，招標日期：" + dayjs(this.props.tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + this.props.tenders[0].id + "，分類：" + this.props.tenders[0].category;
       return (
-        <div className="starter-template">
+        <div className="container starter-template">
          <Head>
          <title>{this.props.tenders[0].name} - 開放政府標案</title>
          <meta name="description"

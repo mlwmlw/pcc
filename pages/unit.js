@@ -86,7 +86,7 @@ export default class extends React.Component {
     if(unit.childs && unit.childs.length > 0)
       more.push(<a key={7} href={"/units/" + unit._id}>{unit.name}子機關</a>)
     return (
-      <div className="starter-template">
+      <div className="container starter-template">
         <Head>
         <title>{title} - 開放政府標案</title>
 				<meta name="description"

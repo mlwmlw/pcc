@@ -21,7 +21,7 @@ export default class extends React.Component {
  
    render() {
      return (
-        <div className="starter-template">
+        <div className="container starter-template">
         <h1>歷月標案</h1>
           <ul>
           {this.props.month.map(m => <li key={m.name}><a target="_blank" href={"/dates/" + m.year + "/" + m.month }>檢視 {m.name} 標案 </a></li> )}
