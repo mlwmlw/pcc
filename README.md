@@ -1,11 +1,8 @@
 pcc.gXv.tw
 ===
-demo: http://pcc.mlwmlw.org/
-api: http://pcc.mlwmlw.org/api
+demo: https://pcc.mlwmlw.org/
+api: https://pcc.mlwmlw.org/api
 
-狀態
-===
-被 pcc 鎖 IP 九月以後就暫時沒更新資料-_-
 
 Installation
 ===
@@ -40,12 +37,12 @@ spawn 6804
 ```
 api endpoint
 ===
-* GET /page/:page http://pcc.mlwmlw.org/api/page/1
-* GET /keyword/:keyword http://pcc.mlwmlw.org/api/keyword/陸軍 
-* GET /categories http://pcc.mlwmlw.org/api/categories
-* GET /category/:category http://pcc.mlwmlw.org/api/category/工程類
-* GET /units http://pcc.mlwmlw.org/api/units
-* GET /units/:id http://pcc.mlwmlw.org/api/units/0 
-  * http://pcc.mlwmlw.org/api/units/0  
-* GET /unit/:unit http://pcc.mlwmlw.org/api/unit/總統府
-* GET /date/:date http://pcc.mlwmlw.org/api/date/2014-08-05
+* GET /page/:page https://pcc.mlwmlw.org/api/page/1
+* GET /keyword/:keyword https://pcc.mlwmlw.org/api/keyword/陸軍 
+* GET /categories https://pcc.mlwmlw.org/api/categories
+* GET /category/:category https://pcc.mlwmlw.org/api/category/工程類
+* GET /units https://pcc.mlwmlw.org/api/units
+* GET /units/:id https://pcc.mlwmlw.org/api/units/0 
+  * https://pcc.mlwmlw.org/api/units/0  
+* GET /unit/:unit https://pcc.mlwmlw.org/api/unit/總統府
+* GET /date/:date https://pcc.mlwmlw.org/api/date/2014-08-05
