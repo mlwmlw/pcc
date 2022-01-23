@@ -22,6 +22,7 @@ export default class extends React.Component {
     render() {
         let {tenders, units, merchants, news} = this.props;
         return <>
+            <title>開放政府標案</title>
             <meta name="description"
             content="開放政府標案目的是為了讓公民能更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。提供各種統計數據與最新趨勢案件
             "/>
@@ -29,8 +30,8 @@ export default class extends React.Component {
             <div className="intro-header">
                 <div className="container">
                     <div className="row">
-                        <div className="col-lg-12">
-                            <div className="intro-message" style={{"background": "rgba(0,0,0,0.7)", "padding": "0px 20px"}}>
+                        <div className="col-lg-12" style={{"background": "rgba(0,0,0,0.7)", "padding": "1px 10px 8px 10px"}}>
+                            <div className="intro-message">
                                 <h1>開放標案</h1>
                                 <h3>讓公民更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。</h3>
                             </div>

@@ -16,6 +16,7 @@ export default class MyDocument extends Document {
     return (
       <Html>
         <Head>
+        <link rel="icon" href="/favicon.ico" />
         <script src="/static/lib/jquery/dist/jquery.min.js"></script>
         <script src="/static/lib/angular/angular.min.js"></script>
         <script src="/static/lib/react/react.min.js"></script>
@@ -27,13 +28,14 @@ export default class MyDocument extends Document {
         <script src="/static/lib/c3/c3.js"></script>
         <script src="/static/lib/angular-loading-bar/build/loading-bar.min.js"></script>
         <script src="/static/app.js"></script>
-				<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-				<script
+        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <script
             dangerouslySetInnerHTML={{
-							__html: `
-							(adsbygoogle = window.adsbygoogle || []).push({});
-						 `}}>
-				</script>
+               __html: `
+               (adsbygoogle = window.adsbygoogle || []).push({});
+               `
+            }}>
+        </script>
         <script
             dangerouslySetInnerHTML={{
             __html: `

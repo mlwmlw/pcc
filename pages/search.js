@@ -42,6 +42,13 @@ export default class extends React.Component {
         <meta property="og:description"
         content="開放標案廠商列表" />
         </Head>
+        <ins className="adsbygoogle"
+            style={{"display":"block", "height": "100px"}}
+           data-ad-client="ca-pub-9215576480847196"
+           data-ad-slot="1304930582"
+           data-ad-format="auto"
+           data-full-width-responsive="true">
+        </ins>
         <h1>搜尋 {keyword} 標案列表</h1>
         { tenders.length == 0 ? <h3>找不到結果</h3>: null}
         <ReactTable

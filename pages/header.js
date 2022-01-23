@@ -37,7 +37,11 @@ function SearchDrawer(props) {
           <DrawerBody>
 
 						<form onSubmit={(e) => {
-								location.href = "/search/" + inputRef.current.value
+								fetch('https://pcc.mlwmlw.org/api/keyword/' + inputRef.current.value, {
+									method: 'post'
+								}).then(function() {
+									location.href = "/search/" + inputRef.current.value
+								})
 								e.preventDefault();
 							}} style={{margin: "0px 30px"}} ng-submit="search(keyword)">
 							<div style={{width: "100%"}} className="input-group row">
@@ -53,7 +57,13 @@ function SearchDrawer(props) {
 								<div>熱門關鍵字</div>
 								<ul>
 										{props.keywords.map( keyword => <li key={keyword}>
-											<a ng-click={"search('"+keyword+"')"} style={{padding: "2px 3px", cursor:"pointer", float:"left", display: "inline-block", marginLeft: "5px"}}>{keyword}</a>
+											<a onClick={(e) => {
+												fetch('https://pcc.mlwmlw.org/api/keyword/' + keyword, {
+													method: 'post'
+												}).then(function() {
+													location.href = "/search/" + keyword
+												})
+											}} >{keyword}</a>
 										</li>)}
 								</ul>
 							</div>
@@ -113,8 +123,8 @@ export default class extends React.Component {
 							</li>
 							<li className="dropdown"><a className="dropdown-toggle" href="javascript:void(0)">關於<span className="caret"></span></a>
 									<ul className="dropdown-menu" role="menu">
-											<li><a href="/hackpad">關於</a></li>
-											<li><a target="_blank" href="https://g0v.hackpad.com/LV55tyn5uYK">g0v</a></li>
+											<li><a target="_blank" href="https://g0v.hackpad.com/LV55tyn5uYK">關於</a></li>
+											<li><a href="https://g0v.tw/">g0v</a></li>
 									</ul>
 							</li>
 					</ul>

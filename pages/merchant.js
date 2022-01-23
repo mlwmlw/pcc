@@ -47,9 +47,9 @@ export default class extends React.Component {
       this.state = {year: null}
    }
   static async getInitialProps({ req, query, params, res}) {
-    const merchant_res = await fetch("http://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
+    const merchant_res = await fetch("https://pcc.mlwmlw.org/api/merchant/" + encodeURIComponent(query.id));
     const merchant = await merchant_res.json()
-    const lookalike = await fetch("http://pcc.mlwmlw.org/api/lookalike/" + encodeURIComponent(query.id));
+    const lookalike = await fetch("https://pcc.mlwmlw.org/api/lookalike/" + encodeURIComponent(query.id));
     const merchants = await lookalike.json()
 
     if( typeof(window) === 'undefined' && merchant._id && merchant._id != query.id) {
@@ -62,7 +62,7 @@ export default class extends React.Component {
     }).filter(function onlyUnique(value, index, self) {
         return self.indexOf(value) === index;
     }).sort().reverse());
-    return { merchant, years, id: query.id, merchants };
+    return { merchant, years, id: query.id, merchants, directors: merchant.directors || [] };
   }
  
   changeYear(event) {
@@ -77,7 +77,7 @@ export default class extends React.Component {
 	}
   
   render() {
-    let { merchant, years = [], merchants }= this.props;
+    let { merchant, years = [], merchants, directors } = this.props;
     let year = this.state.year || years[1];
    	let currentYear = new Date().getFullYear(); 
   
@@ -141,6 +141,18 @@ export default class extends React.Component {
         </Head>
         <h1>{currentYear}年{merchant.name}得標案件</h1>
         <span>公司統一編號：{merchant._id}</span><br />
+        {(() => {
+          if (directors.length) {
+            return <>
+              <span>董監事：</span><br />
+              <ul>
+                {directors.map((row) => {
+                  return <li>{row.title}：{row.name}</li>
+                })}
+              </ul>
+            </>
+          }
+        })()}
         <a href={"https://company.g0v.ronny.tw/index/search?q=" + merchant._id} target="_blank">查看公司資料</a>
         <div style={{width: "100%", height: line[0].data.length > 1 ? "400px": 0}}>
           {chart(line)}
@@ -200,12 +212,12 @@ export default class extends React.Component {
         />
         </div>
       	<ins className="adsbygoogle"
-					 style={{"display":"block", "height": "150px"}}
-					 data-ad-client="ca-pub-9215576480847196"
-					 data-ad-slot="1304930582"
-					 data-ad-format="auto"
-					 data-full-width-responsive="true"></ins>  
-				<h3>相關得標案件</h3>
+          style={{ "display": "block", "height": "100px" }}
+          data-ad-client="ca-pub-9215576480847196"
+          data-ad-slot="1304930582"
+          data-ad-format="auto"
+          data-full-width-responsive="true"></ins>
+        <h3>相關得標案件</h3>
         <ReactTable
           data={merchant.tenders}
           columns={[
@@ -306,28 +318,34 @@ export default class extends React.Component {
           pageSizeOptions={[100, 500]}
           className="-striped -highlight"
         />
-				<h3>查看更多相似廠商</h3>
- 				<ReactTable
-          data={merchants}
-          columns={[
-            {
-              Header: "廠商名稱",
-              accessor: "name"
-            },
-						{
-              Header: "相關標案",
-              accessor: "_id",
-              Cell: ({ row }) => {
-                return <a href={"/merchants/" + row._id}>
-									查看相關標案
-                </a>
-              }
-            },
-           ]} 
-          defaultPageSize={Math.min(30, merchants.length)}
-          pageSizeOptions={[100, 500]}
-          className="-striped -highlight"
-        />       
+        {(() => {
+          if (merchants.length > 0) {
+            <>
+              <h3>查看更多相似廠商</h3>
+              <ReactTable
+                data={merchants}
+                columns={[
+                  {
+                    Header: "廠商名稱",
+                    accessor: "name"
+                  },
+                  {
+                    Header: "相關標案",
+                    accessor: "_id",
+                    Cell: ({ row }) => {
+                      return <a href={"/merchants/" + row._id}>
+                        查看相關標案
+                      </a>
+                    }
+                  },
+                ]}
+                defaultPageSize={Math.min(30, merchants.length)}
+                pageSizeOptions={[100, 500]}
+                className="-striped -highlight"
+              />
+            </>
+          }
+        })()}
 				
       </div>
 			

@@ -1,2 +1,7 @@
 database.js
 node_modules
+.next
+tender
+vendor
+web/assets/lib
+list
