@@ -28,45 +28,49 @@ class Fetcher {
         return $output;
     }
     function fetch($url) {
-		$content = $this->request($url);
-		$dom = new Document($content);
-        //$content = file_get_contents('test.html');
-        //$dom = new Document('row.html', true);
-        $tables = $dom->find(".tb_01,.tb_04,.tb_05,.tb_06,.tb_07,.tb_09");
-		foreach($tables as $table) {
-			unset($merchant, $award);
+			$content = $this->request($url);
+			$dom = new Document($content);
+			//$content = file_get_contents('test.html');
+			//$dom = new Document('row.html', true);
+			$tables = $dom->find(".tb_01,.tb_04,.tb_05,.tb_06,.tb_07,.tb_09");
+			foreach($tables as $table) {
+				unset($merchant, $award);
 
-			foreach($table->find('tr') as $row) {
-				$cols = $row->find('td');
-				if(count($cols) < 2) continue;
-				$name = preg_replace('|\s+|', '', $cols[0]->text());
-				$name = preg_replace('|^[　]*|', '', $name);
-				if(empty($name)) continue;
-				$value = preg_replace('|[\s]+|', '',$cols[1]->text());
+				foreach($table->find('tr') as $row) {
+					$cols = $row->find('td');
+					if(count($cols) < 2) continue;
+					$name = preg_replace('|\s+|', '', $cols[0]->text());
+					$name = preg_replace('|^[　]*|', '', $name);
 
-				if (preg_match('|投標廠商\d+|', $name) > 0) {
-					unset($merchant);
-					$merchant = [];
-					$values['投標廠商'][] = &$merchant;
-					continue;
-				}
-				
-				if(preg_match('|第\d+品項|', $name) > 0) {
-					unset($merchant, $award);
-					$award = [];
-					$values['決標品項'][$name] = &$award;
-					continue;
-				}
-				if (isset($merchant)) {
-					$merchant[$name] = $value;
-				} else if(isset($award)) {
-					$award[$name] = $value;
-				} else {
-					$values[$name] = $value;
+					if(empty($name)) continue;
+					$value = preg_replace('|[\s]+|', '',$cols[1]->text());
+					$value = preg_replace('|\$.+$|', '', $value);
+					if (preg_match('|投標廠商\d+|', $name) > 0) {
+						unset($merchant);
+						$merchant = [];
+						$values['投標廠商'][] = &$merchant;
+						continue;
+					}
+					
+					if(preg_match('|第\d+品項|', $name) > 0) {
+						unset($merchant, $award);
+						$award = [];
+						$values['決標品項'][$name] = &$award;
+						continue;
+					}
+					if (isset($merchant)) {
+						$merchant[$name] = $value;
+					} else if(isset($award)) {
+						$award[$name] = $value;
+					} else {
+						$values[$name] = $value;
+					}
 				}
 			}
-		}
-		return $values;
+			if(empty($values)) {
+				return [];
+			}
+			return $values;
     }
     function fetchList($date) {
         $date = strtotime($date);
@@ -83,14 +87,17 @@ class Fetcher {
 			'經公開評選或公開徵求之限制性招標更正公告' => '限制性招標(經公開評選或公開徵求)更正公告',
 			'決標公告' => '決標公告',
 			'無法決標公告' => '無法決標公告',
-			'無法決標公告' => '無法決標更正公告',
+			'無法決標更正公告' => '無法決標更正公告',
 			'決標更正公告' => '決標更正公告',
 			'決標資料定期彙送公告' => '定期彙送'
 	    ];
-        
+       	$tenders = []; 
         foreach($types as $type => $name) {
             preg_match("/<a id=\"{$type}\">.+?<\/a>(.+?)總筆數/msi", $content, $matches);
-            
+           	if(count($matches) == 0) {
+            	echo $type, " 0 \n";
+				continue;
+			}
             $dom = new Document($matches[0]);
             $elems = $dom->find(".tenderLinkPublish");
             foreach($elems as $elm) {
@@ -117,19 +124,22 @@ class Parser {
 
 		if(count($tenders) == 0 ) return;
 		
-		$insert_tenders = array_map(function($row) use($type) {
+		$insert_tenders = array_map(function($row) use($type, $date) {
 			preg_match('/<?([^\d]+?)>?\d+?([^\d]+)/mis', $row['標的分類'], $match);
 			$category = trim(@$match[1]);
 			$sub_category = trim(preg_replace('|^-|', '', @$match[2]));
 			$price = intval(str_replace(",", "", @$row['預算金額']));
-			$publish_raw = @$row['公告日'] ?: @$row['原公告日'];
+			
+			/*
+			$publish_raw = @$row['公告日'] ?: @$row['原公告日'] ;
 			$publish = null;
 			if($publish_raw && preg_match('|(\d+)\/(\d+)\/(\d+)|', $publish_raw)) {
 				$publish = new MongoDB\BSON\UTCDateTime(strtotime(preg_replace_callback('/(\d+)\/(\d+)\/(\d+)/', function($row) {
 					return ($row[1] + 1911) . '-' . $row[2] . '-' . $row[3];
 				}, $publish_raw)) * 1000);
-			}
-			$end_date_raw = @$row['決標公告日期'] ?: @$row['原決標公告日期'] ?: @$row['決標日期'];
+			}*/
+			$publish = new MongoDB\BSON\UTCDateTime(strtotime($date) * 1000);
+			$end_date_raw = @$row['決標公告日期'] ?: @$row['原決標公告日期'] ?: @$row['決標日期'] ?: @$row['無法決標公告日期'] ?: @$row['原無法決標公告日期'];
 			$end_date = null;
 			if($end_date_raw && preg_match('/(\d+)\/(\d+)\/(\d+)/', $end_date_raw)) {
 				$end_date = new MongoDB\BSON\UTCDateTime(strtotime(preg_replace_callback('/(\d+)\/(\d+)\/(\d+)/', function($row) {
@@ -150,7 +160,7 @@ class Parser {
 					"country" => @$row['得標廠商國別'],
 					"amount" => isset($row['決標金額']) ? intval(str_replace(",", "", @$row['決標金額'])): null
 				);
-			}, @$row['投標廠商'] ?: []);
+			}, is_array(@$row['投標廠商']) ? @$row['投標廠商'] : []);
 			$data = [
 				'_id' => $row['job_number'], 
 				'unit' => $row['機關名稱'],
@@ -245,7 +255,7 @@ if(isset($argv[2])) {
 	$range = $argv[2];
 }
 else {
-	$range = 7;
+	$range = 1;
 }
 $fetcher = new Fetcher();
 $parser = new Parser();
@@ -254,13 +264,14 @@ for($i = 0; $i < $range; $i++) {
 	$date = date('Y-m-d', strtotime("{$start} -{$diff} days"));
 	echo $date, "\n";
 	$tenderTypes = $fetcher->fetchList($date);
-	
+	$j = 0;
 	foreach ($tenderTypes as $type => &$tenders) {
 		//$tenders = array_slice($tenders, 0, 1);
-		$j = 0;
-		$tenders = array_filter(array_map(function($tender) use($fetcher, &$j) {
+		$k = 0;
+		$tenders = array_filter(array_map(function($tender) use($fetcher, &$j, &$k, $date) {
 			$j++;
-			echo date('Y-m-d H:i:s'), " {$j}.";
+			$k++;
+			echo $date, " ", date('Y-m-d H:i:s'), " {$k}/{$j}. ";
 			return $tender + $fetcher->fetch($tender['url']);
 		}, $tenders));
 	} 
