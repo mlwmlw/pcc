@@ -1,4 +1,5 @@
 import React from "react";
+import { ResponsiveCalendar } from '@nivo/calendar'
 
 export default class extends React.Component {
     constructor(props) {
@@ -17,10 +18,17 @@ export default class extends React.Component {
 
         const news_res = await fetch(host + "/api/news");
         const news = await news_res.text();
-        return {tenders, units, merchants, news}
+
+        const dates_res = await fetch(host + "/api/dates");
+        let dates = await dates_res.json();
+        dates = Object.keys(dates).map(day => {
+            return {"day": day, "value": dates[day]}
+        })
+        return {tenders, units, merchants, news, dates}
     }    
     render() {
-        let {tenders, units, merchants, news} = this.props;
+        let {tenders, units, merchants, news, dates} = this.props;
+        let end = dates[0].day, start = dates[100].day;
         return <>
             <title>開放政府標案</title>
             <meta name="description"
@@ -38,6 +46,42 @@ export default class extends React.Component {
                         </div>
                     </div>
                 </div>
+                </div>
+                <div className="content-section-b">
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-lg-12   col-sm-12" style={{height: 200}}>
+                                <h2 className="section-heading">最新日期標案</h2>
+                                <ResponsiveCalendar
+                                    data={dates}
+                                    from={start}
+                                    to={end}
+                                    emptyColor="#eeeeee"
+                                    colors={[ '#61cdbb', '#97e3d5', '#e8c1a0', '#f47560' ]}
+                                    margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
+                                    yearSpacing={40}
+                                    monthBorderColor="#ffffff"
+                                    dayBorderWidth={2}
+                                    dayBorderColor="#ffffff"
+                                    onClick={row => {
+                                        location.href = "/date/tender/" + row.day
+                                    }}
+                                    legends={[
+                                        {
+                                            anchor: 'bottom-right',
+                                            direction: 'row',
+                                            translateY: 36,
+                                            itemCount: 4,
+                                            itemWidth: 42,
+                                            itemHeight: 36,
+                                            itemsSpacing: 14,
+                                            itemDirection: 'right-to-left'
+                                        }
+                                    ]}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div className="content-section-a">
                     <div className="container">
