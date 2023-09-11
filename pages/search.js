@@ -42,36 +42,13 @@ export default class extends React.Component {
         <meta property="og:description"
         content="開放標案廠商列表" />
         </Head>
-        { Date.now() < +new Date(2023,8,11) && 
-        <Flex direction={(Math.random() > 0.5 ? 'row': 'row-reverse')} gap='4'>
-          <Link style={{ textDecoration: 'none' }} target="_blank" href="https://ms7.tw/5YsLI">
-          <Box p="1" maxW="400px" borderWidth="1px">
-            <Image borderRadius="md" src="https://s3.buy123.com.tw/images/upload/b5c815d92709642ebc1850aef3fbfb20.png" />
-            <Flex align="baseline" mt={2}>
-              <Badge w='90px' colorScheme="gray">生活市集</Badge>
-              <Text color="black" isTruncated h="1.5em">《生活市集》99 狂購節，3萬點LINE POINTS等你搶，滿$999再抽好禮，立即逛逛
-</Text>
-              <Button w='90px'  colorScheme='blue' size='sm'>
-                立即前往
-              </Button>
-            </Flex>
-          </Box>
-          </Link>
-          <Spacer></Spacer>
-          <Link style={{ textDecoration: 'none' }} target="_blank" href="http://pc7.in/UAxb">
-          <Box p="1" maxW="400px" borderWidth="1px">
-            <Image borderRadius="md" src="https://images.pcone.com.tw/uploads/event/661f68d3b3db3c3e8c5b9935828374b3.png" />
-            <Flex align="baseline" mt={2}>
-              <Badge w='90px' colorScheme="gray">松果購物</Badge>
-              <Text color="black" isTruncated h="1.5em">松果購物 99狂購節 😍 下單滿額送 LINE POINTS 10%回饋，精選商品滿千再折百。
-</Text>
-              <Button w='90px'  colorScheme='blue' size='sm'>
-                立即前往
-              </Button>
-            </Flex>
-          </Box>
-          </Link>
-        </Flex> }
+        <ins className="adsbygoogle"
+            style={{"display":"block", "height": "50px"}}
+           data-ad-client="ca-pub-9215576480847196"
+           data-ad-slot="1304930582"
+           data-ad-format="auto"
+           data-full-width-responsive="true">
+        </ins>
        
         <h1>搜尋 {keyword} 標案列表</h1>
         { tenders.length == 0 ? <h3>找不到結果</h3>: null}
