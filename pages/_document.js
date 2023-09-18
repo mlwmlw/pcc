@@ -31,9 +31,7 @@ export default class MyDocument extends Document {
         <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
         <script
             dangerouslySetInnerHTML={{
-               __html: `
-               (adsbygoogle = window.adsbygoogle || []).push({});
-               `
+               __html: `setTimeout(function(){ (adsbygoogle = window.adsbygoogle || []).push({}); }, 2000);`
             }}>
         </script>
         <script
@@ -55,10 +53,9 @@ export default class MyDocument extends Document {
             ga('send', 'pageview');
           `}}>
          </script>
-         
         </Head>
         <body  ng-app="myapp" ng-controller="page" className="adaw">
-					<Main />
+          <Main />
           <NextScript />
         </body>
       </Html>

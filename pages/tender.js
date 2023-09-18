@@ -83,21 +83,21 @@ export default class extends React.Component {
                         <dd>{t.type}</dd>
                         <dt>結果</dt>
                         <dd>
-                           {t.award && t.award.merchants.length == 0 &&
+                           {t.award && t.award.merchants && t.award.merchants.length == 0 &&
                            <span className="label label-danger" >
                               無法決標
                            </span>   
                            }
-                           {t.award && t.award.merchants.length > 0 &&
+                           {t.award && t.award.merchants && t.award.merchants.length > 0 &&
                            <span className="label label-success">決標</span>
                            }
                         </dd>
                      </dl>
                      <p className="lead" style={{textAlign:"right"}}>
-                        <a target="_blank" href={"//web.pcc.gov.tw/prkms/prms-viewTenderDetailClient.do?ds=" + dayjs(t.publish).format('YYYY-MM-DD')+ "&fn=" + t.filename + ".xml"}><button className="btn btn-info">招標公告</button></a> 
+                        <a target="_blank" href={t.url || ("//web.pcc.gov.tw/prkms/prms-viewTenderDetailClient.do?ds=" + dayjs(t.publish).format('YYYY-MM-DD')+ "&fn=" + t.filename + ".xml")}><button className="btn btn-info">招標公告</button></a> 
                         {t.award && t.award.url && 
                         <a style={{marginLeft: 5}} target="_blank" href={t.award.url}>
-                           <button className={(t.award.merchants.length == 0 ? 'btn-danger ': '') + (t.award.merchants.length ? 'btn-success ': '') + ' btn'}>決標公告</button></a>
+                           <button className={(t.award && t.award.merchants && t.award.merchants.length == 0 ? 'btn-danger ': '') + (t.award && t.award.merchants && t.award.merchants.length ? 'btn-success ': '') + ' btn'}>決標公告</button></a>
                         }
                      </p>
                      <hr />
@@ -108,7 +108,7 @@ export default class extends React.Component {
                </div>
             </div>
 						<ins className="adsbygoogle"
-							style={{"display":"block", "height": "100px"}}
+							style={{"display":"block", "height": "100px", "width": "100%"}}
 							data-ad-client="ca-pub-9215576480847196"
 							data-ad-slot="1304930582"
 							data-ad-format="auto"

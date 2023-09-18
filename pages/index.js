@@ -97,7 +97,7 @@ export default class extends React.Component {
                                     { tenders.map((tender) => {
                                         return <li>
                                             <a target="_blank" href={"/tender/" + tender.unit + "/" + tender.job_number}>{tender.name}</a>
-                                            { tender.count > 3 && <Icon color='red.500'  as={BiSolidHot} />}
+                                            { tender.count > 10 && <Icon color='red.500'  as={BiSolidHot} />}
                                         </li>
                                     })}
                                 </ul>
@@ -118,7 +118,7 @@ export default class extends React.Component {
                                     { units.map((u) => {
                                         return <li>
                                             <a target="_blank" href={"/unit/" + u.unit}>{u.name}</a>
-                                            { u.count > 3 && <Icon color='red.500'  as={BiSolidHot} />}
+                                            { u.count > 10 && <Icon color='red.500'  as={BiSolidHot} />}
                                         </li>
                                     })}
                                 </ul>
@@ -139,7 +139,7 @@ export default class extends React.Component {
                                     { merchants.map((m) => {
                                         return <li>
                                             <a target="_blank" href={"/merchants/" + m.merchant}>{m.name}</a>
-                                            { m.count > 3 && <Icon color='red.500'  as={BiSolidHot} />}
+                                            { m.count > 10 && <Icon color='red.500'  as={BiSolidHot} />}
                                         </li>
                                     })}
                                 </ul>

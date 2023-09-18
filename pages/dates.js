@@ -6,12 +6,12 @@ export default class extends React.Component {
    static async getInitialProps({ req, query }) {
       const res = await fetch(`http://pcc.mlwmlw.org/api/dates/?year=${query.year}&month=${query.month}`);
       let json = await res.json();
-      
+     	let dates = [] 
       for(var i in json) {
-         var day = dayjs(json[i])
-         json[i] = {year: day.format('YYYY'), month: day.format('MM'), day: day.format('DD'), date: day.format('YYYY-MM-DD')}
+         var day = dayjs(i)
+         dates.push({year: day.format('YYYY'), month: day.format('MM'), day: day.format('DD'), date: day.format('YYYY-MM-DD')})
       }
-      return { dates: json, year: query.year, month: query.month }
+      return { dates: dates, year: query.year, month: query.month }
    }
  
    render() {
