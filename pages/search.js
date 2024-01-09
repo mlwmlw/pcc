@@ -2,8 +2,7 @@ const fetch = require("node-fetch");
 import React,{ useState, useEffect } from "react";
 import ReactTable from "react-table";
 import "react-table/react-table.css";
-import ReactPaginate from 'react-paginate';
-import Router from 'next/router'
+import { Box, Button, Image, Spacer, Flex, Badge, Link, Center, Text } from "@chakra-ui/react";
 import _ from 'lodash'
 import Head from 'next/head';
 export default class extends React.Component {
@@ -34,6 +33,7 @@ export default class extends React.Component {
   render() {
     let currentYear = new Date().getFullYear();
     let {keyword, tenders} = this.props;
+    
     return (
       <div className="container starter-template">
        <Head>
@@ -43,12 +43,13 @@ export default class extends React.Component {
         content="開放標案廠商列表" />
         </Head>
         <ins className="adsbygoogle"
-            style={{"display":"block", "height": "100px"}}
+            style={{"display":"block", "height": "50px"}}
            data-ad-client="ca-pub-9215576480847196"
            data-ad-slot="1304930582"
            data-ad-format="auto"
            data-full-width-responsive="true">
         </ins>
+       
         <h1>搜尋 {keyword} 標案列表</h1>
         { tenders.length == 0 ? <h3>找不到結果</h3>: null}
         <ReactTable
@@ -109,7 +110,13 @@ export default class extends React.Component {
           pageSizeOptions={[100, 200, 500]}
           className="-striped -highlight"
         />
-
+        <ins className="adsbygoogle"
+            style={{"display":"block", "height": "100px"}}
+           data-ad-client="ca-pub-9215576480847196"
+           data-ad-slot="1304930582"
+           data-ad-format="auto"
+           data-full-width-responsive="true">
+        </ins>
       </div>
     );
   }
