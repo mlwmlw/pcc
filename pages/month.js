@@ -1,32 +1,34 @@
 const fetch = require('node-fetch');
 import React from 'react'
 
+const getMonth = async () => {
+  const data = await fetch('https://pcc.mlwmlw.org/api/month')
+  const month = await data.json();
+  return month.filter(m => m.year > 1970).sort(function(b, a) {
+    if (a.year != b.year) {
+        if (+a.year < +b.year) return -1;
+        if (+a.year > +b.year) return 1;
+        return 0;
+    }
+    if (+a.month < +b.month) return -1;
+    if (+a.month > +b.month) return 1;
+    return 0;
+  })
+};
+export const getServerSideProps = async (context) => {
+  const month = await getMonth()
+  return {
+    props: {month}
+  };
+};
 
-export default class extends React.Component {
-   static async getInitialProps({ req }) {
-      const res = await fetch('http://pcc.mlwmlw.org/api/month');
-      let json = await res.json()
-      json = json.sort(function(b, a) {
-          if (a.year != b.year) {
-              if (+a.year < +b.year) return -1;
-              if (+a.year > +b.year) return 1;
-              return 0;
-          }
-          if (+a.month < +b.month) return -1;
-          if (+a.month > +b.month) return 1;
-          return 0;
-      });
-      return { month: json }
-   }
- 
-   render() {
-     return (
-        <div className="container starter-template">
-        <h1>歷月標案</h1>
-          <ul>
-          {this.props.month.map(m => <li key={m.name}><a target="_blank" href={"/dates/" + m.year + "/" + m.month }>檢視 {m.name} 標案 </a></li> )}
-          </ul>
-       </div>
-     )
-   }
- }
+
+
+export default function Month({month}) {
+  return <div className="container starter-template">
+  <h1>歷月標案</h1>
+    <ul>
+    {month.map(m => <li key={m.name}><a target="_blank" href={"/dates/" + m.year + "/" + m.month }>檢視 {m.name} 標案 </a></li> )}
+    </ul>
+  </div>
+}

@@ -2,17 +2,11 @@
 // Event handlers like onClick can't be added to this file
 
 // ./pages/_document.js
-import Document, { Html, Head, Main, NextScript } from 'next/document'
+import { Html, Head, Main, NextScript } from 'next/document'
 
 const fetch = require("node-fetch");
 
-export default class MyDocument extends Document {
-  static async getInitialProps(ctx) {
-    const initialProps = await Document.getInitialProps(ctx)
-    return { ...initialProps }
-  }
-
-  render() {
+export default function Document() {
     return (
       <Html>
         <Head>
@@ -60,5 +54,4 @@ export default class MyDocument extends Document {
         </body>
       </Html>
     )
-  }
 }
