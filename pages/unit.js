@@ -21,11 +21,11 @@ export default class extends React.Component {
       this.state = {year: null}
    }
   static async getInitialProps({ req, query, params }) {
-    const unit_res = await fetch("http://pcc.mlwmlw.org/api/unit_info/" + encodeURIComponent(query.unit));
+    const unit_res = await fetch("https://pcc.mlwmlw.org/api/unit_info/" + encodeURIComponent(query.unit));
     const unit = await unit_res.json()
-    const res = await fetch("http://pcc.mlwmlw.org/api/unit/" + encodeURIComponent(query.unit));
+    const res = await fetch("https://pcc.mlwmlw.org/api/unit/" + encodeURIComponent(query.unit));
     const data = await res.json()
-		const lookalike = await fetch("http://pcc.mlwmlw.org/api/unit_lookalike/" + encodeURIComponent(query.unit));
+		const lookalike = await fetch("https://pcc.mlwmlw.org/api/unit_lookalike/" + encodeURIComponent(query.unit));
     const lookalike_units = await lookalike.json()
 
   

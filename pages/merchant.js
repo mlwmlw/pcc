@@ -108,7 +108,12 @@ export default class extends React.Component {
       if(!total[d.getFullYear()]) {
         total[d.getFullYear()] = 0;
       }
-      total[d.getFullYear()] += +row.price;
+      row.award.merchants.forEach((row) => {
+        if (merchant._id == row._id) {
+          total[d.getFullYear()] += +row.amount;
+        }
+      })
+      //total[d.getFullYear()] += +row.price;
       return total;
     }, {});
     
@@ -119,7 +124,6 @@ export default class extends React.Component {
         value: stats[key]
       }
     })
-    
     let line = [{
       id: "spend", 
       data: Object.keys(line_data).map(function(key) {
