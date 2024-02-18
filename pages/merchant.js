@@ -89,7 +89,7 @@ export default class extends React.Component {
         desc += dayjs(merchant.tenders[i].publish).format('YYYY-MM-DD') + " " + merchant.tenders[i].name + "、";
     }
     let stats = merchant.tenders.reduce(function(total, row) {
-      if(!row.parent_unit) {
+      if(!row.parent_unit || !row.parent_unit.name) {
         return total;
 			}
       var unit = row.parent_unit.name.replace(/\s/g, '')
