@@ -4,37 +4,35 @@
             $scope.items = null;
             var type = '<%- @type %>';
             var date = '<%- @date %>';
-						var data = <%- @data %>;
+            var data = <%- @data %>;
             if (date.length) {
                 $scope.date = date;
-            }
-						if (type == 'tender')
-							$rootScope.title = $scope.date + ' 招標標案檢索';
-						else
-							$rootScope.title = $scope.date + ' 決標標案檢索';
+            } else {
+								$scope.date = new Date(Date.now() + 60 * 60 * 8 * 1000).toISOString().split('T')[0]
+						}
+            if (type == 'tender')
+                $rootScope.title = $scope.date + ' 招標標案檢索';
+            else
+                $rootScope.title = $scope.date + ' 決標標案檢索';
             var now = new Date();
             $http.get('/api/dates?year=' + now.getFullYear()).then(function(res) {
-                var dates = $scope.dates = res.data;
-                for (var i in dates) {
-                    dates[i] = dates[i].replace(/T.+$/, '');
-                }
-							
-                $scope.dates = dates = dates.sort().reverse();
+                console.log(res);
+                var dates = $scope.dates = Object.keys(res.data);
                 if (date) {
-									$scope.dates.unshift(date);
-									$scope.date = date;
-								}
-								else {
-									$scope.date = dates[0];
-									if (type == 'tender')
-										$rootScope.title = $scope.date + ' 招標標案檢索';
-									else
-										$rootScope.title = $scope.date + ' 決標標案檢索';
-								}
-								if(data)
-									$scope.grid.data = data;
-								else
-									$scope.loadByDate();
+                    $scope.dates.unshift(date);
+                    $scope.date = date;
+                }
+                else {
+                    $scope.date = dates[0];
+                    if (type == 'tender')
+                        $rootScope.title = $scope.date + ' 招標標案檢索';
+                    else
+                        $rootScope.title = $scope.date + ' 決標標案檢索';
+                }
+                if(data)
+                    $scope.grid.data = data;
+                else
+                    $scope.loadByDate();
             });
             $scope.loadByDate = function() {
                 $scope.items = false;

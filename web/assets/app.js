@@ -141,7 +141,7 @@ app.service('grid', function($filter) {
                 if (row.award && row.award.url)
                     url = row.award.url
                 if (url) {
-                    return React.DOM.a({ href: url, target: "_blank" }, '決標公告');
+                    return React.DOM.a({ href: url, target: "_blank" }, row.merchants && row.merchants ? '決標公告': '招標公告');
                 } else if (row.job_number) {
                     return React.DOM.a({ target: "_blank", href: row.url || "//web.pcc.gov.tw/prkms/prms-viewTenderDetailClient.do?ds=" + $filter('gmt')(row.publish) + "&fn=" + row.filename + ".xml"}, '招標公告');
                 } else {
