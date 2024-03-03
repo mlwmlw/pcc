@@ -7,6 +7,7 @@
     padding-bottom: 10px;
     background-color: #2C2C2C;
     text-align: center;
+		margin-top: 50px;
 }
 
 .ngReactGrid ul {
@@ -177,9 +178,24 @@ ul {
 .ReactTable .rt-tbody .rt-td {
     white-space: unset;
 }
-
+.keywords a {
+		padding: 2px 8px;
+		cursor: pointer;
+		float: left;
+		display: inline-block;
+		margin-left: 5px;
+		margin-bottom: 5px;
+		border-radius: 3px;
+		background: #d5dfe7;
+		text-decoration: none;
+}
+.keywords a:hover {
+		background: #c6e5ff;
+    color: #4e4e4e;
+}
 .navbar-form a, .starter-template a, .keywords a, .landing a {
     color: #428bca;
+
 }
 
 .starter-template h1, .landing h1 {
@@ -194,4 +210,7 @@ ul {
 .starter-template h3, .landing h3 {
     font-size:18px;
     margin:3px 0;
+}
+.content-section-b hr {
+	margin:15px 0px;
 }

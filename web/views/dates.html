@@ -4,15 +4,11 @@
             $scope.items = null;
             var year = $scope.year = '<%- @year %>';
             var month = $scope.month = '<%- @month %>';
-						if(year && month) {
-							$http.get('/api/dates/?year=' + year + '&month=' + month).then(function(res) {
-									var dates = $scope.dates = res.data;
-									for (var i in dates) {
-											dates[i] = dates[i].replace(/T.+$/, '');
-									}
-									$scope.dates = dates = dates.sort().reverse();
-							});
-						}
+            if(year && month) {
+                $http.get('/api/dates/?year=' + year + '&month=' + month).then(function(res) {
+                        $scope.dates = res.data.keys();
+                });
+            }
             if (year.length == 0 && month.length == 0) {
                 $http.get('/api/month').then(function(res) {
                     res = res.data.sort(function(b, a) {
