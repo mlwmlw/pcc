@@ -1,15 +1,11 @@
-const fetch = require("node-fetch");
+
 import React from "react";
 
-import { ResponsiveBar } from '@nivo/bar'
-import { ResponsivePie } from '@nivo/pie'
-import { ResponsiveLine } from '@nivo/line'
+import fetch from "node-fetch";
+import dynamic from 'next/dynamic';
 
-import ReactTable from "react-table";
-import "react-table/react-table.css";
-import dayjs from 'dayjs'
+import { DataTable } from "../components/DataTable";
 import Head from 'next/head';
-import 'c3/c3.css';
 
 export default class extends React.Component {
    constructor(props) {
@@ -40,6 +36,10 @@ export default class extends React.Component {
     return { election, stats, keys };
   }
   chart(stats, keys) {
+    const ResponsiveBar = dynamic(() => {
+        return import('@nivo/bar').then((mod) => mod.ResponsiveBar)
+    }, { ssr: false })
+
     return <div style={{width: "100%", height: "400px"}}>
       <ResponsiveBar data={stats}
   
@@ -61,6 +61,7 @@ export default class extends React.Component {
           legendOffset: -40,
           format: v => new Intl.NumberFormat('zh-TW').format(v/100000000) + "億"
         }}
+        
         indexBy="name"
         keys={keys}
         margin={{
@@ -74,8 +75,9 @@ export default class extends React.Component {
         innerRadius={0.5}
         padAngle={0.7}
         cornerRadius={3}
-        colors="paired"
-        
+  
+        colors={{scheme: "paired"}}
+  
         borderWidth={1}
         borderColor="inherit:darker(0.2)"
         animate={true}
@@ -118,9 +120,9 @@ export default class extends React.Component {
     })
     var desc = '查詢各候選人收入/支出金額與相關組織標案查詢';
     var title = '2019 總統候選人 政治獻金查詢';
-    
-    
+
     return (
+      <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
       <div className="container starter-template">
         <Head>
         <title>{title} - 開放政府標案</title>
@@ -135,52 +137,49 @@ export default class extends React.Component {
           <h4>各候選人前十大支出廠商</h4>
           {this.chart(stats, keys, 'expense')}
           <h4>非個人支出/收入明細</h4>
-            <ReactTable
-               data={data}
-               columns={[
+            <DataTable
+                data={data}
+                columns={[
                   {
-                  Header: "候選人",
-                  accessor: "candidate",
-                  
+                    header: "候選人",
+                    accessorKey: "candidate",
                   },
                   {
-                  Header: "日期",
-                  accessor: "date"
+                    header: "日期",
+                    accessorKey: "date"
                   },
                   {
-                  Header: "捐獻者",
-                  accessor: "donator",
-                  Cell: ({row}) => {
-                     return <a target="_blank" href={'/merchants/' + (row._original.unique_id) }>{row.donator}</a>
-                  }
+                    header: "捐獻者",
+                    accessorKey: "donator",
+                    cell: ({row}) => {
+                      return <a target="_blank" href={'/merchants/' + (row.original.unique_id) }>{row.original.donator}</a>
+                    }
                   },
                   {
-                  Header: "收入",
-                  accessor: "income",
-                  Cell: ({row}) => {
-                     return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.income)}</div>;
-                  }
+                    header: "收入",
+                    accessorKey: "income",
+                    cell: ({row}) => {
+                      return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.original.income)}</div>;
+                    }
                   },
                   {
-                     Header: "支出",
-                     accessor: "expense",
-                     Cell: ({row}) => {
-                     return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.expense)}</div>;
+                    header: "支出",
+                    accessorKey: "expense",
+                     cell: ({row}) => {
+                      return <div style={{textAlign: 'right'}}>{new Intl.NumberFormat('zh-TW').format(row.original.expense)}</div>;
                      }
                   },
                   {
-                     Header: "支出類型",
-                     accessor: "expense_type",
+                    header: "支出類型",
+                    accessorKey: "expense_type",
                   }
                ]}
 
-               defaultPageSize={Math.min(100, data.length)}
-               pageSizeOptions={[100, 500, 1000, 2000]}
-               className="-striped -highlight"
+           
             />
          </div>         
       </div>
-			
+      </div>
     );
   }
 }

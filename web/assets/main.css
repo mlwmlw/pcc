@@ -189,15 +189,24 @@ ul {
 		background: #d5dfe7;
 		text-decoration: none;
 }
+.tw-hidden {
+    display: none;
+}
+
 .keywords a:hover {
-		background: #c6e5ff;
+	background: #c6e5ff;
     color: #4e4e4e;
 }
-.navbar-form a, .starter-template a, .keywords a, .landing a {
+.navbar-form a, .starter-template a, .keywords a, .landing a, .chakra-table a {
     color: #428bca;
-
 }
-
+a[role="button"] {
+    color:white;
+}
+.chakra-table a:hover {
+    text-decoration: underline;
+    color: #2a6eaa;
+}
 .starter-template h1, .landing h1 {
     font-size:28px;
     margin:10px 0;
@@ -214,3 +223,5 @@ ul {
 .content-section-b hr {
 	margin:15px 0px;
 }
+
+

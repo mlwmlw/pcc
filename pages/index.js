@@ -1,7 +1,9 @@
 import React from "react";
-import { ResponsiveCalendar } from '@nivo/calendar'
+
 import { BiSolidHot } from 'react-icons/bi'
+import dynamic from 'next/dynamic';
 import { Icon } from '@chakra-ui/react'
+import Head from 'next/head';
 
 export default class extends React.Component {
     constructor(props) {
@@ -29,31 +31,37 @@ export default class extends React.Component {
         return {tenders, units, merchants, news, dates}
     }    
     render() {
+        const ResponsiveCalendar = dynamic(() => {
+            return import('@nivo/calendar').then((mod) => mod.ResponsiveCalendar)
+        }, { ssr: false })
         let {tenders, units, merchants, news, dates} = this.props;
         let end = dates[0].day, start = dates[100].day;
         return <>
-            <title>開放政府標案</title>
-            <meta name="description"
-            content="開放政府標案目的是為了讓公民能更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。提供各種統計數據與最新趨勢案件
-            "/>
-            <div className="container landing">
-            <div className="intro-header">
-                <div className="container">
-                    <div className="row">
-                        <div className="col-lg-12" style={{"background": "rgba(0,0,0,0.7)", "padding": "1px 10px 8px 10px"}}>
-                            <div className="intro-message">
-                                <h1>開放標案</h1>
-                                <h3>讓公民更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。</h3>
+            <Head>
+                <title>開放政府標案</title>
+                <meta name="description"
+                content="開放政府標案目的是為了讓公民能更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。提供各種統計數據與最新趨勢案件
+                "/>
+            </Head>
+            <div className="container landing mx-auto">
+                <div className="intro-header">
+                    <div className="w-3/4 mx-auto">
+                        <div className="row">
+                            <div className="col-lg-12" style={{"background": "rgba(0,0,0,0.7)", "padding": "1px 10px 8px 10px"}}>
+                                <div className="intro-message">
+                                    <h1>開放標案</h1>
+                                    <h3>讓公民更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。</h3>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                </div>
                 <div className="content-section-b">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
-                            <div className="col-lg-12   col-sm-12" style={{height: 200}}>
+                            <div className="col-lg-12 col-sm-12" style={{height: 200}}>
                                 <h2 className="section-heading">最新日期標案</h2>
+                                
                                 <ResponsiveCalendar
                                     data={dates}
                                     from={start}
@@ -86,7 +94,7 @@ export default class extends React.Component {
                     </div>
                 </div>
                 <div className="content-section-a">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
                             <div className="col-lg-5 col-sm-6">
                                 <h2 className="section-heading">熱門瀏覽標案</h2>
@@ -94,8 +102,8 @@ export default class extends React.Component {
                             </div>
                             <div className="col-lg-5 col-lg-offset-2 col-sm-6">
                                 <ul style={{"marginLeft": "20px", "listStyle": "circle"}}>
-                                    { tenders.map((tender) => {
-                                        return <li>
+                                    { tenders.map((tender, i) => {
+                                        return <li key={i}>
                                             <a target="_blank" href={"/tender/" + tender.unit + "/" + tender.job_number}>{tender.name}</a>
                                             { tender.count > 10 && <Icon color='red.500'  as={BiSolidHot} />}
                                         </li>
@@ -107,7 +115,7 @@ export default class extends React.Component {
                     </div>
                 </div>
                 <div className="content-section-b">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
                             <div className="col-lg-5 col-lg-offset-1 col-sm-push-6 col-sm-6">
                                 <h2 className="section-heading">熱門瀏覽單位</h2>
@@ -115,8 +123,8 @@ export default class extends React.Component {
                             </div>
                             <div className="col-lg-5 col-sm-pull-6 col-sm-6">
                                 <ul style={{"marginLeft": "20px", "listStyle": "circle"}}>
-                                    { units.map((u) => {
-                                        return <li>
+                                    { units.map((u, i) => {
+                                        return <li key={i}>
                                             <a target="_blank" href={"/unit/" + u.unit}>{u.name}</a>
                                             { u.count > 10 && <Icon color='red.500'  as={BiSolidHot} />}
                                         </li>
@@ -128,7 +136,7 @@ export default class extends React.Component {
                 </div>
 
                 <div className="content-section-a">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
                             <div className="col-lg-5 col-sm-6">
                                 <h2 className="section-heading">熱門瀏覽公司</h2>
@@ -136,8 +144,8 @@ export default class extends React.Component {
                             </div>
                             <div className="col-lg-5 col-lg-offset-2 col-sm-6">
                                 <ul style={{"marginLeft": "20px", "listStyle": "circle"}}>
-                                    { merchants.map((m) => {
-                                        return <li>
+                                    { merchants.map((m, i) => {
+                                        return <li key={i}>
                                             <a target="_blank" href={"/merchants/" + m.merchant}>{m.name}</a>
                                             { m.count > 10 && <Icon color='red.500'  as={BiSolidHot} />}
                                         </li>
@@ -150,7 +158,7 @@ export default class extends React.Component {
 
                 </div>
                 <div className="content-section-b">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
                             <div className="col-lg-5 col-lg-offset-1 col-sm-push-6 col-sm-6">
                                 <hr className="section-heading-spacer" />
@@ -166,7 +174,7 @@ export default class extends React.Component {
                 </div>
 
                 <div className="content-section-a">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
                             <div className="col-lg-5 col-sm-6">
                                 <hr className="section-heading-spacer" />
@@ -183,7 +191,7 @@ export default class extends React.Component {
 
                 </div>
                 <div className="content-section-b">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
                             <div className="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                                 <hr className="section-heading-spacer" />
@@ -199,7 +207,7 @@ export default class extends React.Component {
 
                 </div>
                 <div className="content-section-a">
-                    <div className="container">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                         <div className="row">
                             <div className="col-lg-5 col-sm-6">
                                 <hr className="section-heading-spacer" />
@@ -219,7 +227,7 @@ export default class extends React.Component {
 
             </div>
             <div className="content-section-b">
-                <div className="container">
+                <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
                     <div className="row">
                         <div className="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                             <hr className="section-heading-spacer" />

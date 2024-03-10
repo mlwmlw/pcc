@@ -4,13 +4,12 @@
 // ./pages/_document.js
 import { Html, Head, Main, NextScript } from 'next/document'
 
-const fetch = require("node-fetch");
-
 export default function Document() {
     return (
-      <Html>
+      <Html className="text-[15px]">
         <Head>
         <link rel="icon" href="/favicon.ico" />
+        <link rel="stylesheet" href="/_next/static/style.css" />
         <script src="/static/lib/jquery/dist/jquery.min.js"></script>
         <script src="/static/lib/angular/angular.min.js"></script>
         <script src="/static/lib/react/react.min.js"></script>
@@ -48,7 +47,7 @@ export default function Document() {
           `}}>
          </script>
         </Head>
-        <body  ng-app="myapp" ng-controller="page" className="adaw">
+        <body ng-app="myapp" ng-controller="page" className="pt-0">
           <Main />
           <NextScript />
         </body>
