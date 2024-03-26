@@ -119,6 +119,7 @@ function SearchDrawer(props) {
 				
 				onMouseDown={(e) => {
 					onOpen(e)
+					e.preventDefault()
 				}} 
 				radius="sm"
 				size="sm"
@@ -130,7 +131,7 @@ function SearchDrawer(props) {
 				],
 				input: [
 					"placeholder:text-gray-100",
-					"hover:placeholder:text-gray-400",
+					"hover:placeholder:text-gray-700",
 				],
 				inputWrapper: [
 					"shadow-xl",

@@ -32,7 +32,7 @@ export default function MyApp({ Component, pageProps, keywords }) {
       <Component {...pageProps} />
       <div className="footer">
           <div className="container">
-              @{(new Date()).getFullYear()} 開放標案，本站所有資料僅供參考，資料來源請見 <a target="_blank" href="https://web.pcc.gov.tw/">http://web.pcc.gov.tw/</a>
+              @{(new Date()).getFullYear()} 開放標案，本站所有資料僅供參考，資料來源請見 <a target="_blank" href="https://web.pcc.gov.tw/">https://web.pcc.gov.tw/</a>
           </div>
       </div>
     </ChakraProvider>

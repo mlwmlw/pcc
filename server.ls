@@ -43,25 +43,25 @@ app.use (req, res, next) ->
 	next!
 
 app.use compression!
-app.use (req, res, next) ->
-	res.setHeader 'Content-Type', 'application/json'
-	if /merchants|rank|units|month|categories|units_stats/.test req.path
-		key = req.path;
-		key = key + "?" + qs.stringify(req.query);
-		send = res.send
-		res.send = (result) ->
-			cache.set key, result
-			cache.expire key, 3600*24
-			send.call res, result
-		err, reply <- cache.get key
-		if reply
-			res.setHeader 'cache', 'HIT'
-			send.call res, reply
-		else
-			res.setHeader 'cache', 'MISS'
-			next!
-	else
-		next!
+# app.use (req, res, next) ->
+# 	res.setHeader 'Content-Type', 'application/json'
+# 	if /merchants|rank|units|month|categories|units_stats/.test req.path
+# 		key = req.path;
+# 		key = key + "?" + qs.stringify(req.query);
+# 		send = res.send
+# 		res.send = (result) ->
+# 			cache.set key, result
+# 			cache.expire key, 3600*24
+# 			send.call res, result
+# 		err, reply <- cache.get key
+# 		if reply
+# 			res.setHeader 'cache', 'HIT'
+# 			send.call res, reply
+# 		else
+# 			res.setHeader 'cache', 'MISS'
+# 			next!
+# 	else
+# 		next!
 
 	
 app.get '/page/:page', (req, res) ->
@@ -215,7 +215,7 @@ app.get '/rank/merchants/:order?/:year?', (req, res) ->
 	{ $match: $match},
 	{ $group : {_id: {$ifNull: ["$award.merchants._id", "$award.merchants.name"]}, merchants: {$addToSet: "$award.merchants"}, count: {$sum: 1}, sum: {$sum: "$award.merchants.amount"}}}, 
 	$sort, 
-	{ $limit: 100}] .toArray!
+	{ $limit: 100}], {allowDiskUse: true} .toArray!
 	for i,m of merchants
 		m.merchant = m.merchants.pop!
 		delete m.merchants
@@ -257,12 +257,16 @@ app.get '/merchant_type/:id?', (req, res) ->
 		err, types <- db.collection 'merchant_type' .find {count: {$gt: 1}} .toArray
 		res.send types
 
+app.get '/merchants_count', (req, res) ->
+	err, count <- db.collection 'merchants' .count!
+	return res.send { count: count }
+
 app.get '/merchants/:id?', (req, res) ->
 	id = req.params.id
 	query = req.query.filter && JSON.parse(req.query.filter)
 	if !query
 		query = []
-	filter = {}
+	filter = {name: {$exists: true}}
 	if /\d+/.test id 
 		filter = {_id: id} 
 	else if id
@@ -270,18 +274,18 @@ app.get '/merchants/:id?', (req, res) ->
 	for i in query
 		filter[i.id] = new RegExp(i.value)
 	
-	err, merchants <- db.collection 'merchants' .find filter, {name: 1, address: 1, phone: 1, org: 1, _id: 1} .toArray
 	if(req.query.count) 
-		res.send merchants.length
-	page = req.query.page
-	if page 
-		page -= 1
-		merchants = merchants.slice(page * 100, page * 100 + 100)
-	if id 
-		res.send merchants[0]
+		err, count <- db.collection 'merchants' .count {name: {$exists: true}} 
+		return res.send ""+count
 	else
-		res.send merchants
-
+		page = req.query.page || 1
+		page -= 1
+		#merchants = merchants.slice(page * 100, page * 100 + 100)
+		err, merchants <- db.collection 'merchants' .find filter, {name: 1, address: 1, phone: 1, org: 1, _id: 1} .limit 100 .skip(page * 100) .toArray
+		if id 
+			res.send merchants[0]
+		else
+			res.send merchants
 app.get '/merchant/:id?', (req, res) ->
 	id = req.params.id
 	if !id
@@ -329,7 +333,7 @@ app.get '/merchant/:id?', (req, res) ->
 		{$unwind: "$parent_unit"},
 		{$project: {_unit: 0, _root: 0, _parent: 0}}
 	] .toArray
-	docs = _(docs).groupBy 'job_number'
+	docs = _(docs).groupBy 'name'
 		.map (vals, key) ->
 			return _.assign(vals[0], {
 				publish: _.min(vals.map (val) ->

@@ -10,7 +10,7 @@ export default class extends React.Component {
         super(props);
     }
     static async getInitialProps({ req, query, params}) {
-        let host = "https://pcc.mlwmlw.org" || "http://localhost:3000";
+        let host = "https://pcc.mlwmlw.org";
         const tenders_res = await fetch(host + "/api/hot/tenders");
         const tenders = await tenders_res.json();
 

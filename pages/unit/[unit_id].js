@@ -231,8 +231,7 @@ export default function Page({data, unit, stats, lookalike_units}) {
   if(unit.childs && unit.childs.length > 0)
     more.push(<a key={7} href={"/units/" + unit._id}>{unit.name}子機關</a>)
 
-  
-  const LookalikeUnitsTable = <DataTable data={lookalike_units} 
+  const LookalikeUnitsTable = () => <DataTable data={lookalike_units} 
     columns={[
       {
         header: "單位",
@@ -240,7 +239,6 @@ export default function Page({data, unit, stats, lookalike_units}) {
       },
       {
         header: "相關標案",
-        accessorKey: "_id",
         cell: ({ row }) => {
           return <a href={"/unit/" + row.original._id}>
             查看相關標案
@@ -252,12 +250,12 @@ export default function Page({data, unit, stats, lookalike_units}) {
     <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
       <div className="container starter-template">
         <Head>
-        <title>{title} - 開放政府標案</title>
-        <meta name="description"
-        content={desc}/>
+          <title>{title} - 開放政府標案</title>
+          <meta name="description"
+          content={desc}/>
 
-        <meta property="og:description"
-        content={desc}/>
+          <meta property="og:description"
+          content={desc}/>
         </Head>
         <h1>{title}</h1>
         <h3>{more}</h3>
@@ -275,7 +273,7 @@ export default function Page({data, unit, stats, lookalike_units}) {
         
         <TenderTable data={data} />
         
-        { () => {
+        { (() => {
           if (lookalike_units.length) {
             return <div>
               <h3>相似單位</h3>
@@ -287,7 +285,7 @@ export default function Page({data, unit, stats, lookalike_units}) {
               />
             </div>
           }
-        } }
+        })() }
       </div>
     </div>
   );

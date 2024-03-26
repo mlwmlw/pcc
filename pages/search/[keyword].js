@@ -29,7 +29,7 @@ export default function Page({tenders, keyword}) {
       header: "標案名稱",
       accessorKey: "name",
       cell: ({ row }) =>
-        <a target="_blank" href={`/tender/${row.unit}/${row.original.job_number}`}>
+        <a target="_blank" href={`/tender/${row.original.unit}/${row.original.job_number}`}>
           {row.original.name}
         </a>
     },

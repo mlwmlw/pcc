@@ -37,7 +37,6 @@ function UnitTable({units}) {
     },
     {
       header: "檢索標案",
-      accessorKey: 'tenders',
       cell: ({ row }) => {                
         return <a href={"/unit/" + encodeURIComponent(row.original.name)}>
           查詢{row.original.name}標案

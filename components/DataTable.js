@@ -1,16 +1,18 @@
 import * as React from "react";
 import { Table, Thead, Tbody, Tr, Th, Td, Text, chakra } from "@chakra-ui/react";
-import { TriangleDownIcon, TriangleUpIcon } from "@chakra-ui/icons";
+import { TriangleDownIcon, TriangleUpIcon, SearchIcon } from "@chakra-ui/icons";
 import {Pagination} from "@nextui-org/react";
-import ReactPaginate from 'react-paginate';
+
+// import ReactPaginate from 'react-paginate';
+import {Input} from "@nextui-org/react";
 
 import {
   useReactTable,
   flexRender,
   getCoreRowModel,
   ColumnDef,
+  getFilteredRowModel,
   getPaginationRowModel,
-  SortingState,
   getSortedRowModel
 } from "@tanstack/react-table";
 
@@ -25,8 +27,10 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
     data,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
+    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: setPage ? null: getPaginationRowModel(),
+    //onPaginationChange: setPageState,
     state: {
       sorting,
       pagination: {
@@ -41,6 +45,7 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
         <Pagination onChange={setPage} className="mx-auto" size="lg" variant="flat" showControls total={pages} initialPage={page} />
       </div>
     }
+    pages = Math.floor(table.getFilteredRowModel().rows.length/pageSize);
     if(pages > 0) {
       return <div className="my-5 flex gap-4">
         <Pagination onChange={(p) => {
@@ -80,6 +85,11 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
                       )
                     ) : null}
                     </Text>
+                    {header.column.getCanFilter() ? (
+                        <div>
+                          <Filter column={header.column} table={table} />
+                        </div>
+                    ) : null}
                 </Th>
               );
             })}
@@ -104,4 +114,74 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
     <CustomPagination /> 
     </div>
   );
+}
+function Filter({column, table}) {
+  const firstValue = table
+    .getPreFilteredRowModel()
+    .flatRows[0]?.getValue(column.id)
+  const columnFilterValue = column.getFilterValue()
+  if(!columnFilterValue) {
+    return null
+  }
+  return typeof firstValue === 'number' ? (
+    <div className="flex space-x-2">
+      <Input
+        value={(columnFilterValue)[0] ?? ''}
+				radius="sm"
+				size="sm"
+				placeholder="Search..."
+        onChange={e =>
+          column.setFilterValue((old) => [
+            e.target.value,
+            old?.[1],
+          ])
+        }
+				startContent={
+				<SearchIcon color="gray.400" className="mb-0.5 dark:text-white/90 pointer-events-none flex-shrink-0" />
+				}
+			/>
+      {/* <input
+        type="number"
+        value={(columnFilterValue)[0] ?? ''}
+        onChange={e =>
+          column.setFilterValue((old) => [
+            e.target.value,
+            old?.[1],
+          ])
+        }
+        placeholder={`Min`}
+        className="w-24 border shadow rounded"
+      />
+      <input
+        type="number"
+        value={(columnFilterValue)[1] ?? ''}
+        onChange={e =>
+          column.setFilterValue((old) => [
+            old?.[0],
+            e.target.value,
+          ])
+        }
+        placeholder={`Max`}
+        className="w-24 border shadow rounded"
+      /> */}
+    </div>
+  ) : (
+    <Input
+        value={columnFilterValue}
+				radius="sm"
+				size="sm"
+        onChange={e => column.setFilterValue(e.target.value)}
+				placeholder="Search..."
+				startContent={
+				<SearchIcon color="gray.400" className="mb-0.5 dark:text-white/90 pointer-events-none flex-shrink-0" />
+				}
+			/>
+    // <input
+    //   type="text"
+    //   value={(columnFilterValue ?? '')}
+    //   onChange={e => column.setFilterValue(e.target.value)}
+    //   placeholder={`Search...`}
+    //   className="w-36 border shadow rounded"
+    // />
+  )
 }
