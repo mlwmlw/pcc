@@ -10,8 +10,8 @@ import { DataTable } from "../components/DataTable";
 
 
 const getMerchants = async (page) => {
-  //var host = typeof(window) == 'undefined'? 'https://pcc.mlwmlw.org': '';
-  var host = typeof(window) == 'undefined'? 'http://localhost:3000': '';
+  var host = typeof(window) == 'undefined'? 'https://pcc.mlwmlw.org': '';
+  //var host = typeof(window) == 'undefined'? 'http://localhost:3000': '';
   const res = await fetch(host + "/api/merchants?count=1");
   let count = await res.json();
   page = page ? +page: 1;
