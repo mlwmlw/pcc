@@ -36,8 +36,8 @@ export default function Page({tenders, award, merchants, unit}) {
    if (tenders.length == 0) {
       return <Error statusCode={404}  />
    }
-   let desc = "招標單位：" + unit + "，招標金額：" + new Intl.NumberFormat('zh-TW').format(tenders[0].price) + "，招標日期：" + dayjs(tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + tenders[0].id + "，分類：" + tenders[0].category;
-   let title = tenders[0].name + ' - 開放政府標案';
+   let desc = tenders[0].type + " 招標單位：" + unit + "，招標金額：" + new Intl.NumberFormat('zh-TW').format(tenders[0].price) + "，招標日期：" + dayjs(tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + tenders[0].id + "，分類：" + tenders[0].category;
+   let title = tenders[0].name + '/' + unit + ' - 開放政府標案';
 
    return (
       <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
