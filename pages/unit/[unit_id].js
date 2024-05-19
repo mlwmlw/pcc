@@ -212,9 +212,7 @@ function TenderTable({data}) {
 }
 export default function Page({data, unit, stats, lookalike_units}) {
   useEffect(() => {
-    fetch('/api/pageview/unit/' + unit._id, {method: 'post'}).then(function () {
-      console.log(arguments)
-    })
+    fetch('/api/pageview/unit/' + unit._id, {method: 'post'})
   })
   let title = unit.name + '標案檢索'
   let desc = unit.name + " 最新標案 ";

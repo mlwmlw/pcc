@@ -230,9 +230,7 @@ function TenderTable({merchant}) {
 }
 export default function Page({merchant, years, merchant_id, merchants, directors}) {
   useEffect(() => {
-    fetch('/api/pageview/merchant/' + merchant_id, {method: 'post'}).then(function () {
-      console.log(arguments)
-    })
+    fetch('/api/pageview/merchant/' + merchant_id, {method: 'post'})
   })
 
   let currentYear = new Date().getFullYear(); 
