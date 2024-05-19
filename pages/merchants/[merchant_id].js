@@ -5,6 +5,8 @@ import { DataTable } from "../../components/DataTable";
 
 import dayjs from 'dayjs'
 import Head from 'next/head';
+import { useEffect } from 'react';
+
 function LineChart({data}) {
   const ResponsiveLine = dynamic(() => {
     return import('@nivo/line').then((mod) => mod.ResponsiveLine)
@@ -227,6 +229,12 @@ function TenderTable({merchant}) {
   return <DataTable columns={columns} data={merchant.tenders} />
 }
 export default function Page({merchant, years, merchant_id, merchants, directors}) {
+  useEffect(() => {
+    fetch('/api/pageview/merchant/' + merchant_id, {method: 'post'}).then(function () {
+      console.log(arguments)
+    })
+  })
+
   let currentYear = new Date().getFullYear(); 
 
   var desc = '近期得標案件：';

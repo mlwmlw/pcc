@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import Head from 'next/head';
 import {Link,Button, Chip} from "@nextui-org/react";
 import Error from 'next/error'
+import { useEffect } from 'react';
 
 const getTender = async (unit, id) => {
       var unit = encodeURIComponent(unit);
@@ -36,6 +37,11 @@ export default function Page({tenders, award, merchants, unit}) {
    if (tenders.length == 0) {
       return <Error statusCode={404}  />
    }
+   useEffect(() => {
+      fetch('/api/pageview/tender/' + tenders[0].id, {method: 'post'}).then(function () {
+        console.log(arguments)
+      })
+    })
    let desc = tenders[0].type + " 招標單位：" + unit + "，招標金額：" + new Intl.NumberFormat('zh-TW').format(tenders[0].price) + "，招標日期：" + dayjs(tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + tenders[0].id + "，分類：" + tenders[0].category;
    let title = tenders[0].name + '/' + unit + ' - 開放政府標案';
 

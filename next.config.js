@@ -49,6 +49,10 @@ module.exports = {
             source: '/units',
             destination: `/units/0`,
         },
+        {
+            source: '/stats/:unit*',
+            destination: `/stats`,
+        },
         // {
         //     source: '/keyword/:keyword*',
         //     destination: '/search/?keyword=:keyword*' // Proxy to Backend

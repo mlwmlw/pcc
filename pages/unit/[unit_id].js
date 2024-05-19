@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import dayjs from 'dayjs'
 import Head from 'next/head';
 import { DataTable } from '../../components/DataTable';
+import { useEffect } from 'react';
 Number.prototype.format = function(n, x, s, c) {
   var re = '\\d(?=(\\d{' + (x || 3) + '})+' + (n > 0 ? '\\D' : '$') + ')',
       num = this.toFixed(Math.max(0, ~~n));
@@ -210,6 +211,11 @@ function TenderTable({data}) {
   />
 }
 export default function Page({data, unit, stats, lookalike_units}) {
+  useEffect(() => {
+    fetch('/api/pageview/unit/' + unit._id, {method: 'post'}).then(function () {
+      console.log(arguments)
+    })
+  })
   let title = unit.name + '標案檢索'
   let desc = unit.name + " 最新標案 ";
   data.slice(0, 5).map(function(row) {  
