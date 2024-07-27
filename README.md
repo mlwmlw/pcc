@@ -37,12 +37,10 @@ spawn 6804
 ```
 api endpoint
 ===
-* GET /page/:page https://pcc.mlwmlw.org/api/page/1
-* GET /keyword/:keyword https://pcc.mlwmlw.org/api/keyword/陸軍 
-* GET /categories https://pcc.mlwmlw.org/api/categories
-* GET /category/:category https://pcc.mlwmlw.org/api/category/工程類
-* GET /units https://pcc.mlwmlw.org/api/units
-* GET /units/:id https://pcc.mlwmlw.org/api/units/0 
-  * https://pcc.mlwmlw.org/api/units/0  
-* GET /unit/:unit https://pcc.mlwmlw.org/api/unit/總統府
-* GET /date/:date https://pcc.mlwmlw.org/api/date/2014-08-05
+* GET /keyword/:keyword https://pcc.mlwmlw.org/api/keyword/陸軍 用關鍵字搜尋標案 
+* GET /categories https://pcc.mlwmlw.org/api/categories 取得所有分類
+* GET /category/:category https://pcc.mlwmlw.org/api/category/工程類 取得該分類最新 200 筆標案
+* GET /units/:id https://pcc.mlwmlw.org/api/units/2 取得子機關
+* GET /unit/:unit/:month? https://pcc.mlwmlw.org/api/unit/總統府/2024-07 取得某月該機關招標案件
+* GET /date/tender/:date https://pcc.mlwmlw.org/api/date/award/2014-08-05 取得某日招標案件
+* GET /date/award/:date https://pcc.mlwmlw.org/api/date/award/2024-07-01 取得某日得標案件
