@@ -20,7 +20,7 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
   const [sorting, setSorting] = React.useState([]);
   const [pageState, setPageState] = React.useState(page);
   if(!pages) {
-    pages = Math.floor(data.length/pageSize);
+    pages = Math.ceil(data.length/pageSize);
   }
   const table = useReactTable({
     columns,
@@ -45,7 +45,7 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
         <Pagination onChange={setPage} className="mx-auto" size="lg" variant="flat" showControls total={pages} initialPage={page} />
       </div>
     }
-    pages = Math.floor(table.getFilteredRowModel().rows.length/pageSize);
+    pages = Math.ceil(table.getFilteredRowModel().rows.length/pageSize);
     if(pages > 0) {
       return <div className="my-5 flex gap-4">
         <Pagination onChange={(p) => {
