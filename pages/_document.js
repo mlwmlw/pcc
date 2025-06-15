@@ -9,7 +9,6 @@ export default function Document() {
       <Html className="text-[15px]">
         <Head>
         <link rel="icon" href="/favicon.ico" />
-        <link rel="stylesheet" href="/_next/static/style.css" />
         <script src="/static/lib/jquery/dist/jquery.min.js"></script>
         <script src="/static/lib/angular/angular.min.js"></script>
         <script src="/static/lib/react/react.min.js"></script>

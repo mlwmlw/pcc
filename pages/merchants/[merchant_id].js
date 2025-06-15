@@ -2,6 +2,7 @@ import fetch from 'node-fetch'
 import React from "react";
 import dynamic from 'next/dynamic';
 import { DataTable } from "../../components/DataTable";
+import { getApiUrl } from "../../utils/api";
 
 import dayjs from 'dayjs'
 import Head from 'next/head';
@@ -41,9 +42,9 @@ function LineChart({data}) {
 }
 const getMerchant = async (merchant_id) => {
   merchant_id = encodeURIComponent(merchant_id);
-  const merchant_res = await fetch("https://pcc.mlwmlw.org/api/merchant/" + merchant_id);
+  const merchant_res = await fetch(getApiUrl(`/api/merchant/${merchant_id}`));
   const merchant = await merchant_res.json()
-  const lookalike = await fetch("https://pcc.mlwmlw.org/api/lookalike/" + merchant_id);
+  const lookalike = await fetch(getApiUrl(`/api/lookalike/${merchant_id}`));
   const merchants = await lookalike.json()
 
   const years = ['全部'].concat(merchant.tenders.map(function(row) {
@@ -230,7 +231,7 @@ function TenderTable({merchant}) {
 }
 export default function Page({merchant, years, merchant_id, merchants, directors}) {
   useEffect(() => {
-    fetch('/api/pageview/merchant/' + merchant_id, {method: 'post'})
+    fetch(getApiUrl(`/api/pageview/merchant/${merchant_id}`), {method: 'post'})
   })
 
   let currentYear = new Date().getFullYear(); 
@@ -294,10 +295,14 @@ export default function Page({merchant, years, merchant_id, merchants, directors
     <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
       <Head>
       <title>{title} - 開放政府標案</title>
-      <meta name="description"
-      content={desc}/>
-      <meta property="og:description"
-      content={desc}/>
+      <meta name="description" content={desc}/>
+      <meta property="og:title" content={title + ' - 開放政府標案'}/>
+      <meta property="og:description" content={desc}/>
+      <meta property="og:image" content={`/api/og-image/merchant?id=${merchant._id || merchant_id}`}/>
+      <meta property="og:image:width" content="1200"/>
+      <meta property="og:image:height" content="630"/>
+      <meta property="og:type" content="website"/>
+      <meta property="og:url" content={`https://pcc.mlwmlw.org/merchants/${merchant._id || merchant_id}`}/>
       </Head>
       <div className="container starter-template">
         
@@ -308,8 +313,8 @@ export default function Page({merchant, years, merchant_id, merchants, directors
             return <>
               <span>董監事：</span><br />
               <ul>
-                {directors.map((row) => {
-                  return <li>{row.title}：{row.name}</li>
+                {directors.map((row, i) => {
+                  return <li key={i}>{row.title}：{row.name}</li>
                 })}
               </ul>
             </>

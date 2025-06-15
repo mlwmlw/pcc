@@ -5,20 +5,14 @@ import "./globals.css"
 
 import { ChakraProvider } from "@chakra-ui/react"
 import {NextUIProvider} from "@nextui-org/react";
+import { getApiUrl } from "../utils/api";
 
 import Header from '../components/header'
 //import { useState, useEffect } from 'react'
 import fetch from 'node-fetch'
 import App from 'next/app'
 
-
-const getKeywords = async () => {
-  const data = await fetch('https://pcc.mlwmlw.org/api/keywords')
-  const keywords = await data.json();
-  return keywords;
-};
-
-export default function MyApp({ Component, pageProps, keywords }) {
+export default function MyApp({ Component, pageProps }) {
   
   return <>
     <Head>
@@ -27,7 +21,7 @@ export default function MyApp({ Component, pageProps, keywords }) {
     <NextUIProvider>
     <ChakraProvider>
     
-      <Header keywords={keywords} />
+      <Header />
       
       <Component {...pageProps} />
       <div className="footer">
@@ -38,10 +32,4 @@ export default function MyApp({ Component, pageProps, keywords }) {
     </ChakraProvider>
     </NextUIProvider>
   </>
-}
-MyApp.getInitialProps = async (context) => {
-  const ctx = await App.getInitialProps(context)
-  const keywords = await getKeywords();
-  return { ...ctx, keywords: keywords }
-
 }
