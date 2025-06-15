@@ -1,43 +1,70 @@
 import fetch from 'node-fetch'
-import React from "react";
-import dynamic from 'next/dynamic';
+import React, { useState } from 'react';
 import { DataTable } from "../../components/DataTable";
 import { getApiUrl } from "../../utils/api";
-
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
 import dayjs from 'dayjs'
 import Head from 'next/head';
 import { useEffect } from 'react';
 
-function LineChart({data}) {
-  const ResponsiveLine = dynamic(() => {
-    return import('@nivo/line').then((mod) => mod.ResponsiveLine)
-  }, { ssr: false })
+const dark24 = [
+  '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', 
+  '#E377C2', '#7F7F7F', '#BCBD22', '#17BECF', '#AEC7E8', '#FFBB78', 
+  '#98DF8A', '#FF9896', '#C5B0D5', '#C49C94', '#F7B6D2', '#C7C7C7', 
+  '#DBDB8D', '#9EDAE5', '#393B79', '#637939', '#8C6D31', '#843C39'
+];
+
+function MerchantLineChart({data}) {
   return (
-    <ResponsiveLine
-      data={data}
-      margin={{
-        top: 30,
-        right: 50,
-        bottom: 50,
-        left: 100
-      }}
-      yScale={{
-        type: "linear",
-        
-      }}
-      axisLeft={{ format: v => new Intl.NumberFormat('zh-TW', { notation: "compact" }).format(v) }}
-      useMesh={true}
-      
-      xScale={{
-        type: "point",
-        //precision: "year",
-        //format: "%Y"
-        //format: "native"
-      }}
-      axisBottom={{
-        //format: "%Y"
-      }}
-    />
+    <ResponsiveContainer>
+      <LineChart
+        data={data[0].data || []}
+        margin={{ top: 10, right: 30, bottom: 5, left: 25 }}
+      >
+        <CartesianGrid strokeDasharray="2 4" stroke="#f0f0f0" strokeOpacity={0.8} vertical={false} />
+        <XAxis 
+          dataKey="x"
+          angle={-45}
+          height={45}
+          dy={0}
+          tick={{fontSize: 12}}
+          interval={0}
+          textAnchor="end"
+        />
+        <YAxis
+          tickFormatter={(value) => 
+            value >= 1000000000 
+              ? `${(value/1000000000).toFixed(1)}B`
+              : value >= 1000000 
+                ? `${(value/1000000).toFixed(0)}M`
+                : `${(value/1000).toFixed(0)}k`
+          }
+          tickSize={3}
+          dx={-2}
+          width={25}
+          tickMargin={2}
+          orientation="left"
+          axisLine={false}
+          tick={{ fontSize: 11, fill: '#666' }}
+        />
+        <Tooltip
+          formatter={(value) => [`$${Number(value).toLocaleString()}`, '得標金額']}
+        />
+        <Legend />
+        <Line
+          dataKey="y"
+          name="得標金額"
+          stroke={dark24[0]}
+          dot={true}
+          strokeWidth={2}
+          activeDot={{ r: 6 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }
 const getMerchant = async (merchant_id) => {
@@ -72,62 +99,70 @@ export const getServerSideProps = async (context) => {
     props: props
   };
 };
-function PieChart({stats}) {
-  const ResponsivePie = dynamic(() => {
-    return import('@nivo/pie').then((mod) => mod.ResponsivePie)
-  }, { ssr: false })
-  return <ResponsivePie data={stats}
-  axisBottom={{
-    "tickSize": 5,
-    "tickPadding": 5,
-    "tickRotation": 45,
-    
-    "legendPosition": "middle",
-    "legendOffset": 32
-  }}
-  indexBy="year"
-  
-  margin={{
-      "top": 30,
-      "right": 120,
-      "bottom": 100,
-      "left": 0
-  }}
-  
-  sortByValue={true}
-  innerRadius={0.5}
-  padAngle={0.7}
-  cornerRadius={3}
-  colors={{scheme: "paired"}}
-  colorBy="id"
-  borderWidth={1}
-  borderColor="inherit:darker(0.2)"
-  animate={true}
-  motionStiffness={90}
-  motionDamping={15}
-  legends={[
-    {
-        "dataFrom": "keys",
-        "anchor": "bottom-right",
-        "direction": "column",
-        "translateX": 120,
-        "itemWidth": 120,
-        "itemHeight": 14,
-        "itemsSpacing": 2,
-        "itemTextColor": "#999",
-        "symbolSize": 14,
-        "symbolShape": "circle",
-        "effects": [
-            {
-                "on": "hover",
-                "style": {
-                    "itemTextColor": "#000"
-                }
+function MerchantPieChart({stats, setSelectedParent, parentUnits}) {
+  return (
+    <ResponsiveContainer>
+      <PieChart margin={{ top: 10, right: 120, bottom: 10, left: 10 }}>
+          <Pie
+            data={stats}
+            cx="50%"
+            cy="50%"
+            innerRadius="42%"
+            outerRadius="75%"
+            dataKey="value"
+            nameKey="id"
+            paddingAngle={2}
+            onClick={(entry) => {
+              if (entry.id !== '其他' && parentUnits.includes(entry.id)) {
+                setSelectedParent(entry.id);
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          label={({ value, id, percent }) => 
+            `${id} (${value >= 1000000000 
+              ? `${(value/1000000000).toFixed(0)}B`
+              : value >= 1000000 
+                ? `${(value/1000000).toFixed(0)}M`
+                : `${(value/1000).toFixed(0)}k`
+            }, ${(percent * 100).toFixed(1)}%)`
+          }
+          labelLine={{
+            strokeWidth: 0.8,
+            stroke: '#666',
+            strokeDasharray: "3 3"
+          }}
+        >
+          {stats.map((entry, index) => (
+            <Cell 
+              key={`cell-${index}`}
+              fill={dark24[index % dark24.length]}
+              stroke="#fff"
+              strokeWidth={0.5}
+            />
+          ))}
+        </Pie>
+        <Tooltip 
+          formatter={(value) => [`$${Number(value).toLocaleString()}`, '得標金額']}
+        />
+        <Legend 
+          layout="vertical"
+          align="right"
+          verticalAlign="middle"
+          wrapperStyle={{
+            paddingLeft: "8px",
+            fontSize: "12px",
+            lineHeight: "1.4",
+            cursor: "pointer"
+          }}
+          onClick={(entry) => {
+            if (entry.value !== '其他' && parentUnits.includes(entry.value)) {
+              setSelectedParent(entry.value);
             }
-        ]
-    }
-  ]}
-/>  
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  );
 }
 function TenderTable({merchant}) {
   const columns = [
@@ -230,11 +265,20 @@ function TenderTable({merchant}) {
   return <DataTable columns={columns} data={merchant.tenders} />
 }
 export default function Page({merchant, years, merchant_id, merchants, directors}) {
+  const [selectedParent, setSelectedParent] = useState('全部');
+  
   useEffect(() => {
     fetch(getApiUrl(`/pageview/merchant/${merchant_id}`), {method: 'post'})
   })
 
   let currentYear = new Date().getFullYear(); 
+
+  // 取得所有母機關
+  const parentUnits = ['全部'].concat([...new Set(
+    merchant.tenders
+      .filter(t => t.parent_unit && t.parent_unit.name)
+      .map(t => t.parent_unit.name)
+  )].sort());
 
   var desc = '近期得標案件：';
   var title = currentYear + '年 ' + merchant.name + '得標案件';
@@ -244,22 +288,48 @@ export default function Page({merchant, years, merchant_id, merchants, directors
       desc += dayjs(merchant.tenders[i].publish).format('YYYY-MM-DD') + " " + merchant.tenders[i].name + "、";
   }
   let stats = merchant.tenders.reduce(function(total, row) {
-    if(!row.parent_unit || !row.parent_unit.name) {
+    let unit;
+    if (row.parent_unit && row.parent_unit.name) {
+      unit = row.parent_unit.name.replace(/\s/g, '');
+    } else if (row.unit) {
+      unit = row.unit.replace(/\s/g, '');
+    } else {
       return total;
     }
-    var unit = row.parent_unit.name.replace(/\s/g, '')
-    if(!total[unit])
+    if (!total[unit]) {
       total[unit] = 0;
-    total[unit] += +row.price;
+    }
+    if (row.award && row.award.merchants) {
+      row.award.merchants.forEach((tender) => {
+        if (merchant._id == tender._id && +tender.amount > 0) {
+          total[unit] += +tender.amount;
+        }
+      });
+    }
     return total;
   }, {});
-  stats = Object.keys(stats).map((key) => {
-    return {
-      id: key,
-      label: key,
-      value: stats[key]
+  // 先轉換成陣列並排序
+  stats = Object.keys(stats).map((key) => ({
+    id: key,
+    label: key,
+    value: stats[key]
+  })).sort((a, b) => b.value - a.value);
+
+  // 只取前15個，剩下的加總到"其他"
+  if (stats.length > 15) {
+    const topStats = stats.slice(0, 15);
+    const otherValue = stats.slice(15).reduce((sum, item) => sum + item.value, 0);
+    
+    if (otherValue > 0) {
+      topStats.push({
+        id: '其他',
+        label: '其他',
+        value: otherValue
+      });
     }
-  })
+    
+    stats = topStats;
+  }
 
   let line_data = merchant.tenders.reduce(function(total, row) {
     
@@ -321,11 +391,8 @@ export default function Page({merchant, years, merchant_id, merchants, directors
           }
         })()}
         <a href={"https://company.g0v.ronny.tw/index/search?q=" + merchant._id} target="_blank">查看公司資料</a>
-        <div style={{width: "100%", height: line[0].data.length > 1 ? "400px": 0}}>
-          <LineChart data={line} />
-        </div>
-        <div style={{width: "100%", height: stats.length > 1 ? "400px": 0}}>
-        <PieChart stats={stats} />
+        <div style={{width: "100%", height: line[0].data.length > 1 ? "250px": 0}}>
+          <MerchantLineChart data={line} />
         </div>
         <ins className="adsbygoogle"
           style={{"display":"block", "height": "100px", "width": "100%"}}
@@ -333,8 +400,36 @@ export default function Page({merchant, years, merchant_id, merchants, directors
           data-ad-slot="1304930582"
           data-ad-format="auto"
           data-full-width-responsive="true"></ins>
+        <div style={{width: "100%", height: stats.length > 1 ? "400px": 0}}>
+        <MerchantPieChart stats={stats} setSelectedParent={setSelectedParent} parentUnits={parentUnits} />
+        </div>
+        
         <h3>相關得標案件</h3>
-        <TenderTable merchant={merchant} />
+        <div className="mb-4 flex items-center gap-4">
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+            篩選發標單位：
+          </label>
+          <select
+            value={selectedParent}
+            onChange={(e) => setSelectedParent(e.target.value)}
+            className="mt-1 block w-64 p-2 border border-gray-300 rounded-md shadow-sm"
+          >
+            {parentUnits.map((unit) => (
+              <option key={unit} value={unit}>
+                {unit}
+              </option>
+            ))}
+          </select>
+        </div>
+        <TenderTable
+          merchant={{
+            ...merchant,
+            tenders: merchant.tenders.filter(tender => 
+              selectedParent === '全部' || 
+              (tender.parent_unit && tender.parent_unit.name === selectedParent)
+            )
+          }}
+        />
         {(() => {
           if (merchants.length > 0) {
             <>

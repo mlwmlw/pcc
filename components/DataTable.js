@@ -53,7 +53,7 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
       return Math.ceil(table.getFilteredRowModel().rows.length/pageSize);
     }, [table, totalPages]);
 
-    if (!currentPages || currentPages <= 0) return null;
+    if (!currentPages || currentPages <= 0 || currentPages === 1) return null;
 
     return (
       <div className="my-5 flex gap-4">

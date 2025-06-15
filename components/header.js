@@ -122,7 +122,6 @@ function SearchDrawer() {
 				const data = await fetch(getApiUrl(`/keywords`))
 				const keywordsData = await data.json();
 				setKeywords(keywordsData);
-				console.log("Fetched keywords:", keywordsData);
 			} catch (error) {
 				console.error("Failed to fetch keywords:", error);
 				// Optionally set keywords to a default or empty array
