@@ -54,13 +54,13 @@ export default function Page({tenders, award, merchants, unit}) {
          </Head>
          <div className="container starter-template">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div class="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
                   <a href="#">
-                     <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">標案歷史</h5>
+                     <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">標案歷史</h5>
                   </a>
-                  {tenders.map(t => 
-                        <div className="row">
+                  {tenders.map((t, i) => 
+                        <div className="row" key={i}>
                         <div className="col-xs-12">
                            <h2>{t.name}</h2>
                            <dl className="dl-horizontal">
@@ -106,19 +106,19 @@ export default function Page({tenders, award, merchants, unit}) {
                      )}
                </div>
                <div>
-                  <div class="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
+                  <div className="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
                      <a href="#">
-                        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">機關資訊</h5>
+                        <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">機關資訊</h5>
                      </a>
                      <div className="panel-body"><a href={"/unit/" + unit} target="_blank">{unit}</a></div>
                   </div>
-                  <div class="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
+                  <div className="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
                      <a href="#">
-                        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">得標廠商</h5>
+                        <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">得標廠商</h5>
                      </a>
                      <div className="panel-body">
-                        {award.map(m => 
-                        <div className="row col-xs-12">
+                        {award.map((m, i) => 
+                        <div className="row col-xs-12" key={i}>
                            <a href={"/merchants/" + m.name}>
                               {m.name}
                            </a>
@@ -133,13 +133,13 @@ export default function Page({tenders, award, merchants, unit}) {
                         )}
                      </div>
                   </div>
-                  <div class="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
+                  <div className="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
                      <a href="#">
-                        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">投標廠商</h5>
+                        <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">投標廠商</h5>
                      </a>
                      <div className="panel-body">
-                        {(merchants || []).map(m => 
-                        <div className="row col-xs-12">
+                        {(merchants || []).map((m, i) => 
+                        <div className="row col-xs-12" key={i}>
                            <a href={"/merchants/" + m.name}>
                               {m.org} - {m.name}
                            </a>
@@ -147,13 +147,13 @@ export default function Page({tenders, award, merchants, unit}) {
                         )}
                      </div>
                   </div>
-                  <div class="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
+                  <div className="mt-10 p-6 bg-white border border-gray-200 rounded-lg shadow ">
                      <a href="#">
-                        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">相關關鍵字</h5>
+                        <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">相關關鍵字</h5>
                      </a>
                      <div className="panel-body">
                         {(tenders[0].tags || []).map((word , i) => 
-                           <span><a href={"/search/" + word}>{word}</a>{tenders[0].tags.length == i + 1 ? '': '、'}</span>
+                           <span key={i}><a href={"/search/" + word}>{word}</a>{tenders[0].tags.length == i + 1 ? '': '、'}</span>
                         )}
                      </div>
                   </div>

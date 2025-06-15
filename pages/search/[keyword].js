@@ -3,6 +3,8 @@ import React,{ useState, useEffect } from "react";
 import { DataTable } from "../../components/DataTable";
 import _ from 'lodash'
 import Head from 'next/head';
+import { getApiUrl } from "../../utils/api";
+
 export const getServerSideProps = async (context) => {
   const { keyword } = context.query;
   const props = await getTenders(keyword)
@@ -11,7 +13,7 @@ export const getServerSideProps = async (context) => {
   };
 };
 const getTenders = async (keyword) => {
-  const result = await fetch("https://pcc.mlwmlw.org/api/keyword/" + encodeURIComponent(keyword));
+  const result = await fetch(getApiUrl(`/keyword/` + encodeURIComponent(keyword)));
   let tenders = await result.json();
   return { tenders, keyword };
 }
