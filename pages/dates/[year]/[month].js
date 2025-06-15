@@ -1,14 +1,15 @@
 const fetch = require('node-fetch');
-import React from 'react'
 import { useRouter } from 'next/router'
+import { getApiUrl } from '../../../utils/api';
 import dayjs from 'dayjs'
 import Head from 'next/head';
 
 
 const getDay = async (year, month) => {
-   const data = await fetch(`https://pcc.mlwmlw.org/api/dates?year=${year}&month=${month}`)
+   const data = await fetch(getApiUrl(`/dates?year=${year}&month=${month}`))
    const dates = await data.json();
-   return Object.keys(dates).map((date) => {
+   
+   return dates.map((date) => {
       var day = dayjs(date)
       return {year: day.format('YYYY'), month: day.format('MM'), day: day.format('DD'), date: day.format('YYYY-MM-DD')}
    })

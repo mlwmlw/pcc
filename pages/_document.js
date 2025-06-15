@@ -9,17 +9,6 @@ export default function Document() {
       <Html className="text-[15px]">
         <Head>
         <link rel="icon" href="/favicon.ico" />
-        <script src="/static/lib/jquery/dist/jquery.min.js"></script>
-        <script src="/static/lib/angular/angular.min.js"></script>
-        <script src="/static/lib/react/react.min.js"></script>
-        <script src="/static/lib/ngReactGrid/build/js/ngReactGrid.min.js"></script>
-        <script src="/static/lib/angular-route/angular-route.min.js"></script>
-        <script src="/static/lib/bootstrap/dist/js/bootstrap.min.js"></script>
-        <script src="/static/lib/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
-        <script src="/static/lib/d3/d3.min.js"></script>
-        <script src="/static/lib/c3/c3.js"></script>
-        <script src="/static/lib/angular-loading-bar/build/loading-bar.min.js"></script>
-        <script src="/static/app.js"></script>
         <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
         <script
             dangerouslySetInnerHTML={{

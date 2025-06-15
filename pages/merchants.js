@@ -1,5 +1,6 @@
 import fetch from 'node-fetch'
 import React from "react";
+import { getApiUrl } from '../utils/api';
 
 import { useEffect, useState } from 'react'
 import Router from 'next/router'
@@ -10,13 +11,11 @@ import { DataTable } from "../components/DataTable";
 
 
 const getMerchants = async (page) => {
-  var host = typeof(window) == 'undefined'? 'https://pcc.mlwmlw.org': '';
-  //var host = typeof(window) == 'undefined'? 'http://localhost:3000': '';
-  const res = await fetch(host + "/api/merchants?count=1");
+  const res = await fetch(getApiUrl('/merchants?count=1'));
   let count = await res.json();
   page = page ? +page: 1;
   
-  const mres = await fetch(host + "/api/merchants?page=" + page);
+  const mres = await fetch(getApiUrl(`/merchants?page=${page}`));
   let merchants = await mres.json();
 
   return { page: page, pages:  Math.ceil(parseFloat(count/100)), merchants: merchants };

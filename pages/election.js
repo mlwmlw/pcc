@@ -1,8 +1,8 @@
 
 import React from "react";
-
 import fetch from "node-fetch";
 import dynamic from 'next/dynamic';
+import { getApiUrl } from '../utils/api';
 
 import { DataTable } from "../components/DataTable";
 import Head from 'next/head';
@@ -13,7 +13,7 @@ export default class extends React.Component {
       this.state = {year: null}
    }
   static async getInitialProps({ req, query, params }) {
-    const res = await fetch("http://pcc.mlwmlw.org/api/election");
+    const res = await fetch(getApiUrl('/election'));
     const election = await res.json();
     var mapping = {};
     var stats = [];

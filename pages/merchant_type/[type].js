@@ -61,7 +61,7 @@ export default function MerchantTypeDetail({ merchants = [], types = [], type, s
   return (
     <Container maxW="container.xl" mt={8}>
       <Head>
-        <title>{selectedTypeName} 廠商列表 - 開放標案</title>
+        <title>{selectedTypeName} 廠商列表 - 開放政府標案</title>
       </Head>
       <Grid templateColumns={{ base: "1fr", md: "2fr 1fr" }} gap={8}>
         <GridItem>

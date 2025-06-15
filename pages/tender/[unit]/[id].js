@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 import React from 'react'
 import dayjs from 'dayjs'
+import { getApiUrl } from '../../../utils/api';
 import Head from 'next/head';
 import {Link,Button, Chip} from "@nextui-org/react";
 import Error from 'next/error'
@@ -8,7 +9,7 @@ import { useEffect } from 'react';
 
 const getTender = async (unit, id) => {
       var unit = encodeURIComponent(unit);
-      const data = await fetch(`https://pcc.mlwmlw.org/api/tender/${id}/${unit}`);
+      const data = await fetch(getApiUrl(`/tender/${id}/${unit}`));
       const tenders = await data.json();
       
       var award = []
@@ -38,7 +39,7 @@ export default function Page({tenders, award, merchants, unit}) {
       return <Error statusCode={404}  />
    }
    useEffect(() => {
-      fetch('/api/pageview/tender/' + tenders[0]._id, {method: 'post'})
+      fetch(getApiUrl(`/pageview/tender/${tenders[0]._id}`), {method: 'post'})
     })
    let desc = tenders[0].type + " 招標單位：" + unit + "，招標金額：" + new Intl.NumberFormat('zh-TW').format(tenders[0].price) + "，招標日期：" + dayjs(tenders[0].publish).format('YYYY-MM-DD') + "，標案案號：" + tenders[0].id + "，分類：" + tenders[0].category;
    let title = tenders[0].name + '/' + unit + ' - 開放政府標案';

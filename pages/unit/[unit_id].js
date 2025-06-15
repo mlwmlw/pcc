@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
-import React from "react";
 import dynamic from 'next/dynamic';
+import { getApiUrl } from '../../utils/api';
 import dayjs from 'dayjs'
 import Head from 'next/head';
 import { DataTable } from '../../components/DataTable';
@@ -13,11 +13,11 @@ Number.prototype.format = function(n, x, s, c) {
 };
 const getUnit = async (unit_id) => {
     unit_id = encodeURIComponent(unit_id);
-    const unit_res = await fetch("https://pcc.mlwmlw.org/api/unit_info/" + unit_id);
+    const unit_res = await fetch(getApiUrl(`/unit_info/${unit_id}`));
     const unit = await unit_res.json()
-    const res = await fetch("https://pcc.mlwmlw.org/api/unit/" + unit_id);
+    const res = await fetch(getApiUrl(`/unit/${unit_id}`));
     const data = await res.json()
-		const lookalike = await fetch("https://pcc.mlwmlw.org/api/unit_lookalike/" + unit_id);
+    const lookalike = await fetch(getApiUrl(`/unit_lookalike/${unit_id}`));
     const lookalike_units = await lookalike.json()
 
   
@@ -212,7 +212,7 @@ function TenderTable({data}) {
 }
 export default function Page({data, unit, stats, lookalike_units}) {
   useEffect(() => {
-    fetch('/api/pageview/unit/' + unit._id, {method: 'post'})
+    fetch(getApiUrl(`/pageview/unit/${unit._id}`), {method: 'post'})
   })
   let title = unit.name + '標案檢索'
   let desc = unit.name + " 最新標案 ";

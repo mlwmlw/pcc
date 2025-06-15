@@ -1,7 +1,7 @@
 import React from "react";
-
 import { BiSolidHot } from 'react-icons/bi'
 import dynamic from 'next/dynamic';
+import { getApiUrl } from '../utils/api';
 import { Icon } from '@chakra-ui/react'
 import Head from 'next/head';
 
@@ -10,20 +10,19 @@ export default class extends React.Component {
         super(props);
     }
     static async getInitialProps({ req, query, params}) {
-        let host = "https://pcc.mlwmlw.org";
-        const tenders_res = await fetch(host + "/api/hot/tenders");
+        const tenders_res = await fetch(getApiUrl('/hot/tenders'));
         const tenders = await tenders_res.json();
 
-        const units_res = await fetch(host + "/api/hot/unit");
+        const units_res = await fetch(getApiUrl('/hot/unit'));
         const units = await units_res.json();
         
-        const merchants_res = await fetch(host + "/api/hot/merchant");
+        const merchants_res = await fetch(getApiUrl('/hot/merchant'));
         const merchants = await merchants_res.json();
 
-        const news_res = await fetch(host + "/api/news");
+        const news_res = await fetch(getApiUrl('/news'));
         const news = await news_res.text();
 
-        const dates_res = await fetch(host + "/api/dates");
+        const dates_res = await fetch(getApiUrl('/dates'));
         let dates = await dates_res.json();
         dates = Object.keys(dates).map(day => {
             return {"day": day, "value": dates[day]}
@@ -270,4 +269,3 @@ export default class extends React.Component {
         </>
     }
 }
-

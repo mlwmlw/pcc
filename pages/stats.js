@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { DataTable } from '../components/DataTable';
+import { getApiUrl } from '../utils/api';
 import { 
     AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
     ResponsiveContainer, PieChart, Pie, Cell
@@ -24,8 +25,6 @@ const stringifyMongoId = (item) => {
     return item;
 };
 
-const API_HOST = "http://localhost:8888";
-
 export async function getServerSideProps(context) {
     let monthes = [];
     let initialStatsData = [];
@@ -33,9 +32,7 @@ export async function getServerSideProps(context) {
     let initialSelectedMonthData = null;
 
     try {
-        console.error(`${API_HOST}/month`)
-
-        const monthRes = await fetch(`${API_HOST}/month`); // 使用 /api 前綴
+        const monthRes = await fetch(getApiUrl('/month')); // 使用 /api 前綴
         if (!monthRes.ok) throw new Error(`Failed to fetch months: ${monthRes.status} ${monthRes.statusText}`);
         const rawMonthes = await monthRes.json();
         monthes = rawMonthes.sort((a, b) => {
@@ -46,7 +43,7 @@ export async function getServerSideProps(context) {
             initialSelectedMonthData = monthes[0];
             const { year, month } = initialSelectedMonthData;
             const dateStr = `${year}-${month.toString().padStart(2, '0')}-01`;
-            const statsRes = await fetch(`${API_HOST}/units_stats/${dateStr}`); // 使用 /api 前綴
+            const statsRes = await fetch(getApiUrl(`/units_stats/${dateStr}`)); // 使用 /api 前綴
             if (!statsRes.ok) throw new Error(`Failed to fetch initial stats for ${dateStr}: ${statsRes.status} ${statsRes.statusText}`);
             initialStatsData = await statsRes.json();
         }
@@ -223,7 +220,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                 const startDateStr = startDate.toISOString().slice(0, 10);
                 //endDate is current date
                 const endDate = new Date().toISOString().slice(0, 10);
-                const res = await fetch(`${API_HOST}/units_stats/${startDateStr}/${endDate}`);
+                const res = await fetch(getApiUrl(`/units_stats/${startDateStr}/${endDate}`));
                 if (!res.ok) throw new Error(`Failed to fetch trend data: ${res.status}`);
                 const data = await res.json();
                 const processedData = processTrendData(data);
@@ -249,8 +246,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
             try {
                 const { year, month } = newSelectedMonth;
                 const dateStr = `${year}-${month.toString().padStart(2, '0')}-01`;
-                const statsRes = await fetch(`${API_HOST}/units_stats/${dateStr}`); // 使用 /api 前綴
-                console.log(`${API_HOST}/units_stats/${dateStr}`)
+                const statsRes = await fetch(getApiUrl(`/units_stats/${dateStr}`)); // 使用 /api 前綴
                 if (!statsRes.ok) throw new Error(`Failed to fetch stats for ${dateStr}: ${statsRes.status} ${statsRes.statusText}`);
                 const newStats = await statsRes.json();
                 setCurrentRawStats(Array.isArray(newStats) ? newStats : []); // Update currentRawStats
@@ -282,7 +278,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
             try {
                 const { year, month } = selectedMonthData;
                 const monthStr = `${year}-${month.toString().padStart(2, '0')}`;
-                const tendersRes = await fetch(`${API_HOST}/unit/${encodeURIComponent(clickedUnit)}/${monthStr}`); // 使用 /api 前綴
+                const tendersRes = await fetch(getApiUrl(`/unit/${encodeURIComponent(clickedUnit)}/${monthStr}`)); // 使用 /api 前綴
                 if (!tendersRes.ok) throw new Error(`Failed to fetch tenders for ${clickedUnit}: ${tendersRes.status} ${tendersRes.statusText}`);
                 const tendersData = await tendersRes.json();
                 setUnitTenders(tendersData.map(stringifyMongoId));
@@ -331,7 +327,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
     return (
         <>
             <Head>
-                <title>政府標案統計</title>
+                <title>各月招標資料統計 - 開放政府標案</title>
                 <meta name="description" content="政府標案統計數據，包含各單位招標金額與數量分析" />
             </Head>
             <div className="container mx-auto p-4">

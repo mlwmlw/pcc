@@ -15,7 +15,7 @@ export default function MerchantTypes({ types = [] }) {
   return (
     <Container maxW="container.xl" mt={8}>
       <Head>
-        <title>依營業類型檢索商家 - 開放標案</title>
+        <title>依營業類型檢索商家 - 開放政府標案</title>
       </Head>
       <Heading as="h1" mb={6}>商家類型列表</Heading>
       <Box p={4} borderWidth="1px" borderRadius="lg" className="sidebar-module sidebar-module-inset">

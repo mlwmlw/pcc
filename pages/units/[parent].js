@@ -2,6 +2,7 @@
 import React from "react";
 import fetch from "node-fetch";
 import { DataTable } from "../../components/DataTable";
+import { getApiUrl } from '../../utils/api';
 
 import Head from 'next/head';
 Number.prototype.format = function(n, x, s, c) {
@@ -50,11 +51,11 @@ export const getServerSideProps = async (context) => {
   let parent = context.query.parent == "0" ? '': context.query.parent;
   let unit = {name: '所有'};
   if(parent) {
-    const unit_res = await fetch("http://pcc.mlwmlw.org/api/unit_info/" + encodeURIComponent(parent));
+    const unit_res = await fetch(getApiUrl(`/unit_info/${encodeURIComponent(parent)}`));
     unit = await unit_res.json()
   }
   
-  const res = await fetch("http://pcc.mlwmlw.org/api/units/" + encodeURIComponent(parent));
+  const res = await fetch(getApiUrl(`/units/${encodeURIComponent(parent)}`));
   const units = await res.json()
 
   units.sort(function(a, b) {

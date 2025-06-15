@@ -1,8 +1,9 @@
 const fetch = require('node-fetch');
 import React from 'react'
+import { getApiUrl } from '../utils/api';
 
 const getMonth = async () => {
-  const data = await fetch('https://pcc.mlwmlw.org/api/month')
+  const data = await fetch(getApiUrl('/month'))
   const month = await data.json();
   return month.filter(m => m.year > 1970).sort(function(b, a) {
     if (a.year != b.year) {

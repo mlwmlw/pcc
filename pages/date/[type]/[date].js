@@ -1,6 +1,7 @@
 const fetch = require('node-fetch');
 import React from 'react'
 import { useRouter } from 'next/router'
+import { getApiUrl } from '../../../utils/api';
 import {Select, SelectItem} from "@nextui-org/react";
 import dayjs from 'dayjs'
 import Head from 'next/head';
@@ -9,15 +10,15 @@ import { DataTable } from '../../../components/DataTable';
 const getDates = async () => {
     const now = new Date()
     const year = now.getFullYear();
-    const data = await fetch(`https://pcc.mlwmlw.org/api/dates?year=${year}`)
+    const data = await fetch(getApiUrl(`/dates?year=${year}`))
     const dates = await data.json();
-    return Object.keys(dates).map((date) => {
+    return dates.map((date) => {
         var day = dayjs(date)
         return {year: day.format('YYYY'), month: day.format('MM'), day: day.format('DD'), date: day.format('YYYY-MM-DD')}
     })
 }
 const getTender = async (type, date) => {
-    const tenders = await fetch(`https://pcc.mlwmlw.org/api/date/${type}/${date}`)
+    const tenders = await fetch(getApiUrl(`/date/${type}/${date}`))
     return await tenders.json();
 }
 function TenderTable({tenders}) {
@@ -109,6 +110,9 @@ function TenderTable({tenders}) {
 export const getServerSideProps = async (context) => {
    let { date, type } = context.query;
    const dates = await getDates()
+   dates.sort((a, b) => {
+      return new Date(b.date) - new Date(a.date);
+   })
    date = date != "0" ? date : dates[0].date
    const tenders = await getTender(type, date)
    return {
