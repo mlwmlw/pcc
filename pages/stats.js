@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
 import { DataTable } from '../components/DataTable';
 import { 
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+    AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
     ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
+
+const dark24 = [
+    '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', 
+    '#E377C2', '#7F7F7F', '#BCBD22', '#17BECF', '#AEC7E8', '#FFBB78', 
+    '#98DF8A', '#FF9896', '#C5B0D5', '#C49C94', '#F7B6D2', '#C7C7C7', 
+    '#DBDB8D', '#9EDAE5', '#393B79', '#637939', '#8C6D31', '#843C39'
+];
 
 const stringifyMongoId = (item) => {
     if (!item) {
@@ -36,7 +42,6 @@ export async function getServerSideProps(context) {
             if (a.year !== b.year) return b.year - a.year;
             return b.month - a.month;
         }).map(m => ({ ...m, id: `${m.year}-${m.month.toString().padStart(2, '0')}` }));
-
         if (monthes.length > 0) {
             initialSelectedMonthData = monthes[0];
             const { year, month } = initialSelectedMonthData;
@@ -63,73 +68,121 @@ export async function getServerSideProps(context) {
     };
 }
 
+const useIsMobile = () => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkIfMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkIfMobile();
+        window.addEventListener('resize', checkIfMobile);
+
+        return () => {
+            window.removeEventListener('resize', checkIfMobile);
+        };
+    }, []);
+
+    return isMobile;
+};
+
 const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) => { // Removed initialUnitTenders from props
     const router = useRouter();
+    const isMobile = useIsMobile();
     const [selectedMonthData, setSelectedMonthData] = useState(initialSelectedMonthData);
     const [statsType, setStatsType] = useState('price');
     const [currentRawStats, setCurrentRawStats] = useState(initialStats); // Store current month's raw stats
-    const [statsDataForPie, setStatsDataForPie] = useState([]);
+    const [statsDataForPie, setStatsDataForPie] = useState({ data: [], total: 0 });
     const [unitTenders, setUnitTenders] = useState([]); // Initialize as empty
     const [currentBreadcrumb, setCurrentBreadcrumb] = useState(['全部']);
     const [currentUnit, setCurrentUnit] = useState(null);
     const [loadingTenders, setLoadingTenders] = useState(false);
     const [chartType, setChartType] = useState('line');
     const [trendData, setTrendData] = useState([]);
+    const [visibleSeries, setVisibleSeries] = useState({});
+    const [highlightedSeries, setHighlightedSeries] = useState(null);
 
     const processStatsForPie = useCallback((stats, type, parentUnit = null) => {
-        if (!stats || stats.length === 0) return [];
+        if (!stats || stats.length === 0) return { data: [], total: 0 };
         const aggregated = {};
+        let total = 0;
+
         stats.forEach(item => {
             const key = parentUnit ? item.unit : item.parent;
             if (!key || key === "") return;
             if (parentUnit && item.parent !== parentUnit) return;
+            const value = type === 'price' ? Number(item.price) || 0 : Number(item.count) || 0;
+            total += value;
             if (!aggregated[key]) {
-                aggregated[key] = { price: 0, count: 0 };
+                aggregated[key] = 0;
             }
-            aggregated[key].price += Number(item.price) || 0;
-            aggregated[key].count += Number(item.count) || 0;
+            aggregated[key] += value;
         });
-        return Object.entries(aggregated)
-            .map(([name, values]) => ({ id: name, label: name, value: values[type] || 0 }))
-            .filter(item => item.value > 0)
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 15);
+
+        return {
+            data: Object.entries(aggregated)
+                .map(([name, value]) => ({ id: name, label: name, value }))
+                .filter(item => item.value > 0)
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 20),
+            total
+        };
     }, []);
 
     const processTrendData = useCallback((stats) => {
         if (!stats) return [];
         
-        const aggregated = {};
-        Object.entries(stats).forEach(([date, units]) => {
-            units.forEach(unit => {
+        // 首先收集所有日期和單位
+        const dates = new Set();
+        const units = new Set();
+        const valuesByDateAndUnit = {};
+
+        Object.entries(stats).forEach(([date, dateUnits]) => {
+            dates.add(date);
+            dateUnits.forEach(unit => {
                 if (!unit.parent || unit.parent === '') return;
+                units.add(unit.parent);
                 
-                if (!aggregated[unit.parent]) {
-                    aggregated[unit.parent] = {
-                        id: unit.parent,
-                        data: []
-                    };
+                const key = `${date}-${unit.parent}`;
+                if (!valuesByDateAndUnit[key]) {
+                    valuesByDateAndUnit[key] = 0;
                 }
-                
-                const existingData = aggregated[unit.parent].data.find(d => d.x === date);
-                if (existingData) {
-                    existingData.y += Number(unit[statsType]) || 0;
-                } else {
-                    aggregated[unit.parent].data.push({
-                        x: date,
-                        y: Number(unit[statsType]) || 0
-                    });
-                }
+                valuesByDateAndUnit[key] += Number(unit[statsType]) || 0;
             });
         });
 
-        return Object.values(aggregated)
-            .sort((a, b) => {
-                const sumA = a.data.reduce((sum, point) => sum + point.y, 0);
-                const sumB = b.data.reduce((sum, point) => sum + point.y, 0);
-                return sumB - sumA;
-            })
-            .slice(0, 15);
+        // 轉換成圖表需要的格式
+        const sortedDates = Array.from(dates).sort();
+        const formattedData = sortedDates.map(date => {
+            const dataPoint = { date };
+            units.forEach(unit => {
+                dataPoint[unit] = valuesByDateAndUnit[`${date}-${unit}`] || 0;
+            });
+            return dataPoint;
+        });
+
+        // 計算並排序總量以只保留前15個單位
+        const unitTotals = Array.from(units).map(unit => ({
+            unit,
+            total: sortedDates.reduce((sum, date) => sum + (valuesByDateAndUnit[`${date}-${unit}`] || 0), 0)
+        }));
+
+        const topUnits = unitTotals
+            .sort((a, b) => b.total - a.total)
+            .map(item => item.unit);
+        const finalData = formattedData.map(point => {
+            const filtered = { date: point.date };
+            topUnits.forEach(unit => {
+                filtered[unit] = point[unit];
+            });
+            return filtered;
+        });
+
+        return {
+            data: finalData,
+            units: topUnits
+        };
     }, [statsType]);
 
     useEffect(() => {
@@ -138,12 +191,34 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
     }, [currentRawStats, statsType, processStatsForPie, currentBreadcrumb]);
 
     useEffect(() => {
+        // 初始化 visibleSeries，只顯示前5個系列
+        if (trendData?.units) {
+            const initialVisibility = {};
+            trendData.units.forEach((unit, index) => {
+                initialVisibility[unit] = index < 15;  // 顯示前15個
+            });
+            setVisibleSeries(initialVisibility);
+        }
+    }, [trendData]);
+
+    const handleLegendMouseEnter = useCallback((o) => {
+        const { dataKey } = o;
+        setHighlightedSeries(dataKey);
+    }, []);
+
+    const handleLegendMouseLeave = useCallback(() => {
+        setHighlightedSeries(null);
+    }, []);
+
+    const handleLegendClick = useCallback((o) => {}, []);
+
+    useEffect(() => {
         const fetchTrendData = async () => {
             try {
                 // const startDate = "2018-01-01";
                 //startDate is current date sub 12 month first day
                 const startDate = new Date();
-                startDate.setMonth(startDate.getMonth() - 12);
+                startDate.setMonth(startDate.getMonth() - 36);
                 startDate.setDate(1); 
                 const startDateStr = startDate.toISOString().slice(0, 10);
                 //endDate is current date
@@ -275,23 +350,24 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                             <option value="area">面積圖</option>
                         </select>
                     </div>
-                    <div style={{ height: '500px' }} className="bg-white rounded p-1">
-                        {trendData.length > 0 ? (
+                    <div style={{ height: isMobile ? '580px' : '500px' }} className="bg-white rounded p-1">
+                        {trendData?.data ? (
                             <ResponsiveContainer>
-                                <AreaChart
-                                    data={trendData[0]?.data || []}
-                                    margin={{ top: 10, right: 10, bottom: 0, left: 25 }}
+                                {chartType === 'area' ? (
+                                    <AreaChart
+                                        data={trendData?.data || []}
+                                        margin={{ top: 10, right: 10, bottom: 0, left: 25 }}
                                 >
                                     <defs>
-                                        {trendData.map((entry, index) => (
-                                            <linearGradient key={entry.id} id={`color${index}`} x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={`hsl(${(index * 360) / trendData.length}, 85%, 45%)`} stopOpacity={0.9}/>
-                                                <stop offset="95%" stopColor={`hsl(${(index * 360) / trendData.length}, 85%, 45%)`} stopOpacity={0.2}/>
+                                        {trendData?.units.map((unit, index) => (
+                                            <linearGradient key={unit} id={`color${index}`} x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={dark24[index % dark24.length]} stopOpacity={1}/>
+                                                <stop offset="95%" stopColor={dark24[index % dark24.length]} stopOpacity={0.8}/>
                                             </linearGradient>
                                         ))}
                                     </defs>
                                     <XAxis 
-                                        dataKey="x" 
+                                        dataKey="date" 
                                         angle={-45}
                                         tickFormatter={(value) => {
                                             const date = new Date(value);
@@ -307,7 +383,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                         tickFormatter={(value) => 
                                             statsType === 'price' 
                                                 ? value >= 1000000000 
-                                                    ? `${(value/1000000000).toFixed(1)}B`
+                                                    ? `${(value/1000000000).toFixed(0)}B`
                                                     : value >= 1000000 
                                                         ? `${(value/1000000).toFixed(0)}M`
                                                         : `${(value/1000).toFixed(0)}k`
@@ -341,6 +417,9 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                         align="right" 
                                         verticalAlign="middle"
                                         iconType="circle"
+                                        onMouseEnter={handleLegendMouseEnter}
+                                        onMouseLeave={handleLegendMouseLeave}
+                                        onClick={handleLegendClick}
                                         wrapperStyle={{
                                             paddingLeft: "8px",
                                             right: 0,
@@ -348,24 +427,116 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                             padding: "6px 8px",
                                             border: "1px solid #f0f0f0",
                                             borderRadius: "4px",
-                                            fontSize: "12px"
+                                            fontSize: "12px",
+                                            cursor: "default"
                                         }}
                                     />
-                                    {trendData.map((entry, index) => (
-                                        <Area
-                                            key={entry.id}
-                                            type="basis"
-                                            dataKey={(data) => {
-                                                const matchingPoint = entry.data.find(point => point.x === data.x);
-                                                return matchingPoint ? matchingPoint.y : 0;
-                                            }}
-                                            name={entry.id}
+                                    {trendData?.units.map((unit, index) => (
+                                        visibleSeries[unit] && <Area
+                                            key={unit}
+                                            dataKey={unit}
                                             stackId="1"
-                                            stroke={`hsl(${(index * 360) / trendData.length}, 85%, 45%)`}
+                                            name={unit}
+                                            stroke={dark24[index % dark24.length]}
                                             fill={`url(#color${index})`}
+                                            style={{
+                                                opacity: highlightedSeries ? (highlightedSeries === unit ? 1 : 0.3) : 1
+                                            }}
                                         />
                                     ))}
                                 </AreaChart>
+                                ) : (
+                                    <LineChart
+                                        data={trendData?.data || []}
+                                        margin={{ top: 10, right: 10, bottom: 0, left: 25 }}
+                                    >
+                                        <defs>
+                                        {trendData?.units.map((unit, index) => (
+                                            <linearGradient key={unit} id={`color${index}`} x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor={dark24[index % dark24.length]} stopOpacity={0.9}/>
+                                                    <stop offset="95%" stopColor={dark24[index % dark24.length]} stopOpacity={0.2}/>
+                                                </linearGradient>
+                                            ))}
+                                        </defs>
+                                        <XAxis 
+                                            dataKey="date" 
+                                            angle={-45}
+                                            tickFormatter={(value) => {
+                                                const date = new Date(value);
+                                                return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+                                            }}
+                                            height={75}
+                                            dy={0}
+                                            tick={{fontSize: 12}}
+                                            interval={1}
+                                            textAnchor="end"
+                                        />
+                                        <YAxis
+                                            tickFormatter={(value) => 
+                                                statsType === 'price' 
+                                                    ? value >= 1000000000 
+                                                        ? `${(value/1000000000).toFixed(1)}B`
+                                                        : value >= 1000000 
+                                                            ? `${(value/1000000).toFixed(0)}M`
+                                                            : `${(value/1000).toFixed(0)}k`
+                                                    : value >= 1000 
+                                                        ? `${(value/1000).toFixed(0)}k`
+                                                        : value.toString()
+                                            }
+                                            tickSize={3}
+                                            dx={-2}
+                                            width={25}
+                                            tickMargin={2}
+                                            orientation="left"
+                                            axisLine={false}
+                                            tick={{ fontSize: 11, fill: '#666' }}
+                                        />
+                                        <CartesianGrid strokeDasharray="2 4" stroke="#f0f0f0" strokeOpacity={0.8} vertical={false} />
+                                        <Tooltip
+                                            formatter={(value, name) => [
+                                                statsType === 'price'
+                                                    ? `$${Number(value).toLocaleString()}`
+                                                    : Number(value).toLocaleString(),
+                                                name
+                                            ]}
+                                            labelFormatter={(value) => {
+                                                const date = new Date(value);
+                                                return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+                                            }}
+                                        />
+                                        <Legend 
+                                            layout="vertical" 
+                                            align="right" 
+                                            verticalAlign="middle"
+                                            iconType="circle"
+                                            onMouseEnter={handleLegendMouseEnter}
+                                            onMouseLeave={handleLegendMouseLeave}
+                                            onClick={handleLegendClick}
+                                            wrapperStyle={{
+                                                paddingLeft: "8px",
+                                                right: 0,
+                                                backgroundColor: "white",
+                                                padding: "6px 8px",
+                                                border: "1px solid #f0f0f0",
+                                                borderRadius: "4px",
+                                                fontSize: "12px",
+                                                cursor: "default"
+                                            }}
+                                        />
+                                        {trendData?.units.map((unit, index) => (
+                                            visibleSeries[unit] && <Line
+                                                key={unit}
+                                                dataKey={unit}
+                                                name={unit}
+                                                stroke={dark24[index % dark24.length]}
+                                                dot={false}
+                                                style={{
+                                                    opacity: highlightedSeries ? (highlightedSeries === unit ? 1 : 0.3) : 1
+                                                }}
+                                            />
+                                        ))}
+                                    </LineChart>
+                                )}
                             </ResponsiveContainer>
                         ) : <p className="text-center py-10">載入趨勢資料中...</p>}
                     </div>
@@ -404,44 +575,47 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                         </ol>
                     </div>
 
-                    <div style={{ height: '500px' }} className="bg-white rounded p-1">
-                        {statsDataForPie.length > 0 ? (
+                    <div style={{ height: isMobile ? '500px' : '500px' }} className="bg-white rounded p-1 relative">
+                        {statsDataForPie.data.length > 0 ? (
                             <ResponsiveContainer>
-                                <PieChart>
+                                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                                     <Pie
-                                        data={statsDataForPie}
-                                        dataKey="value"
-                                        nameKey="id"
+                                        data={statsDataForPie.data}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius="42%"
                                         outerRadius="75%"
+                                        dataKey="value"
+                                        nameKey="id"
+                                        isAnimationActive={false}
                                         label={(props) => {
-                                            const { value, id, percent, x, y, cx, index } = props;
-                                            const offsetX = x > cx ? 8 : -8;
-                                            return (
-                                                <text 
-                                                    x={x + offsetX} 
-                                                    y={y} 
-                                                    fill="#222"
-                                    fontSize={11}
-                                    textAnchor={x > cx ? "start" : "end"}
-                                    dominantBaseline="central"
-                                    dy={2}
-                                    letterSpacing={0.2}
-                                                >
-                                                    {`${id} (${
-                                            statsType === 'price' 
-                                            ? value >= 1000000000 
-                                                ? `${(value/1000000000).toFixed(1)}B`
-                                                : value >= 1000000 
-                                                    ? `${(value/1000000).toFixed(0)}M`
-                                                    : `${(value/1000).toFixed(0)}k`
-                                            : value >= 1000 
-                                                ? `${(value/1000).toFixed(0)}k`
-                                                : value.toString()
-                                        }, ${(percent * 100).toFixed(1)}%)`}
-                                                </text>
+                                                const { value, id, percent, x, y, cx, index } = props;
+                                                const offsetX = x > cx ? 8 : -8;
+                                                const piePercent = (value / statsDataForPie.total) * 100;
+                                                
+                                                return (
+                                                    <text 
+                                                        x={x + offsetX} 
+                                                        y={y} 
+                                                        fill="#222"
+                                                        fontSize={11}
+                                                        textAnchor={x > cx ? "start" : "end"}
+                                                        dominantBaseline="central"
+                                                        dy={2}
+                                                        letterSpacing={0.2}
+                                                    >
+                                                        {`${id} (${
+                                                            statsType === 'price' 
+                                                                ? value >= 1000000000 
+                                                                    ? `${(value/1000000000).toFixed(1)}B`
+                                                                    : value >= 1000000 
+                                                                        ? `${(value/1000000).toFixed(0)}M`
+                                                                        : `${(value/1000).toFixed(0)}k`
+                                                                : value >= 1000 
+                                                                    ? `${(value/1000).toFixed(0)}k`
+                                                                    : value.toString()
+                                                        }, ${piePercent.toFixed(1)}%)`}
+                                                    </text>
                                             );
                                         }}
                                         labelLine={{
@@ -452,15 +626,13 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                             distance: 15
                                         }}
                                         labelOffset={12}
-                                        minAngle={8}
                                         paddingAngle={2}
                                         onClick={(data) => handlePieClick(data)}
-                                        isAnimationActive={false}
                                     >
-                                        {statsDataForPie.map((entry, index) => (
+                                        {statsDataForPie.data.map((entry, index) => (
                                             <Cell 
                                                 key={`cell-${index}`}
-                                                fill={`hsl(${(index * 360) / statsDataForPie.length}, 85%, 45%)`}
+                                                fill={dark24[index % dark24.length]}
                                                 stroke="#fff"
                                                 strokeWidth={0.5}
                                             />
@@ -475,20 +647,38 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                         ]}
                                     />
                                     <Legend 
-                                        layout="vertical" 
-                                        align="right" 
-                                        verticalAlign="middle"
+                                        layout={isMobile ? "horizontal" : "vertical"}
+                                        align={isMobile ? "center" : "right"}
+                                        verticalAlign={isMobile ? "bottom" : "middle"}
                                         iconType="circle"
                                         wrapperStyle={{
-                                            paddingLeft: "8px",
-                                            right: 15,
-                                            backgroundColor: "white",
-                                            padding: "4px 6px",
-                                            marginLeft: "15px",
-                                            border: "1px solid #f0f0f0",
-                                            borderRadius: "4px",
-                                            fontSize: "12px",
-                                            lineHeight: "1.4"
+                                            ...(isMobile ? {
+                                                position: 'absolute',
+                                                bottom: 0,
+                                                left: '50%',
+                                                transform: 'translateX(-50%)',
+                                                width: '100%',
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                backgroundColor: "white",
+                                                padding: "8px",
+                                                fontSize: "12px",
+                                                margin: 0,
+                                                borderTop: "1px solid #f0f0f0",
+                                                boxShadow: "0 -2px 4px rgba(0,0,0,0.05)"
+                                            } : {
+                                                position: 'absolute',
+                                                right: 15,
+                                                backgroundColor: "white",
+                                                padding: "8px",
+                                                border: "1px solid #f0f0f0",
+                                                borderRadius: "4px",
+                                                fontSize: "12px",
+                                                lineHeight: "1.4",
+                                                boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+                                            })
                                         }}
                                     />
                                 </PieChart>

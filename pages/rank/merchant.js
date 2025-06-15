@@ -3,6 +3,14 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { DataTable } from '../../components/DataTable';
+import { LoadingOverlay } from '../../components/LoadingOverlay';
+
+const dark24 = [
+    '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', 
+    '#E377C2', '#7F7F7F', '#BCBD22', '#17BECF', '#AEC7E8', '#FFBB78', 
+    '#98DF8A', '#FF9896', '#C5B0D5', '#C49C94', '#F7B6D2', '#C7C7C7', 
+    '#DBDB8D', '#9EDAE5', '#393B79', '#637939', '#8C6D31', '#843C39'
+];
 
 const ResponsiveBar = dynamic(() => import('@nivo/bar').then(mod => mod.ResponsiveBar), {
     ssr: false,
@@ -79,16 +87,19 @@ export async function getServerSideProps(context) {
 const MerchantRankPage = ({ year, merchantsBySum, merchantsByCount, initialError }) => {
     const router = useRouter();
     const [selectedYear, setSelectedYear] = useState(year);
+    const [isLoading, setIsLoading] = useState(false);
     
     useEffect(() => {
         if (year !== selectedYear) {
             setSelectedYear(year);
         }
+        setIsLoading(false);
     }, [year, selectedYear]);
 
-    const handleYearChange = (event) => {
+    const handleYearChange = async (event) => {
         const newYear = parseInt(event.target.value);
-        router.push(`/rank/merchant?year=${newYear}`, undefined, { shallow: false });
+        setIsLoading(true);
+        await router.push(`/rank/merchant?year=${newYear}`, undefined, { shallow: false });
     };
     
     if (initialError) {
@@ -121,18 +132,25 @@ const MerchantRankPage = ({ year, merchantsBySum, merchantsByCount, initialError
     return (
         <>
             <Head>
-                <title>廠商標案排行 - {selectedYear}</title>
+                <title>廠商標案排行</title>
                 <meta name="description" content={`查詢 ${selectedYear} 年度廠商標案總金額與數量排行`} />
             </Head>
-            <div className="container mx-auto p-4">
-                <h1 className="text-2xl font-bold mb-4">廠商標案排行 - {selectedYear}</h1>
+            <div className="container mx-auto p-4 relative">
+                <h1 className="text-2xl font-bold mb-4">廠商標案排行</h1>
 
                 <div className="mb-4">
                     <label htmlFor="year-select" className="mr-2">選擇年份:</label>
-                    <select id="year-select" value={selectedYear} onChange={handleYearChange} className="p-2 border rounded">
+                    <select 
+                        id="year-select" 
+                        value={selectedYear} 
+                        onChange={handleYearChange} 
+                        disabled={isLoading}
+                        className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                 </div>
+                {isLoading && <LoadingOverlay />}
 
                 <h2 className="text-xl font-semibold mt-6 mb-2">標案總金額排行 (Top 12)</h2>
                 <div style={{ height: '400px' }} className="bg-white shadow rounded p-4">
@@ -141,11 +159,11 @@ const MerchantRankPage = ({ year, merchantsBySum, merchantsByCount, initialError
                             data={barChartData}
                             keys={['value']}
                             indexBy="name"
-                            margin={{ top: 20, right: 30, bottom: 120, left: 100 }}
+                            margin={{ top: 20, right: 30, bottom: 180, left: 100 }}
                             padding={0.3}
                             valueScale={{ type: 'linear' }}
                             indexScale={{ type: 'band', round: true }}
-                            colors={{ scheme: 'nivo' }}
+                            colors={(bar) => dark24[bar.index % dark24.length]}
                             axisTop={null}
                             axisRight={null}
                             axisBottom={{
@@ -163,7 +181,11 @@ const MerchantRankPage = ({ year, merchantsBySum, merchantsByCount, initialError
                                 legend: '總金額',
                                 legendPosition: 'middle',
                                 legendOffset: -90,
-                                format: v => `$${(v / 1000000).toFixed(1)}M`
+                                format: v => v >= 1000000000 
+                                            ? `${(v/1000000000).toFixed(0)}B`
+                                                : v >= 1000000 
+                                                ? `${(v/1000000).toFixed(0)}M`
+                                                : `${(v/1000).toFixed(0)}k`
                             }}
                             labelSkipWidth={12}
                             labelSkipHeight={12}

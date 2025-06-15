@@ -1,5 +1,7 @@
 import fetch from 'node-fetch'
-import React, {useState, useRef} from "react";
+import React, {useState, useRef, useEffect} from "react";
+import { getApiUrl } from "../utils/api";
+
 import {
 	ChakraProvider,
 	useDisclosure,	
@@ -19,7 +21,7 @@ import { SearchIcon, ChevronDownIcon } from '@chakra-ui/icons'
 
 import {Dropdown, DropdownMenu, DropdownItem, DropdownTrigger, Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, NavbarContent, Input, NavbarItem, Link, Button} from "@nextui-org/react";
   
-export default function(props) {
+export default function() {
 
 
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -84,7 +86,7 @@ export default function(props) {
 	
 	</NavbarContent>
 	<NavbarContent height="2.5rem"  justify="end" >
-		<SearchDrawer keywords={props.keywords} />
+		<SearchDrawer />
 	</NavbarContent>
 	<NavbarMenu>
         {Object.keys(menuItems).map((item, index) => (
@@ -109,9 +111,26 @@ export default function(props) {
       </NavbarMenu>
   </Navbar>
 }
-function SearchDrawer(props) {
+function SearchDrawer() {
 	const { isOpen, onOpen, onClose } = useDisclosure()
 	const [value, setValue] = useState("");
+	const [keywords, setKeywords] = useState([]);
+
+	useEffect(() => {
+		const fetchKeywords = async () => {
+			try {
+				const data = await fetch(getApiUrl(`/api/keywords`))
+				const keywordsData = await data.json();
+				setKeywords(keywordsData);
+				console.log("Fetched keywords:", keywordsData);
+			} catch (error) {
+				console.error("Failed to fetch keywords:", error);
+				// Optionally set keywords to a default or empty array
+				setKeywords([]);
+			}
+		};
+		fetchKeywords();
+	}, []);
 
 	return (
 		<>
@@ -198,7 +217,7 @@ function SearchDrawer(props) {
 								<br />
 								<div>熱門關鍵字</div>
 								<ul>
-									{props.keywords.map((keyword, i) => <li key={i}>
+									{keywords.map((keyword, i) => <li key={i}>
 										<a onClick={(e) => {
 											fetch('/api/keyword/' + keyword, {
 												method: 'post'

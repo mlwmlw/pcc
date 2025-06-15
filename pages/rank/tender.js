@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { DataTable } from '../../components/DataTable';
+import { LoadingOverlay } from '../../components/LoadingOverlay';
 
 export async function getServerSideProps(context) {
     const currentDate = new Date();
@@ -59,14 +60,17 @@ const TenderRankPage = ({ year, month, tenders, initialError }) => {
     const router = useRouter();
     const [selectedYear, setSelectedYear] = useState(year);
     const [selectedMonth, setSelectedMonth] = useState(month);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         setSelectedYear(year);
         setSelectedMonth(month);
+        setIsLoading(false);
     }, [year, month]);
 
-    const handleDateChange = () => {
-        router.push(`/rank/tender?year=${selectedYear}&month=${selectedMonth}`, undefined, { shallow: false });
+    const handleDateChange = async () => {
+        setIsLoading(true);
+        await router.push(`/rank/tender?year=${selectedYear}&month=${selectedMonth}`, undefined, { shallow: false });
     };
 
     if (initialError) {
@@ -110,7 +114,7 @@ const TenderRankPage = ({ year, month, tenders, initialError }) => {
                 <title>標案金額排行 - {selectedYear}-{selectedMonth.toString().padStart(2, '0')}</title>
                 <meta name="description" content={`查詢 ${selectedYear} 年 ${selectedMonth} 月標案金額排行`} />
             </Head>
-            <div className="container mx-auto p-4">
+            <div className="container mx-auto p-4 relative">
                 <h1 className="text-2xl font-bold mb-4">標案金額排行 - {selectedYear}-{selectedMonth.toString().padStart(2, '0')}</h1>
 
                 <div className="mb-4 flex items-center space-x-2">
@@ -120,7 +124,8 @@ const TenderRankPage = ({ year, month, tenders, initialError }) => {
                             id="year-select" 
                             value={selectedYear} 
                             onChange={(e) => setSelectedYear(parseInt(e.target.value))} 
-                            className="p-2 border rounded"
+                            disabled={isLoading}
+                            className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
@@ -131,15 +136,21 @@ const TenderRankPage = ({ year, month, tenders, initialError }) => {
                             id="month-select" 
                             value={selectedMonth} 
                             onChange={(e) => setSelectedMonth(parseInt(e.target.value))} 
-                            className="p-2 border rounded"
+                            disabled={isLoading}
+                            className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {monthOptions.map(m => <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>)}
                         </select>
                     </div>
-                    <button onClick={handleDateChange} className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    <button 
+                        onClick={handleDateChange} 
+                        disabled={isLoading}
+                        className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         查詢
                     </button>
                 </div>
+                {isLoading && <LoadingOverlay />}
                 
                 {tenders.length > 0 ? (
                     <DataTable

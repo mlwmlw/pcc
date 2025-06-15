@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { DataTable } from '../../components/DataTable';
+import { LoadingOverlay } from '../../components/LoadingOverlay';
 
 export async function getServerSideProps(context) {
     const currentYear = new Date().getFullYear();
@@ -53,16 +54,19 @@ export async function getServerSideProps(context) {
 const PartnerRankPage = ({ year, partners, initialError }) => {
     const router = useRouter();
     const [selectedYear, setSelectedYear] = useState(year);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (year !== selectedYear) {
             setSelectedYear(year);
         }
+        setIsLoading(false);
     }, [year, selectedYear]);
 
-    const handleYearChange = (event) => {
+    const handleYearChange = async (event) => {
         const newYear = parseInt(event.target.value);
-        router.push(`/rank/partner?year=${newYear}`, undefined, { shallow: false });
+        setIsLoading(true);
+        await router.push(`/rank/partner?year=${newYear}`, undefined, { shallow: false });
     };
     
     if (initialError) {
@@ -85,15 +89,22 @@ const PartnerRankPage = ({ year, partners, initialError }) => {
                 <title>機關合作夥伴排行 - {selectedYear}</title>
                 <meta name="description" content={`查詢 ${selectedYear} 年度機關合作夥伴排行`} />
             </Head>
-            <div className="container mx-auto p-4">
+            <div className="container mx-auto p-4 relative">
                 <h1 className="text-2xl font-bold mb-4">機關合作夥伴排行 - {selectedYear}</h1>
 
                 <div className="mb-4">
                     <label htmlFor="year-select" className="mr-2">選擇年份:</label>
-                    <select id="year-select" value={selectedYear} onChange={handleYearChange} className="p-2 border rounded">
+                    <select 
+                        id="year-select" 
+                        value={selectedYear} 
+                        onChange={handleYearChange} 
+                        disabled={isLoading}
+                        className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                 </div>
+                {isLoading && <LoadingOverlay />}
                 
                 {partners.length > 0 ? (
                     <DataTable

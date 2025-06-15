@@ -81,9 +81,14 @@ export default function Page({merchants, pages, page}) {
     <div className="container starter-template">
       <Head>
       <title>廠商列表 - 開放政府標案</title>
-      
-      <meta property="og:description"
-      content="開放標案廠商列表" />
+      <meta name="description" content="開放標案廠商列表 - 查詢全台政府標案得標廠商資訊" />
+      <meta property="og:title" content="廠商列表 - 開放政府標案" />
+      <meta property="og:description" content="開放標案廠商列表 - 查詢全台政府標案得標廠商資訊" />
+      <meta property="og:image" content="/api/og-image/top-merchants" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://pcc.mlwmlw.org/merchants" />
       </Head>
       <h1>廠商列表</h1>
       
