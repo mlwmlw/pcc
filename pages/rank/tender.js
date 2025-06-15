@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { DataTable } from '../../components/DataTable';
 import { LoadingOverlay } from '../../components/LoadingOverlay';
+import { Select, HStack, Button } from "@chakra-ui/react";
 
 export async function getServerSideProps(context) {
     const currentDate = new Date();
@@ -117,39 +118,37 @@ const TenderRankPage = ({ year, month, tenders, initialError }) => {
             <div className="container mx-auto p-4 relative">
                 <h1 className="text-2xl font-bold mb-4">標案金額排行 - {selectedYear}-{selectedMonth.toString().padStart(2, '0')}</h1>
 
-                <div className="mb-4 flex items-center space-x-2">
-                    <div>
-                        <label htmlFor="year-select" className="mr-2">年份:</label>
-                        <select 
-                            id="year-select" 
-                            value={selectedYear} 
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))} 
-                            disabled={isLoading}
-                            className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="month-select" className="mr-2">月份:</label>
-                        <select 
-                            id="month-select" 
-                            value={selectedMonth} 
-                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))} 
-                            disabled={isLoading}
-                            className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {monthOptions.map(m => <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>)}
-                        </select>
-                    </div>
-                    <button 
-                        onClick={handleDateChange} 
-                        disabled={isLoading}
-                        className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                <HStack spacing={4} mb={4}>
+                    <Select
+                        width="120px"
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        isDisabled={isLoading}
+                        variant="filled"
+                    >
+                        {yearOptions.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </Select>
+                    <Select
+                        width="100px"
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                        isDisabled={isLoading}
+                        variant="filled"
+                    >
+                        {monthOptions.map(m => (
+                            <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
+                        ))}
+                    </Select>
+                    <Button
+                        onClick={handleDateChange}
+                        isDisabled={isLoading}
+                        colorScheme="blue"
                     >
                         查詢
-                    </button>
-                </div>
+                    </Button>
+                </HStack>
                 {isLoading && <LoadingOverlay />}
                 
                 {tenders.length > 0 ? (

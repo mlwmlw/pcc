@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { DataTable } from '../../components/DataTable';
 import { LoadingOverlay } from '../../components/LoadingOverlay';
+import { Select } from "@chakra-ui/react";
 
 const dark24 = [
     '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', 
@@ -139,16 +140,18 @@ const MerchantRankPage = ({ year, merchantsBySum, merchantsByCount, initialError
                 <h1 className="text-2xl font-bold mb-4">廠商標案排行</h1>
 
                 <div className="mb-4">
-                    <label htmlFor="year-select" className="mr-2">選擇年份:</label>
-                    <select 
-                        id="year-select" 
-                        value={selectedYear} 
-                        onChange={handleYearChange} 
-                        disabled={isLoading}
-                        className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    篩選年份：
+                    <Select
+                        width="120px"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                        isDisabled={isLoading}
+                        variant="filled"
                     >
-                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
+                        {yearOptions.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </Select>
                 </div>
                 {isLoading && <LoadingOverlay />}
 

@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { DataTable } from '../../components/DataTable';
 import { LoadingOverlay } from '../../components/LoadingOverlay';
+import { Select } from "@chakra-ui/react";
 
 export async function getServerSideProps(context) {
     const currentYear = new Date().getFullYear();
@@ -86,23 +87,25 @@ const PartnerRankPage = ({ year, partners, initialError }) => {
     return (
         <>
             <Head>
-                <title>機關合作夥伴排行 - {selectedYear}</title>
+                <title>單位與廠商得標次數排名 - {selectedYear}</title>
                 <meta name="description" content={`查詢 ${selectedYear} 年度機關合作夥伴排行`} />
             </Head>
             <div className="container mx-auto p-4 relative">
-                <h1 className="text-2xl font-bold mb-4">機關合作夥伴排行 - {selectedYear}</h1>
+                <h1 className="text-2xl font-bold mb-4">單位與廠商得標次數排名 - {selectedYear} 年</h1>
 
                 <div className="mb-4">
-                    <label htmlFor="year-select" className="mr-2">選擇年份:</label>
-                    <select 
-                        id="year-select" 
-                        value={selectedYear} 
-                        onChange={handleYearChange} 
-                        disabled={isLoading}
-                        className="p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    篩選年份：
+                    <Select
+                        width="120px"
+                        value={selectedYear}
+                        onChange={handleYearChange}
+                        isDisabled={isLoading}
+                        variant="filled"
                     >
-                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
+                        {yearOptions.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </Select>
                 </div>
                 {isLoading && <LoadingOverlay />}
                 
