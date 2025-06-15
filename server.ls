@@ -172,7 +172,7 @@ app.get '/month', (req, res) ->
 		res.send rows
 
 app.get '/dates', (req, res) ->
-	start = moment "20110101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
+	start = moment!.subtract 365, 'days' .toDate!
 	end = moment "20300101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
 	year = req.query.year
 	month = req.query.month
@@ -181,19 +181,28 @@ app.get '/dates', (req, res) ->
 	if year && month
 		start = moment year + month + "01 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
 		end = moment year + month + "01", 'YYYYMMDD hh:mm:ss' .add 1, 'M' .toDate!
-	else if year 
+	else if year
 		start = moment year + "0101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
 		end = moment year + "1231 23:59:59", 'YYYYMMDD hh:mm:ss' .toDate!
+	const rows = []
+	stream = ch.query("SELECT formatDateTime(publish, '%Y-%m-%d') date, count(distinct _id) count FROM pcc WHERE publish >= '" + start.toISOString().slice(0, 10) + "' AND publish < '" + end.toISOString().slice(0, 10) + "'GROUP BY 1 ORDER BY date desc FORMAT JSON")
 
-	db.collection 'pcc' .aggregate [
-		{ $match: {publish: {$gte: start, $lt: end}}},
-		{ $group: { _id: '$publish'}}
-		] .toArray (err, docs) ->
-		dates = _.map docs, '_id'
-		dates = dates.map (val) ->
-			moment val .utcOffset 8 .format!
-		dates.sort!
-		res.send dates
+	stream.on 'data', (row) ->
+		rows.push row
+
+	stream.on 'end', -> 
+		res.send rows
+
+
+	# db.collection 'pcc' .aggregate [
+	# 	{ $match: {publish: {$gte: start, $lt: end}}},
+	# 	{ $group: { _id: {$dateToString: {date: '$publish', format: "%Y-%m-%d", timezone: "Asia/Taipei"}}, count: {$sum: 1}}},
+	# 	{ $sort: {_id: -1}}
+	# ] .toArray (err, docs) ->
+	# 	res.send _.map docs (doc) -> {
+	# 		date: doc._id
+	# 		count: doc.count
+	# 	}
 
 app.get '/categories', (req, res) ->
 	db.collection 'pcc' .aggregate [{ $group: { _id: '$category'}}] .toArray (err, docs) ->

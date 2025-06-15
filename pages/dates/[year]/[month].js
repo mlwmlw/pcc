@@ -9,8 +9,8 @@ const getDay = async (year, month) => {
    const data = await fetch(getApiUrl(`/dates?year=${year}&month=${month}`))
    const dates = await data.json();
    
-   return dates.map((date) => {
-      var day = dayjs(date)
+   return dates.map((row) => {
+      var day = dayjs(row.date)
       return {year: day.format('YYYY'), month: day.format('MM'), day: day.format('DD'), date: day.format('YYYY-MM-DD')}
    })
 };

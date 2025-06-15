@@ -24,8 +24,8 @@ export default class extends React.Component {
 
         const dates_res = await fetch(getApiUrl('/dates'));
         let dates = await dates_res.json();
-        dates = Object.keys(dates).map(day => {
-            return {"day": day, "value": dates[day]}
+        dates = dates.map(row => {
+            return {"day": row.date, "value": row.count}
         })
         return {tenders, units, merchants, news, dates}
     }    
