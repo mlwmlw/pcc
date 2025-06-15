@@ -3,16 +3,10 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { DataTable } from '../components/DataTable';
-
-const ResponsivePie = dynamic(() => import('@nivo/pie').then(mod => mod.ResponsivePie), {
-    ssr: false,
-    loading: () => <p style={{ height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>圖表載入中...</p>,
-});
-
-const ResponsiveLine = dynamic(() => import('@nivo/line').then(mod => mod.ResponsiveLine), {
-    ssr: false,
-    loading: () => <p style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>圖表載入中...</p>,
-});
+import { 
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+    ResponsiveContainer, PieChart, Pie, Cell
+} from 'recharts';
 
 const stringifyMongoId = (item) => {
     if (!item) {
@@ -281,62 +275,98 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                             <option value="area">面積圖</option>
                         </select>
                     </div>
-                    <div style={{ height: '400px' }} className="bg-white rounded p-2">
+                    <div style={{ height: '500px' }} className="bg-white rounded p-1">
                         {trendData.length > 0 ? (
-                            <ResponsiveLine
-                                data={trendData}
-                                margin={{ top: 20, right: 180, bottom: 50, left: 80 }}
-                                xScale={{
-                                    type: 'time',
-                                    format: '%Y-%m-%d',
-                                    useUTC: false,
-                                    precision: 'month'
-                                }}
-                                yScale={{
-                                    type: 'linear',
-                                    stacked: chartType === 'area',
-                                }}
-                                axisBottom={{
-                                    format: '%Y-%m',
-                                    tickRotation: -45,
-                                    tickValues: 'every 3 months',
-                                }}
-                                axisLeft={{
-                                    tickSize: 5,
-                                    tickPadding: 5,
-                                    format: value => statsType === 'price' ? 
-                                        `$${Number(value).toLocaleString()}` : 
-                                        Number(value).toLocaleString(),
-                                }}
-                                enablePoints={false}
-                                enableArea={chartType === 'area'}
-                                areaOpacity={0.15}
-                                enableSlices="x"
-                                curve="monotoneX"
-                                legends={[
-                                    {
-                                        anchor: 'right',
-                                        direction: 'column',
-                                        justify: false,
-                                        translateX: 140,
-                                        translateY: 0,
-                                        itemsSpacing: 2,
-                                        itemWidth: 100,
-                                        itemHeight: 20,
-                                        symbolSize: 12,
-                                        symbolShape: 'circle',
-                                    }
-                                ]}
-                                theme={{
-                                    axis: {
-                                        ticks: {
-                                            text: {
-                                                fontSize: 11
-                                            }
+                            <ResponsiveContainer>
+                                <AreaChart
+                                    data={trendData[0]?.data || []}
+                                    margin={{ top: 10, right: 10, bottom: 0, left: 25 }}
+                                >
+                                    <defs>
+                                        {trendData.map((entry, index) => (
+                                            <linearGradient key={entry.id} id={`color${index}`} x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={`hsl(${(index * 360) / trendData.length}, 85%, 45%)`} stopOpacity={0.9}/>
+                                                <stop offset="95%" stopColor={`hsl(${(index * 360) / trendData.length}, 85%, 45%)`} stopOpacity={0.2}/>
+                                            </linearGradient>
+                                        ))}
+                                    </defs>
+                                    <XAxis 
+                                        dataKey="x" 
+                                        angle={-45}
+                                        tickFormatter={(value) => {
+                                            const date = new Date(value);
+                                            return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+                                        }}
+                                        height={75}
+                                        dy={0}
+                                        tick={{fontSize: 12}}
+                                        interval={1}
+                                        textAnchor="end"
+                                    />
+                                    <YAxis
+                                        tickFormatter={(value) => 
+                                            statsType === 'price' 
+                                                ? value >= 1000000000 
+                                                    ? `${(value/1000000000).toFixed(1)}B`
+                                                    : value >= 1000000 
+                                                        ? `${(value/1000000).toFixed(0)}M`
+                                                        : `${(value/1000).toFixed(0)}k`
+                                                : value >= 1000 
+                                                    ? `${(value/1000).toFixed(0)}k`
+                                                    : value.toString()
                                         }
-                                    }
-                                }}
-                            />
+                                        tickSize={3}
+                                        dx={-2}
+                                        width={25}
+                                        tickMargin={2}
+                                        orientation="left"
+                                        axisLine={false}
+                                        tick={{ fontSize: 11, fill: '#666' }}
+                                    />
+                                    <CartesianGrid strokeDasharray="2 4" stroke="#f0f0f0" strokeOpacity={0.8} vertical={false} />
+                                    <Tooltip
+                                        formatter={(value, name) => [
+                                            statsType === 'price'
+                                                ? `$${Number(value).toLocaleString()}`
+                                                : Number(value).toLocaleString(),
+                                            name
+                                        ]}
+                                        labelFormatter={(value) => {
+                                            const date = new Date(value);
+                                            return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+                                        }}
+                                    />
+                                    <Legend 
+                                        layout="vertical" 
+                                        align="right" 
+                                        verticalAlign="middle"
+                                        iconType="circle"
+                                        wrapperStyle={{
+                                            paddingLeft: "8px",
+                                            right: 0,
+                                            backgroundColor: "white",
+                                            padding: "6px 8px",
+                                            border: "1px solid #f0f0f0",
+                                            borderRadius: "4px",
+                                            fontSize: "12px"
+                                        }}
+                                    />
+                                    {trendData.map((entry, index) => (
+                                        <Area
+                                            key={entry.id}
+                                            type="basis"
+                                            dataKey={(data) => {
+                                                const matchingPoint = entry.data.find(point => point.x === data.x);
+                                                return matchingPoint ? matchingPoint.y : 0;
+                                            }}
+                                            name={entry.id}
+                                            stackId="1"
+                                            stroke={`hsl(${(index * 360) / trendData.length}, 85%, 45%)`}
+                                            fill={`url(#color${index})`}
+                                        />
+                                    ))}
+                                </AreaChart>
+                            </ResponsiveContainer>
                         ) : <p className="text-center py-10">載入趨勢資料中...</p>}
                     </div>
                 </div>
@@ -374,30 +404,95 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                         </ol>
                     </div>
 
-                    <div style={{ height: '500px' }} className="bg-white rounded p-2">
+                    <div style={{ height: '500px' }} className="bg-white rounded p-1">
                         {statsDataForPie.length > 0 ? (
-                            <ResponsivePie
-                                data={statsDataForPie}
-                                margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
-                                innerRadius={0.5}
-                                padAngle={0.7}
-                                cornerRadius={3}
-                                activeOuterRadiusOffset={8}
-                                borderWidth={1}
-                                borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
-                                arcLinkLabelsSkipAngle={10}
-                                arcLinkLabelsTextColor="#333333"
-                                arcLinkLabelsThickness={2}
-                                arcLinkLabelsColor={{ from: 'color' }}
-                                arcLabelsSkipAngle={10}
-                                arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
-                                onClick={handlePieClick}
-                                tooltip={({ datum: { id, value, color } }) => (
-                                    <strong style={{ color }}>
-                                        {id}: {statsType === 'price' ? `$${Number(value).toLocaleString()}` : Number(value).toLocaleString()}
-                                    </strong>
-                                )}
-                            />
+                            <ResponsiveContainer>
+                                <PieChart>
+                                    <Pie
+                                        data={statsDataForPie}
+                                        dataKey="value"
+                                        nameKey="id"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius="42%"
+                                        outerRadius="75%"
+                                        label={(props) => {
+                                            const { value, id, percent, x, y, cx, index } = props;
+                                            const offsetX = x > cx ? 8 : -8;
+                                            return (
+                                                <text 
+                                                    x={x + offsetX} 
+                                                    y={y} 
+                                                    fill="#222"
+                                    fontSize={11}
+                                    textAnchor={x > cx ? "start" : "end"}
+                                    dominantBaseline="central"
+                                    dy={2}
+                                    letterSpacing={0.2}
+                                                >
+                                                    {`${id} (${
+                                            statsType === 'price' 
+                                            ? value >= 1000000000 
+                                                ? `${(value/1000000000).toFixed(1)}B`
+                                                : value >= 1000000 
+                                                    ? `${(value/1000000).toFixed(0)}M`
+                                                    : `${(value/1000).toFixed(0)}k`
+                                            : value >= 1000 
+                                                ? `${(value/1000).toFixed(0)}k`
+                                                : value.toString()
+                                        }, ${(percent * 100).toFixed(1)}%)`}
+                                                </text>
+                                            );
+                                        }}
+                                        labelLine={{
+                                            strokeWidth: 0.8,
+                                            stroke: '#666',
+                                            strokeDasharray: "3 3",
+                                            type: 'polyline',
+                                            distance: 15
+                                        }}
+                                        labelOffset={12}
+                                        minAngle={8}
+                                        paddingAngle={2}
+                                        onClick={(data) => handlePieClick(data)}
+                                        isAnimationActive={false}
+                                    >
+                                        {statsDataForPie.map((entry, index) => (
+                                            <Cell 
+                                                key={`cell-${index}`}
+                                                fill={`hsl(${(index * 360) / statsDataForPie.length}, 85%, 45%)`}
+                                                stroke="#fff"
+                                                strokeWidth={0.5}
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip 
+                                        formatter={(value, name) => [
+                                            statsType === 'price' 
+                                                ? `$${Number(value).toLocaleString()}`
+                                                : Number(value).toLocaleString(),
+                                            name
+                                        ]}
+                                    />
+                                    <Legend 
+                                        layout="vertical" 
+                                        align="right" 
+                                        verticalAlign="middle"
+                                        iconType="circle"
+                                        wrapperStyle={{
+                                            paddingLeft: "8px",
+                                            right: 15,
+                                            backgroundColor: "white",
+                                            padding: "4px 6px",
+                                            marginLeft: "15px",
+                                            border: "1px solid #f0f0f0",
+                                            borderRadius: "4px",
+                                            fontSize: "12px",
+                                            lineHeight: "1.4"
+                                        }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
                         ) : <p className="text-center py-10">此條件下無資料可顯示於圓餅圖。</p>}
                     </div>
                 </div>
@@ -410,7 +505,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                         </h2>
                         {loadingTenders ? <p>載入中...</p> : (
                             unitTenders.length > 0 ? 
-                            <DataTable columns={tenderTableColumns} data={unitTenders} /> : 
+                            <DataTable columns={tenderTableColumns} data={unitTenders} pageSize={30} /> : 
                             <p>此單位在此月份無標案資料。</p>
                         )}
                     </div>
