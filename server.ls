@@ -161,13 +161,15 @@ app.get '/date/:type/:date', (req, res) ->
 		res.send docs
 
 app.get '/month', (req, res) ->
-	collection = db.collection 'pcc'
-	collection.aggregate [{ $group: { _id: { year: { $year: '$publish'}, month: { $month: '$publish'} } } }] .toArray (err, docs) ->
-		monthes = _.map docs, '_id'
-		monthes = monthes.map (val) ->
-			val.name = val.year + ' 年 ' + val.month + ' 月'
-			return val
-		res.send monthes
+	rows = []
+	stream = ch.query("SELECT toYear(publish) as year, toMonth(publish) as month FROM pcc GROUP BY 1, 2 ORDER BY year DESC, month DESC FORMAT JSON")
+
+	stream.on 'data', (row) ->
+		row.name = row.year + ' 年 ' + row.month + ' 月'
+		rows.push row
+
+	stream.on 'end', -> 
+		res.send rows
 
 app.get '/dates', (req, res) ->
 	start = moment "20110101 00:00:00", 'YYYYMMDD hh:mm:ss' .toDate!
