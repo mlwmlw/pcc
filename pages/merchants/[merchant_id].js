@@ -42,9 +42,9 @@ function LineChart({data}) {
 }
 const getMerchant = async (merchant_id) => {
   merchant_id = encodeURIComponent(merchant_id);
-  const merchant_res = await fetch(getApiUrl(`/api/merchant/${merchant_id}`));
+  const merchant_res = await fetch(getApiUrl(`/merchant/${merchant_id}`));
   const merchant = await merchant_res.json()
-  const lookalike = await fetch(getApiUrl(`/api/lookalike/${merchant_id}`));
+  const lookalike = await fetch(getApiUrl(`/lookalike/${merchant_id}`));
   const merchants = await lookalike.json()
 
   const years = ['全部'].concat(merchant.tenders.map(function(row) {
@@ -231,7 +231,7 @@ function TenderTable({merchant}) {
 }
 export default function Page({merchant, years, merchant_id, merchants, directors}) {
   useEffect(() => {
-    fetch(getApiUrl(`/api/pageview/merchant/${merchant_id}`), {method: 'post'})
+    fetch(getApiUrl(`/pageview/merchant/${merchant_id}`), {method: 'post'})
   })
 
   let currentYear = new Date().getFullYear(); 
