@@ -119,7 +119,7 @@ function SearchDrawer() {
 	useEffect(() => {
 		const fetchKeywords = async () => {
 			try {
-				const data = await fetch(getApiUrl(`/api/keywords`))
+				const data = await fetch(getApiUrl(`/keywords`))
 				const keywordsData = await data.json();
 				setKeywords(keywordsData);
 				console.log("Fetched keywords:", keywordsData);

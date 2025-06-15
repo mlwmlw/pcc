@@ -5,6 +5,6 @@
  */
 export const getApiUrl = (path) => {
   const isServer = typeof window === 'undefined'
-  const baseUrl = isServer ? 'http://localhost:8888' : ''
+  const baseUrl = isServer ? 'http://localhost:8888' : '/api'
   return `${baseUrl}${path}`
 }
