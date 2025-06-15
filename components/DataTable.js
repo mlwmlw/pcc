@@ -17,6 +17,10 @@ export function DataTable({ data, columns, page = 1, pages, setPage, pageSize = 
   const [sorting, setSorting] = React.useState([]);
   const [pageState, setPageState] = React.useState(page);
 
+  React.useEffect(() => {
+    setPageState(page);
+  }, [page]);
+
   const totalPages = React.useMemo(() => {
     return pages || Math.ceil(data.length/pageSize);
   }, [data.length, pages, pageSize]);

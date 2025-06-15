@@ -63,17 +63,15 @@ function MerchantsTable({data, pages, page, setPage}) {
 }
 export default function Page({merchants, pages, page}) {
   
-  const [merchantsStatus, setMerchants] = useState([]);
-  const [pageStatus, setPageStatus] = useState(null);
-  async function setPage(page) {
-    Router.push('/merchants?page=' + (page))
-    const {merchants} = await getMerchants(page);
-    setMerchants(merchants)
-    setPageStatus(page)
+  async function setPage(newPage) {
+    Router.push('/merchants?page=' + newPage)
   }
   
-  let data = merchantsStatus.length > 0 ? merchantsStatus: merchants;
-  page = pageStatus || page
+  // Use props directly, no need for client-side status for merchants and page
+  // as getServerSideProps will re-run on route change
+  const data = merchants;
+  // page prop is already the current page from getServerSideProps
+
   return (
     <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
 

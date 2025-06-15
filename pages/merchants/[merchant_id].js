@@ -9,7 +9,26 @@ import {
 } from 'recharts';
 import dayjs from 'dayjs'
 import Head from 'next/head';
-import { useEffect } from 'react';
+import { useEffect } from 'react'; // useState was already imported, useEffect is used below
+
+const useIsMobile = () => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkIfMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkIfMobile();
+        window.addEventListener('resize', checkIfMobile);
+
+        return () => {
+            window.removeEventListener('resize', checkIfMobile);
+        };
+    }, []);
+
+    return isMobile;
+};
 
 const dark24 = [
   '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', 
@@ -82,6 +101,7 @@ const getMerchant = async (merchant_id) => {
   }).sort().reverse());
   return { merchant, years, merchant_id, merchants, directors: merchant.directors || [] };
 };
+
 export const getServerSideProps = async (context) => {
   const { merchant_id } = context.query;
   const props = await getMerchant(merchant_id)
@@ -99,10 +119,12 @@ export const getServerSideProps = async (context) => {
     props: props
   };
 };
-function MerchantPieChart({stats, setSelectedParent, parentUnits}) {
+
+function MerchantPieChart({stats, setSelectedParent, parentUnits, isMobile}) { // Added isMobile prop
   return (
     <ResponsiveContainer>
-      <PieChart margin={{ top: 10, right: 120, bottom: 10, left: 10 }}>
+      <PieChart margin={{ top: 0, right: 0, bottom:  0, left: 0 }}> 
+      {/* Adjusted bottom margin for mobile legend */}
           <Pie
             data={stats}
             cx="50%"
@@ -145,14 +167,39 @@ function MerchantPieChart({stats, setSelectedParent, parentUnits}) {
           formatter={(value) => [`$${Number(value).toLocaleString()}`, '得標金額']}
         />
         <Legend 
-          layout="vertical"
-          align="right"
-          verticalAlign="middle"
+          layout={isMobile ? "horizontal" : "vertical"}
+          align={isMobile ? "center" : "right"}
+          verticalAlign={isMobile ? "bottom" : "middle"}
+          iconType="circle" // Added for consistency
           wrapperStyle={{
-            paddingLeft: "8px",
-            fontSize: "12px",
-            lineHeight: "1.4",
-            cursor: "pointer"
+              ...(isMobile ? {
+                  position: 'absolute',
+                  bottom: 0,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '100%',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  backgroundColor: "white",
+                  padding: "8px",
+                  fontSize: "12px",
+                  margin: 0,
+                  borderTop: "1px solid #f0f0f0",
+                  boxShadow: "0 -2px 4px rgba(0,0,0,0.05)"
+              } : {
+                  position: 'absolute', // Added for consistency with stats.js desktop
+                  right: 15, // Added for consistency
+                  backgroundColor: "white",
+                  padding: "8px", // Standardized padding
+                  border: "1px solid #f0f0f0", // Added border
+                  borderRadius: "4px", // Added border radius
+                  fontSize: "12px",
+                  lineHeight: "1.4",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)", // Added shadow
+                  cursor: "pointer" 
+              })
           }}
           onClick={(entry) => {
             if (entry.value !== '其他' && parentUnits.includes(entry.value)) {
@@ -264,8 +311,10 @@ function TenderTable({merchant}) {
   ];
   return <DataTable columns={columns} data={merchant.tenders} />
 }
+
 export default function Page({merchant, years, merchant_id, merchants, directors}) {
   const [selectedParent, setSelectedParent] = useState('全部');
+  const isMobile = useIsMobile(); // Use the hook
   
   useEffect(() => {
     fetch(getApiUrl(`/pageview/merchant/${merchant_id}`), {method: 'post'})
@@ -400,8 +449,9 @@ export default function Page({merchant, years, merchant_id, merchants, directors
           data-ad-slot="1304930582"
           data-ad-format="auto"
           data-full-width-responsive="true"></ins>
-        <div style={{width: "100%", height: stats.length > 1 ? "400px": 0}}>
-        <MerchantPieChart stats={stats} setSelectedParent={setSelectedParent} parentUnits={parentUnits} />
+        <div style={{width: "100%", height: stats.length > 1 ? (isMobile ? "400px" : "300px"): 0}}> 
+        {/* Adjusted height for mobile to accommodate legend */}
+        <MerchantPieChart stats={stats} setSelectedParent={setSelectedParent} parentUnits={parentUnits} isMobile={isMobile} />
         </div>
         
         <h3>相關得標案件</h3>

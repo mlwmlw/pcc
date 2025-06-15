@@ -346,7 +346,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                             <option value="area">面積圖</option>
                         </select>
                     </div>
-                    <div style={{ height: isMobile ? '580px' : '500px' }} className="bg-white rounded p-1">
+                    <div style={{ height: isMobile ? '380px' : '500px' }} className="bg-white rounded p-1">
                         {trendData?.data ? (
                             <ResponsiveContainer>
                                 {chartType === 'area' ? (
@@ -369,7 +369,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                             const date = new Date(value);
                                             return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
                                         }}
-                                        height={75}
+                                        height={50}
                                         dy={0}
                                         tick={{fontSize: 12}}
                                         interval={1}
@@ -409,14 +409,31 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                         }}
                                     />
                                     <Legend 
-                                        layout="vertical" 
-                                        align="right" 
-                                        verticalAlign="middle"
+                                        layout={isMobile ? "horizontal" : "vertical"}
+                                        align={isMobile ? "center" : "right"}
+                                        verticalAlign={isMobile ? "bottom" : "middle"}
                                         iconType="circle"
                                         onMouseEnter={handleLegendMouseEnter}
                                         onMouseLeave={handleLegendMouseLeave}
                                         onClick={handleLegendClick}
-                                        wrapperStyle={{
+                                        wrapperStyle={isMobile ? {
+                                            position: 'absolute', // Changed from absolute for flow
+                                            bottom: 0,
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            width: '100%',
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            backgroundColor: "white",
+                                            padding: "8px",
+                                            fontSize: "12px",
+                                            margin: 0,
+                                            // marginTop: "10px", // Removed to reduce space
+                                            borderTop: "1px solid #f0f0f0",
+                                            boxShadow: "0 -2px 4px rgba(0,0,0,0.05)"
+                                        } : {
                                             paddingLeft: "8px",
                                             right: 0,
                                             backgroundColor: "white",
@@ -461,7 +478,7 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                                 const date = new Date(value);
                                                 return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
                                             }}
-                                            height={75}
+                                            height={50}
                                             dy={0}
                                             tick={{fontSize: 12}}
                                             interval={1}
@@ -501,14 +518,31 @@ const StatsPage = ({ monthes, initialStats, initialSelectedMonthData, error }) =
                                             }}
                                         />
                                         <Legend 
-                                            layout="vertical" 
-                                            align="right" 
-                                            verticalAlign="middle"
+                                            layout={isMobile ? "horizontal" : "vertical"}
+                                            align={isMobile ? "center" : "right"}
+                                            verticalAlign={isMobile ? "bottom" : "middle"}
                                             iconType="circle"
                                             onMouseEnter={handleLegendMouseEnter}
                                             onMouseLeave={handleLegendMouseLeave}
                                             onClick={handleLegendClick}
-                                            wrapperStyle={{
+                                            wrapperStyle={isMobile ? {
+                                                position: 'absolute', // Changed from absolute for flow
+                                                bottom: 0,
+                                                left: '50%',
+                                                transform: 'translateX(-50%)',
+                                                width: '100%',
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                backgroundColor: "white",
+                                                padding: "8px",
+                                                fontSize: "12px",
+                                                margin: 0,
+                                                
+                                                borderTop: "1px solid #f0f0f0",
+                                                boxShadow: "0 -2px 4px rgba(0,0,0,0.05)"
+                                        } : {
                                                 paddingLeft: "8px",
                                                 right: 0,
                                                 backgroundColor: "white",
