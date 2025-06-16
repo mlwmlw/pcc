@@ -67,7 +67,7 @@ export const getServerSideProps = async (context) => {
   };
 };
 export default function Page({units, unit}) {
-  let title = unit.name + '機關檢索'
+  let title = unit.name + '機關檢索 - 開放政府標案'
   let desc = unit.name + " 相關機關列表";
   var link = null;
   if(unit.name != '所有')
@@ -78,7 +78,7 @@ export default function Page({units, unit}) {
     <div className="min-w-6xl max-w-screen-xl px-4 mx-auto">
       <div className="container starter-template">
         <Head>
-        <title>{title} - 開放政府標案</title>
+        <title>{title}</title>
         <meta name="description"
         content={desc}/>
         <meta property="og:description"

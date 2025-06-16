@@ -214,7 +214,7 @@ export default function Page({data, unit, stats, lookalike_units}) {
   useEffect(() => {
     fetch(getApiUrl(`/pageview/unit/${unit._id}`), {method: 'post'})
   })
-  let title = unit.name + '標案檢索'
+  let title = unit.name + '標案檢索 - 開放政府標案'
   let desc = unit.name + " 最新標案 ";
   data.slice(0, 5).map(function(row) {  
     desc += dayjs(row.publish).format('YYYY-MM-DD') + " " + row.name;
@@ -254,7 +254,7 @@ export default function Page({data, unit, stats, lookalike_units}) {
     <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
       <div className="container starter-template">
         <Head>
-          <title>{title} - 開放政府標案</title>
+          <title>{title}</title>
           <meta name="description"
           content={desc}/>
 

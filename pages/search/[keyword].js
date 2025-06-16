@@ -64,9 +64,10 @@ export default function Page({tenders, keyword}) {
         }}
     }
   ]
+  const title = `${currentYear}年${keyword}標案搜尋結果  - 開放政府標案`;
   return <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
     <Head>
-      <title>{currentYear}年{keyword}標案查詢 - 開放政府標案</title>
+      <title>{title}</title>
       <meta property="og:description"
       content="搜尋結果" />
       

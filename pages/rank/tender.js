@@ -108,11 +108,11 @@ const TenderRankPage = ({ year, month, tenders, initialError }) => {
     const currentRenderYear = new Date().getFullYear();
     const yearOptions = Array.from({ length: currentRenderYear - 2011 }, (_, i) => currentRenderYear - i);
     const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
-
+    const title = `${selectedYear} 年 ${selectedMonth.toString().padStart(2, '0')} 月標案金額排行 - 開放政府標案`;
     return (
         <>
             <Head>
-                <title>標案金額排行 - {selectedYear}-{selectedMonth.toString().padStart(2, '0')}</title>
+                <title>{title}</title>
                 <meta name="description" content={`查詢 ${selectedYear} 年 ${selectedMonth} 月標案金額排行`} />
             </Head>
             <div className="container mx-auto p-4 relative">

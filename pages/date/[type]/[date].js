@@ -126,12 +126,18 @@ export default function Page({date, type, dates, tenders}) {
   function handleSelectChange(event) {
       router.push(`/date/${type}/${event.target.value}`)
   }
+  const title = `${date} ${type == 'tender' ? '招標' : '決標'}標案檢索 - 開放政府標案`;
+  const desc = `${date} ${type == 'tender' ? '招標' : '決標'}標案檢索，共有 ${tenders.length} 筆標案，累積金額為 ${new Intl.NumberFormat('zh-TW').format(tenders.reduce((sum, t) => sum + (t.price || 0), 0))} 元。`;
   return (
     <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
       <div className="container starter-template ">
           <Head>
-          <title>{router.query.date} 招標標案檢索 - 開放政府標案</title>
-          
+            <title>{title}</title>
+            <meta name="description"
+            content={desc}/>
+            <meta property="og:description"
+            content={desc}/>
+
           </Head>
           <h1>{date} {type == 'tender'? '招標': '決標'}標案檢索</h1>
           <div className="form-group">

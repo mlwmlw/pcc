@@ -83,12 +83,14 @@ const PartnerRankPage = ({ year, partners, initialError }) => {
     
     const currentRenderYear = new Date().getFullYear();
     const yearOptions = Array.from({ length: currentRenderYear - 2011 }, (_, i) => currentRenderYear - i);
-
+    const title = `單位與廠商得標次數排名 - ${selectedYear} 年 - 開放政府標案`;
+    const topPartners = partners.slice(0, 3).map(p => `${p.merchant.name} (${p.unit}) ${p.count}次`).join(', ');
+    const desc = `在 ${selectedYear} 年，廠商與單位的得標次數排名，累積得標金額為 ${partners.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()} 元。排行前三為 ${topPartners}`;    
     return (
         <>
             <Head>
-                <title>單位與廠商得標次數排名 - {selectedYear}</title>
-                <meta name="description" content={`查詢 ${selectedYear} 年度機關合作夥伴排行`} />
+                <title>{title}</title>
+                <meta name="description" content={desc} />
             </Head>
             <div className="container mx-auto p-4 relative">
                 <h1 className="text-2xl font-bold mb-4">單位與廠商得標次數排名 - {selectedYear} 年</h1>

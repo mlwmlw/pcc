@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-import React from 'react'
+import Head from 'next/head';
 import { getApiUrl } from '../utils/api';
 
 const getMonth = async () => {
@@ -26,7 +26,11 @@ export const getServerSideProps = async (context) => {
 
 
 export default function Month({month}) {
+  const title = '歷月標案 - 開放政府標案';
   return <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
+    <Head>
+      <title>{title}</title>
+    </Head>
   <div className="container starter-template">
   <h1>歷月標案</h1>
     <ul>

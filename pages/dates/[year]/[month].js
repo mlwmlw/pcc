@@ -26,11 +26,12 @@ export const getServerSideProps = async (context) => {
 export default function Page({dates}) {
    const router = useRouter()
    let desc = router.query.year + " 年 " + router.query.month + "月每日標案列表";
+   const title = `${router.query.year} 年 ${router.query.month} 月標案 - 開放政府標案`
    return (
       <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
       <div className="container starter-template ">
       <Head>
-      <title>{router.query.year} 年 {router.query.month} 月標案 - 開放政府標案</title>
+      <title>{title}</title>
       <meta name="description"
       content={desc}/>
       <meta property="og:description"
