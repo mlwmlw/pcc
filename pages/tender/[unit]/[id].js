@@ -29,12 +29,12 @@ const getTender = async (unit, id) => {
 };
 export const getServerSideProps = async (context) => {
    const { unit, id } = context.query;
-   const props = await getTender(unit, id)
+   const tenderProps = await getTender(unit, id) // Renamed to avoid conflict
    return {
-      props: {unit, ...props}
+      props: {unit, id, ...tenderProps} // Added id to props
    };
 };
-export default function Page({tenders, award, merchants, unit}) {   
+export default function Page({tenders, award, merchants, unit, id}) { // Added id to destructuring
    if (tenders.length == 0) {
       return <Error statusCode={404}  />
    }
@@ -52,6 +52,10 @@ export default function Page({tenders, award, merchants, unit}) {
             content={desc}/>
             <meta property="og:description"
             content={desc}/>
+            <meta property="og:image" content={`/api/og-image/tender?unit=${encodeURIComponent(unit)}&id=${encodeURIComponent(id)}`} />
+            <meta property="og:image:width" content="1200"/>
+            <meta property="og:image:height" content="630"/>
+            <meta property="og:type" content="website"/>
          </Head>
          <div className="container starter-template">
             

@@ -135,6 +135,11 @@ const MerchantRankPage = ({ year, merchantsBySum, merchantsByCount, initialError
             <Head>
                 <title>廠商標案排行</title>
                 <meta name="description" content={`查詢 ${selectedYear} 年度廠商標案總金額與數量排行`} />
+                <meta property="og:image" content="/api/og-image/top-merchants" />
+                <meta property="og:image:width" content="1200" />
+                <meta property="og:image:height" content="630" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://pcc.mlwmlw.org/rank/merchants" />
             </Head>
             <div className="container mx-auto p-4 relative">
                 <h1 className="text-2xl font-bold mb-4">廠商標案排行</h1>

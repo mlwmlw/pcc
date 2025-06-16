@@ -7,7 +7,7 @@ const HEIGHT = 630;
 const BG_COLOR = '#FFFFFF';
 const TEXT_COLOR = '#333333';
 const ACCENT_COLOR = '#4A90E2';
-const LOGO_URL = 'https://pcc.mlwmlw.org/assets/favicon.ico'; // 替換為實際Logo URL
+const LOGO_URL = 'https://pcc.mlwmlw.org/static/favicon.ico'; // 替換為實際Logo URL
 
 // 格式化數字為金額格式
 function formatAmount(amount) {
