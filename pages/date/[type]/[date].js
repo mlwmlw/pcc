@@ -2,7 +2,8 @@ const fetch = require('node-fetch');
 import React from 'react'
 import { useRouter } from 'next/router'
 import { getApiUrl } from '../../../utils/api';
-import {Select, SelectItem} from "@nextui-org/react";
+import {DatePicker} from "@nextui-org/react";
+import {parseDate, today, getLocalTimeZone, CalendarDate} from "@internationalized/date";
 import dayjs from 'dayjs'
 import Head from 'next/head';
 import { DataTable } from '../../../components/DataTable';
@@ -10,13 +11,14 @@ import { DataTable } from '../../../components/DataTable';
 const getDates = async () => {
     const now = new Date()
     const year = now.getFullYear();
-    const data = await fetch(getApiUrl(`/dates?year=${year}`))
+    const data = await fetch(getApiUrl(`/dates`)) // Or simply /dates if API supports
     const dates = await data.json();
     return dates.map((row) => {
         var day = dayjs(row.date)
-        return {year: day.format('YYYY'), month: day.format('MM'), day: day.format('DD'), date: day.format('YYYY-MM-DD')}
+        return day.format('YYYY-MM-DD') // Keep as string for easier checking
     })
 }
+
 const getTender = async (type, date) => {
     const tenders = await fetch(getApiUrl(`/date/${type}/${date}`))
     return await tenders.json();
@@ -109,23 +111,40 @@ function TenderTable({tenders}) {
 }
 export const getServerSideProps = async (context) => {
    let { date, type } = context.query;
-   const dates = await getDates()
-   dates.sort((a, b) => {
-      return new Date(b.date) - new Date(a.date);
-   })
-   date = date != "0" ? date : dates[0].date
+   const availableDates = await getDates(); // Fetch all available dates
+   
+   if (date === "0") {
+       // If "0" is passed, default to the latest available date or today if no dates available
+       if (availableDates.length > 0) {
+           // Sort dates descending to get the latest
+           availableDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+           date = availableDates[0];
+       } else {
+           date = today(getLocalTimeZone()).toString();
+       }
+   }
+   
    const tenders = await getTender(type, date)
    return {
-      props: {date, type, dates, tenders}
+      props: {date, type, tenders, availableDates} // Pass availableDates to the page
    };
 };
  
 
-export default function Page({date, type, dates, tenders}) {
+export default function Page({date, type, tenders, availableDates}) {
   const router = useRouter()
-  function handleSelectChange(event) {
-      router.push(`/date/${type}/${event.target.value}`)
+  
+  function handleDateChange(newDate) { // newDate is a CalendarDate object
+      router.push(`/date/${type}/${newDate.toString()}`)
   }
+
+  const isDateUnavailable = (calendarDate) => {
+    // calendarDate is a CalendarDate object from @internationalized/date
+    // We need to convert it to 'YYYY-MM-DD' string to check against availableDates
+    const dateString = calendarDate.toString();
+    return !availableDates.includes(dateString);
+  };
+
   const title = `${date} ${type == 'tender' ? '招標' : '決標'}標案檢索 - 開放政府標案`;
   const desc = `${date} ${type == 'tender' ? '招標' : '決標'}標案檢索，共有 ${tenders.length} 筆標案，累積金額為 ${new Intl.NumberFormat('zh-TW').format(tenders.reduce((sum, t) => sum + (t.price || 0), 0))} 元。`;
   return (
@@ -145,21 +164,13 @@ export default function Page({date, type, dates, tenders}) {
                   <div className="form-group row">
                       
                     <div className="col-md-4">
-                        <Select 
-                          size="sm"
-                          labelPlacement='outside-left'
+                        <DatePicker 
                           label="標案日期選擇" 
-                          selectedKeys={[date]}
-
-                          className="max-w-xs" 
-                          onChange={handleSelectChange}
-                        >
-                          {dates.map((d) => (
-                            <SelectItem key={d.date} value={d.date}>
-                              {d.date}
-                            </SelectItem>
-                          ))}
-                        </Select>
+                          value={parseDate(date)}
+                          onChange={handleDateChange}
+                          className="max-w-xs"
+                          isDateUnavailable={isDateUnavailable}
+                        />
                       </div>
                   </div>
               </div>

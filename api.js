@@ -3,7 +3,11 @@ const express = require('express');
 const http = require('http');
 const mongodb = require('mongodb');
 const q = require('q'); // Kept for now, might be removable if getAll is fully native Promise
-const moment = require('moment');
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+dayjs.extend(utc);
+dayjs.extend(timezone);
 // const redis = require('redis'); // Original was commented out
 const compression =require('compression');
 const _ = require('lodash');
@@ -184,7 +188,7 @@ async function startServer() {
 
         app.get('/keywords', (req, res) => {
             db.collection('search_log').aggregate([
-                { $match: { ts: { $gt: moment().subtract(7, 'days').toDate() }, keyword: { $ne: "undefined" } } },
+                { $match: { ts: { $gt: dayjs().subtract(7, 'day').toDate() }, keyword: { $ne: "undefined" } } },
                 { $group: { _id: "$keyword", count: { $sum: 1 } } },
                 { $sort: { count: -1 } },
                 { $limit: 30 },
@@ -194,7 +198,7 @@ async function startServer() {
                     let: { keyword: "$_id" },
                     pipeline: [
                         { $match: {
-                            ts: { $gt: moment().subtract(7, 'days').toDate() },
+                            ts: { $gt: dayjs().subtract(7, 'day').toDate() },
                             $expr: { $eq: ["$keyword", "$$keyword"] }
                         }},
                         { $group: { _id: "$$keyword", result: { $max: "$count" } } }
@@ -214,21 +218,16 @@ async function startServer() {
         });
 
         app.get('/date/:type/:date', (req, res) => {
-            const dateParam = new Date(req.params.date);
-            const startDate = new Date(dateParam); // Clone
-            startDate.setDate(startDate.getDate() -1); // LiveScript's date.setDate date.getDate! - 1 behaves like this for the start
-            
-            const endDate = new Date(req.params.date); // This will be the start of the target day
-            // To make it < tomorrow, we set it to the day after the target day's start
+            // 將輸入日期（台北時間）轉為 UTC+0 的同一天 00:00:00
+            const taipeiDate = dayjs.tz(req.params.date, 'Asia/Taipei').startOf('day');
+            const startDate = dayjs(taipeiDate).utc().toDate();
             const tomorrow = new Date(req.params.date);
             tomorrow.setDate(tomorrow.getDate() + 1);
 
-
             const collectionName = req.params.type === 'tender' ? 'pcc' : 'award';
             const filter = req.params.type === 'tender' 
-                ? { publish: { $gte: new Date(req.params.date), $lt: tomorrow } } 
-                : { end_date: { $gte: new Date(req.params.date), $lt: tomorrow } };
-            
+                ? { publish: { $gte: startDate, $lt: tomorrow } } 
+                : { end_date: { $gte: startDate, $lt: tomorrow } };
             db.collection(collectionName).find(filter).toArray((err, docs) => {
                 if (err) {
                     console.error("/date/:type/:date error:", err);
@@ -257,8 +256,8 @@ async function startServer() {
         });
 
         app.get('/dates', (req, res) => {
-            let start = moment().subtract(365, 'days').toDate();
-            let end = moment("20300101 00:00:00", 'YYYYMMDD hh:mm:ss').toDate();
+            let start = dayjs().subtract(365 * 2, 'day').toDate();
+            let end = dayjs("20300101 00:00:00", 'YYYYMMDD HH:mm:ss').toDate();
             const year = req.query.year;
             let month = req.query.month;
 
@@ -266,11 +265,11 @@ async function startServer() {
                 month = '0' + month;
             }
             if (year && month) {
-                start = moment(`${year}${month}01 00:00:00`, 'YYYYMMDD hh:mm:ss').toDate();
-                end = moment(`${year}${month}01`, 'YYYYMMDD hh:mm:ss').add(1, 'M').toDate();
+                start = dayjs(`${year}${month}01 00:00:00`, 'YYYYMMDD HH:mm:ss').toDate();
+                end = dayjs(`${year}${month}01`, 'YYYYMMDD HH:mm:ss').add(1, 'month').toDate();
             } else if (year) {
-                start = moment(`${year}0101 00:00:00`, 'YYYYMMDD hh:mm:ss').toDate();
-                end = moment(`${year}1231 23:59:59`, 'YYYYMMDD hh:mm:ss').toDate();
+                start = dayjs(`${year}0101 00:00:00`, 'YYYYMMDD HH:mm:ss').toDate();
+                end = dayjs(`${year}1231 23:59:59`, 'YYYYMMDD HH:mm:ss').toDate();
             }
             
             const rows = [];
@@ -527,8 +526,8 @@ async function startServer() {
         app.get('/rank/tender/:month?', async (req, res) => {
             try {
                 const m = req.params.month;
-                const start = moment(m).startOf('month').toDate();
-                const end = moment(m).endOf('month').toDate();
+                const start = dayjs(m).startOf('month').toDate();
+                const end = dayjs(m).endOf('month').toDate();
                 let tenders = await db.collection('pcc')
                     .find({ publish: { $gte: start, $lte: end } })
                     .sort({ price: -1 })
@@ -712,7 +711,7 @@ async function startServer() {
         app.get('/unit_lookalike/:unit', async (req, res) => {
             try {
                 const docs = await db.collection('pcc').aggregate([
-                    { $match: { "unit": req.params.unit, publish: { $gt: moment().subtract(1, 'months').toDate() } } },
+                    { $match: { "unit": req.params.unit, publish: { $gt: dayjs().subtract(1, 'month').toDate() } } },
                     { $project: { candidates: "$award.candidates" } },
                     { $unwind: "$candidates" },
                     { $group: { _id: "$candidates._id", count: { $sum: 1 } } },
@@ -890,7 +889,7 @@ async function startServer() {
         app.get('/hot/tenders', async (req, res) => {
             try {
                 const docs = await db.collection('pageview').aggregate([
-                    { $match: { type: "tender", ts: { $gt: moment().subtract(1, 'days').toDate() } } },
+                    { $match: { type: "tender", ts: { $gt: dayjs().subtract(1, 'day').toDate() } } },
                     { $group: { _id: { id: "$id", ip: "$ip" }, count: { $sum: 1 } } }, // Count unique IPs per tender
                     { $group: { _id: "$_id.id", count: { $sum: 1 } } }, // Sum up unique IPs
                     { $sort: { count: -1 } },
@@ -912,7 +911,7 @@ async function startServer() {
         app.get('/hot/unit', async (req, res) => {
             try {
                 const docs = await db.collection('pageview').aggregate([
-                    { $match: { type: "unit", ts: { $gt: moment().subtract(1, 'days').toDate() } } },
+                    { $match: { type: "unit", ts: { $gt: dayjs().subtract(1, 'day').toDate() } } },
                     { $group: { _id: { id: "$id", ip: "$ip" }, count: { $sum: 1 } } },
                     { $group: { _id: "$_id.id", count: { $sum: 1 } } },
                     { $sort: { count: -1 } },
@@ -933,7 +932,7 @@ async function startServer() {
         app.get('/hot/merchant', async (req, res) => {
             try {
                 const docs = await db.collection('pageview').aggregate([
-                    { $match: { type: "merchant", ts: { $gt: moment().subtract(1, 'days').toDate() } } },
+                    { $match: { type: "merchant", ts: { $gt: dayjs().subtract(1, 'day').toDate() } } },
                     { $group: { _id: { id: "$id", ip: "$ip" }, count: { $sum: 1 } } },
                     { $group: { _id: "$_id.id", count: { $sum: 1 } } },
                     { $sort: { count: -1 } },
