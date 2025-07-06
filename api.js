@@ -79,7 +79,20 @@ const getAll = () => {
     });
     return pccDataPromise;
 };
-
+async function getUnitsByName(name) {
+    const query = `SELECT distinct name FROM unit WHERE _id LIKE '${name}%' OR parent_name LIKE '${name}%' OR parent_id LIKE '${name}%' LIMIT 1000`;
+    try {
+        const resultSet = await ch.query({
+            query: query,
+            format: 'JSON'
+        });
+        const rows = await resultSet.json();
+        return rows.data.map(row => row.name.trim())
+    } catch (err) {
+        console.error("Error in getUnitsByName:", err);
+        throw err; // Propagate error
+    }
+}
 async function startServer() {
     try {
         await client.connect();
@@ -149,7 +162,7 @@ async function startServer() {
             res.send(true);
         });
 
-        app.get('/keyword/:keyword', (req, res) => {
+        app.get('/keyword/:keyword', async (req, res) => {
             if (!req.params.keyword) {
                 return res.send('failed');
             }
@@ -160,16 +173,14 @@ async function startServer() {
                            WHERE NOT(has(multiSearchAllPositionsCaseInsensitiveUTF8(concat(pcc.name, ' ', pcc.unit, ' ', arrayStringConcat(pcc.merchants)), ['${tags.join("','")}']), 0)) 
                            GROUP BY job_number 
                            ORDER BY publish DESC 
-                           LIMIT 1000 FORMAT JSON`;
+                           LIMIT 1000`;
             
-            const stream = ch.query(query);
-            const rows = [];
-
-            stream.on('data', (row) => {
-                rows.push(row);
-            });
-
-            stream.on('end', () => {
+            try {
+                const resultSet = await ch.query({
+                    query: query,
+                    format: 'JSON'
+                });
+                const rows = await resultSet.json();
                 db.collection('search_result').insertOne({
                     keyword: req.params.keyword,
                     ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
@@ -178,12 +189,11 @@ async function startServer() {
                     count: rows.length,
                     ts: new Date()
                 });
-                res.send(rows);
-            });
-            stream.on('error', (err) => {
+                res.send(rows.data);
+            } catch (err) {
                 console.error("Clickhouse query error in /keyword/:keyword", err);
                 res.status(500).send("Error processing request");
-            });
+            }
         });
 
         app.get('/keywords', (req, res) => {
@@ -237,25 +247,24 @@ async function startServer() {
             });
         });
         
-        app.get('/month', (req, res) => {
-            const rows = [];
-            const stream = ch.query("SELECT toYear(publish) as year, toMonth(publish) as month FROM pcc GROUP BY 1, 2 ORDER BY year DESC, month DESC FORMAT JSON");
-
-            stream.on('data', (row) => {
-                row.name = `${row.year} 年 ${row.month} 月`;
-                rows.push(row);
-            });
-
-            stream.on('end', () => {
-                res.send(rows);
-            });
-            stream.on('error', (err) => {
+        app.get('/month', async (req, res) => {
+            try {
+                const resultSet = await ch.query({
+                    query: "SELECT toYear(publish) as year, toMonth(publish) as month FROM pcc GROUP BY 1, 2 ORDER BY year DESC, month DESC",
+                    format: 'JSON'
+                });
+                const rows = await resultSet.json();
+                rows.data.forEach((row) => {
+                    row.name = `${row.year} 年 ${row.month} 月`;
+                });
+                res.send(rows.data);
+            } catch (err) {
                 console.error("Clickhouse query error in /month", err);
                 res.status(500).send("Error processing request");
-            });
+            }
         });
 
-        app.get('/dates', (req, res) => {
+        app.get('/dates', async (req, res) => {
             let start = dayjs().subtract(365 * 2, 'day').toDate();
             let end = dayjs("20300101 00:00:00", 'YYYYMMDD HH:mm:ss').toDate();
             const year = req.query.year;
@@ -272,25 +281,22 @@ async function startServer() {
                 end = dayjs(`${year}1231 23:59:59`, 'YYYYMMDD HH:mm:ss').toDate();
             }
             
-            const rows = [];
             const query = `SELECT formatDateTime(publish, '%Y-%m-%d') as date, count(distinct _id) as count 
                            FROM pcc 
                            WHERE publish >= '${start.toISOString().slice(0, 10)}' AND publish < '${end.toISOString().slice(0, 10)}'
                            GROUP BY 1 
-                           ORDER BY date DESC FORMAT JSON`;
-            const stream = ch.query(query);
-
-            stream.on('data', (row) => {
-                rows.push(row);
-            });
-
-            stream.on('end', () => {
-                res.send(rows);
-            });
-            stream.on('error', (err) => {
+                           ORDER BY date DESC`;
+            try {
+                const resultSet = await ch.query({
+                    query: query,
+                    format: 'JSON'
+                });
+                const rows = await resultSet.json();
+                res.send(rows.data);
+            } catch (err) {
                 console.error("Clickhouse query error in /dates", err);
                 res.status(500).send("Error processing request");
-            });
+            }
         });
 
         app.get('/categories', (req, res) => {
@@ -612,9 +618,9 @@ async function startServer() {
                     const units = await db.collection('unit').aggregate([
                         { $match: { $and: [{ parent: parent }, { parent: { $exists: true } }] } },
                         { $lookup: {
-                            as: 'child_counts', // Renamed
-                            from: 'unit',
-                            let: { unit_id: "$_id" }, // Renamed
+                        as: 'child_counts', // Renamed
+                        from: 'unit',
+                        let: { unit_id: "$_id" }, // Renamed
                             pipeline: [
                                 { $match: { $expr: { $eq: ["$parent", "$$unit_id"] } } },
                                 { $group: { _id: null, count: { $sum: 1 } } } // Group by null for total count
@@ -649,7 +655,7 @@ async function startServer() {
             }
         });
 
-        app.get('/unit/:unit/:month?', (req, res) => {
+        app.get('/unit/:unit/:month?', async (req, res) => {
             const unitParam = req.params.unit.replace(/\s+/g, '');
             const filter = {};
             if (req.params.month) {
@@ -658,36 +664,21 @@ async function startServer() {
                 end.setMonth(end.getMonth() + 1);
                 filter.publish = { $gte: start, $lt: end };
             }
-            
-            const unitsToQuery = [unitParam];
-            const query = `SELECT distinct name FROM unit WHERE _id LIKE '${unitParam}%' OR parent_name LIKE '${unitParam}%' OR parent_id LIKE '${unitParam}%' LIMIT 1000 FORMAT JSON`;
-            // Note: LIKE in ClickHouse might need specific syntax depending on setup (e.g. for parent_id if it's not string)
-            // Original LS: `_id like '" + unit + "' or parent_name like '" + unit + "' or parent_id like '" + unit+ "'`
-            // This implies unitParam might be a prefix. Changed to unitParam% for prefix matching.
-            
-            const stream = ch.query(query);
-            stream.on('data', (row) => {
-                unitsToQuery.push(row.name);
-            });
-
-            stream.on('end', async () => {
-                try {
-                    filter.unit = { $in: _.uniq(unitsToQuery) }; // Ensure uniqueness
-                    let docs = await db.collection('pcc').find(filter).sort({ publish: -1 }).limit(2000).toArray();
-                    docs = _(docs).groupBy('job_number')
-                        .map((vals, key) => _.assign(vals[0], { publish: _.min(vals.map(val => val.publish)) }))
-                        .value();
-                    docs.sort((a, b) => new Date(b.publish) - new Date(a.publish));
-                    res.send(docs);
-                } catch (dbErr) {
-                    console.error("/unit/:unit/:month? MongoDB query error:", dbErr);
-                    res.status(500).send("Error processing request");
-                }
-            });
-            stream.on('error', (chErr) => {
-                console.error("/unit/:unit/:month? ClickHouse query error:", chErr);
+            try {      
+                const units = await getUnitsByName(unitParam);
+                const unitsToQuery = [unitParam].concat(units);
+                filter.unit = { $in: _.uniq(unitsToQuery) }; // Ensure uniqueness
+                let docs = await db.collection('pcc').find(filter).sort({ publish: -1 }).limit(2000).toArray();
+                docs = _(docs).groupBy('job_number')
+                    .map((vals, key) => _.assign(vals[0], { publish: _.min(vals.map(val => val.publish)) }))
+                    .value();
+                docs.sort((a, b) => new Date(b.publish) - new Date(a.publish));
+                res.send(docs);
+            } catch (dbErr) {
+                console.error("/unit/:unit/:month? MongoDB query error:", dbErr);
                 res.status(500).send("Error processing request");
-            });
+            }
+
         });
         
         app.get('/lookalike/:merchant', async (req, res) => {
