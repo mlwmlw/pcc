@@ -11,8 +11,9 @@ const queries = [
 				unit_id String,
 				name String,
 				job_number String,
-				merchants Array(String)
-    ) ENGINE=MergeTree()
+				merchants Array(String),
+				_version DateTime
+    ) ENGINE=ReplacingMergeTree(_version)
 		PARTITION BY toYYYYMM(publish)
 		ORDER BY (_id, publish)
 		PRIMARY KEY _id`,
@@ -26,7 +27,7 @@ for(const query of queries) {
 	})
 	stream.pipe(process.stdout)
 }
-var skip = 1587000;
+var skip = 1920000;
 //skip = 0;
 client.connect(require('./database'), function(err, client) {
     pcc = client.db('pcc').collection('pcc');
@@ -54,10 +55,11 @@ client.connect(require('./database'), function(err, client) {
 			clickhouseStream.write(JSON.stringify(doc));
 		});
 		clickhouseStream.on('error', function(err) {
-			console.log(err)
+			console.log('clickhouse error', err);
 		});
-		clickhouseStream.on('finish', function() {
+		clickhouseStream.on('finish', async function() {
 			console.log('clickhouse end');
+			await ch.query("OPTIMIZE TABLE pcc FINAL");
 			client.close();
 		});
 		cursor.on('end', function(err) {
