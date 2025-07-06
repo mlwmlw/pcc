@@ -5,8 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "lsc -c server.ls && pm2 stop server || pm2 start server.js --max-memory-restart 450M  --log-date-format 'YYYY-MM-DD HH:mm:ss'",
-    "web": "cd web ; pm2 start index.js --node-args=\"--harmony\" --watch --name=\"pcc-web\"",
+    "start": "pm2 restart api.js --max-memory-restart 450M  --log-date-format 'YYYY-MM-DD HH:mm:ss'",
     "dev": "PORT=3000 node next.js",
     "build": "next build",
     "next": "NODE_ENV=production node next.js",
@@ -23,7 +22,6 @@
   },
   "homepage": "https://github.com/mlwmlw/pcc",
   "dependencies": {
-    "@apla/clickhouse": "^1.6.4",
     "@chakra-ui/css-reset": "^2.3.0",
     "@chakra-ui/icon": "^3.2.0",
     "@chakra-ui/icons": "^2.1.1",
@@ -83,11 +81,11 @@
     "style-loader": "^3.3.4",
     "tailwindcss": "^3.4.1",
     "unified": "^7.0.0",
-    "unified-stream": "^1.0.2"
+    "unified-stream": "^1.0.2",
+    "@clickhouse/client": "^1.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.17",
-    "clickhouse": "^2.2.1",
     "css-loader": "^6.10.0",
     "http-proxy-middleware": "^2.0.1",
     "webpack": "^5.90.2",
