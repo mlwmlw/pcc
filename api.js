@@ -186,7 +186,7 @@ async function startServer() {
                     ip: req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
                     ua: req.get('User-Agent'),
                     tags: tags,
-                    count: rows.length,
+                    count: rows.data.length,
                     ts: new Date()
                 });
                 res.send(rows.data);
