@@ -1,11 +1,11 @@
 const mongodb = require('mongodb')
 const moment = require('moment')
-const ch = require('./clickhouse').ch
+const ch = require('./clickhouse').default.ch
 
 const client = mongodb.MongoClient
 
 const queries = [
-    `CREATE TABLE unit (
+    `CREATE TABLE IF NOT EXISTS unit (
         _id String,
         parent_id String,
         parent_name String,
@@ -14,13 +14,8 @@ const queries = [
     PRIMARY KEY _id`,
 ];
 for(const query of queries) {
-	break;
-  const stream = ch.query(query, (err, data) => {
-    if(err) {
-      console.log(err)
-    }  
-  })
-  stream.pipe(process.stdout)
+  //break;
+  const stream = ch.query({query: query})
 }
 client.connect(require('./database'), function(err, client) {
     pcc = client.db('pcc').collection('unit');
@@ -49,25 +44,43 @@ client.connect(require('./database'), function(err, client) {
         }
       }
     ])
-    const clickhouseStream = ch.query('INSERT INTO unit FORMAT JSONEachRow')
+    const batchSize = 1000;
+    let batch = [];
     var i = 0;
-    cursor.on('data', function(doc) {
-			i++;
+
+    const insertBatch = async () => {
+      if (batch.length === 0) {
+        return;
+      }
+      try {
+        cursor.pause()
+        await ch.insert({
+          table: 'unit',
+          values: batch,
+          format: 'JSONEachRow',
+        });
+        cursor.resume()
+        batch = [];
+      } catch (error) {
+        console.error('ClickHouse insert error:', error);
+      }
+    };
+    cursor.on('data', async function(doc) {
+      i++;
+      batch.push(doc);
+      if (batch.length >= batchSize) {
+        await insertBatch();
+      }
       if(i % 1000 == 0) {
         console.log(i)
       }
-      clickhouseStream.write(JSON.stringify(doc));
+
     });
-    clickhouseStream.on('error', function(err) {
-      console.log(err)
-    });
-    clickhouseStream.on('finish', function() {
-      console.log('clickhouse end');
-      client.close();
-    });
-    cursor.on('end', function(err) {
+    cursor.on('end', async function(err) {
       console.log('mongo query end');
-      clickhouseStream.end();
+      await insertBatch(); // Insert any remaining data
+      await ch.query({query: "OPTIMIZE TABLE unit FINAL"});
+      await ch.close()
     });
     //cursor.pipe(clickhouseStream)
 
