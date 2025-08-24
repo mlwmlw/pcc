@@ -45,7 +45,7 @@
     "caniuse-lite": "",
     "canvas": "^3.1.0",
     "cheerio": "^0.22.0",
-    "compression": "^1.7.3",
+    "compression": "^1.8.1",
     "cors": "^2.8.4",
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.1.0",
