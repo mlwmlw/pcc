@@ -170,12 +170,47 @@ async function startServer() {
             if (!req.params.keyword) {
                 return res.send('failed');
             }
-            const tags = nodejieba.cut(req.params.keyword, true).filter(str => str.trim());
+						var keyword = req.params.keyword;
+            const tags = nodejieba.cut(keyword, true).filter(str => str.trim());
 
-            const query = `SELECT job_number, anyHeavy(name) as name, anyHeavy(unit) as unit, anyHeavy(unit_id) as unit_id, toDate(min(publish)) as publish, anyHeavy(merchants) as merchants, max(matchAll) matchAll
+            const query = `WITH {tokens:Array(String)} AS q,
+  1.5 AS k1,
+  0.75 AS b,
+  (SELECT avg(length(tokens)) FROM pcc.pcc) AS avgdl,
+  (SELECT count() FROM pcc.pcc) AS N,
+  result_meta AS (
+    SELECT _id, token, countEqual(tokens, token) AS tf, length(tokens) AS dl
+    FROM pcc.pcc
+    ARRAY JOIN tokens AS token
+    WHERE (token IN q or unit like {keyword:String}) and pcc.publish >= addMonths(today(), -12)
+    order by publish desc limit 1000
+  ), score as (
+  select _id, sum(
+    log((N - df + 0.5) / (df + 0.5)) *
+    (tf * (k1 + 1)) /
+    (tf + k1 * (1 - b + b * dl / avgdl))
+  ) AS bm25 from result_meta
+  ANY LEFT JOIN pcc.token_df USING (token)
+  GROUP BY 1
+)
+
+SELECT
+  job_number,
+  anyHeavy(name) as name,
+  anyHeavy(unit) as unit,
+  anyHeavy(unit_id) as unit_id,
+  toDate(min(publish)) as publish,
+  anyHeavy(merchants) as merchants,
+  max(bm25) bm25
+FROM pcc.pcc
+join score using(_id)
+GROUP BY job_number
+ORDER BY bm25 desc`
+/*
+						SELECT job_number, anyHeavy(name) as name, anyHeavy(unit) as unit, anyHeavy(unit_id) as unit_id, toDate(min(publish)) as publish, anyHeavy(merchants) as merchants, max(matchAll) matchAll
                            FROM (
 															SELECT job_number, name, unit, unit_id, publish, merchants, tokens, hasAll(tokens, ['${tags.join("','")}']) matchAll
-															FROM pcc.pcc
+															from PCC.PCC
 															WHERE hasAny(tokens, ['${tags.join("','")}']) 
 															and pcc.publish >= addMonths(today(), -6) 
 															order by publish desc LIMIT 1000 
@@ -184,10 +219,15 @@ async function startServer() {
                            GROUP BY job_number 
                            ORDER BY matchAll desc, publish DESC 
                            `;
+													 */
             
             try {
                 const resultSet = await ch.query({
                     query: query,
+										query_params: {
+   									 tokens: tags,
+										 keyword: '%' + keyword + '%'
+										},
                     format: 'JSON'
                 });
                 const rows = await resultSet.json();
