@@ -182,8 +182,8 @@ async function startServer() {
     SELECT _id, token, countEqual(tokens, token) AS tf, length(tokens) AS dl
     FROM pcc.pcc
     ARRAY JOIN tokens AS token
-    WHERE (token IN q or unit like {keyword:String}) and pcc.publish >= addMonths(today(), -12)
-    order by publish desc limit 1000
+    WHERE (token IN q or multiSearchAny(unit, [{keyword:String}])) and pcc.publish >= addMonths(today(), -18)
+    order by publish desc limit 300
   ), score as (
   select _id, sum(
     log((N - df + 0.5) / (df + 0.5)) *
@@ -206,20 +206,6 @@ FROM pcc.pcc
 join score using(_id)
 GROUP BY job_number
 ORDER BY bm25 desc`
-/*
-						SELECT job_number, anyHeavy(name) as name, anyHeavy(unit) as unit, anyHeavy(unit_id) as unit_id, toDate(min(publish)) as publish, anyHeavy(merchants) as merchants, max(matchAll) matchAll
-                           FROM (
-															SELECT job_number, name, unit, unit_id, publish, merchants, tokens, hasAll(tokens, ['${tags.join("','")}']) matchAll
-															from PCC.PCC
-															WHERE hasAny(tokens, ['${tags.join("','")}']) 
-															and pcc.publish >= addMonths(today(), -6) 
-															order by publish desc LIMIT 1000 
-													)
-													 pcc 
-                           GROUP BY job_number 
-                           ORDER BY matchAll desc, publish DESC 
-                           `;
-													 */
             
             try {
                 const resultSet = await ch.query({
