@@ -27,6 +27,7 @@
     "@chakra-ui/icons": "^2.1.1",
     "@chakra-ui/react": "^2.10.9",
     "@chakra-ui/system": "^2.6.2",
+    "@clickhouse/client": "^1.11.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@emotion/weak-memoize": "^0.3.1",
