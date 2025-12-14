@@ -3,10 +3,21 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { DataTable } from '../components/DataTable';
 import { getApiUrl } from '../utils/api';
-import { 
-    AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-    ResponsiveContainer, PieChart, Pie, Cell
-} from 'recharts';
+import dynamic from 'next/dynamic';
+
+const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
+const Area = dynamic(() => import('recharts').then(m => m.Area), { ssr: false });
+const LineChart = dynamic(() => import('recharts').then(m => m.LineChart), { ssr: false });
+const Line = dynamic(() => import('recharts').then(m => m.Line), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false });
+const Legend = dynamic(() => import('recharts').then(m => m.Legend), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false });
+const PieChart = dynamic(() => import('recharts').then(m => m.PieChart), { ssr: false });
+const Pie = dynamic(() => import('recharts').then(m => m.Pie), { ssr: false });
+const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false });
 
 const dark24 = [
     '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', 
