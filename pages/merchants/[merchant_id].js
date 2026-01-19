@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import dayjs from 'dayjs'
-import Head from 'next/head';
+import SeoHead from '../../components/SeoHead';
 import { useEffect } from 'react'; // useState was already imported, useEffect is used below
 
 const useIsMobile = () => {
@@ -412,17 +412,16 @@ export default function Page({merchant, years, merchant_id, merchants, directors
   
   return (
     <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
-      <Head>
-      <title>{title} - 開放政府標案</title>
-      <meta name="description" content={desc}/>
-      <meta property="og:title" content={title + ' - 開放政府標案'}/>
-      <meta property="og:description" content={desc}/>
-      <meta property="og:image" content={`/api/og-image/merchant?id=${merchant._id || merchant_id}`}/>
-      <meta property="og:image:width" content="1200"/>
-      <meta property="og:image:height" content="630"/>
-      <meta property="og:type" content="website"/>
-      <meta property="og:url" content={`https://pcc.mlwmlw.org/merchants/${merchant._id || merchant_id}`}/>
-      </Head>
+      <SeoHead
+        title={`${title} - 開放政府標案`}
+        description={desc}
+        image={`/api/og-image/merchant?id=${merchant._id || merchant_id}`}
+        url={`https://pcc.mlwmlw.org/merchants/${merchant._id || merchant_id}`}
+        type="website"
+      >
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </SeoHead>
       <div className="container starter-template">
         
         <h1>{currentYear}年{merchant.name}得標案件</h1>

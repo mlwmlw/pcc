@@ -75,7 +75,7 @@ app.use(route.get('/tender/:unit/:id', function*(unit, id, next) {
     this.body = yield render('tender', { unit: unit, id: id })
 }));
 app.use(route.get('/robots.txt', function* (next) {
-		this.body = "User-agent: *\nAllow: /";
+		this.body = "User-agent: *\nAllow: /\nSitemap: https://pcc.mlwmlw.org/sitemap.xml";
 }));
 
 app.use(mount('/assets', serve('assets')));
