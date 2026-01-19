@@ -3,7 +3,7 @@ import { BiSolidHot } from 'react-icons/bi'
 import dynamic from 'next/dynamic';
 import { getApiUrl } from '../utils/api';
 import { Icon } from '@chakra-ui/react'
-import Head from 'next/head';
+import SeoHead from '../components/SeoHead';
 
 export default class extends React.Component {
     constructor(props) {
@@ -36,12 +36,11 @@ export default class extends React.Component {
         let {tenders, units, merchants, news, dates} = this.props;
         let end = dates[0].day, start = dates[100].day;
         return <>
-            <Head>
-                <title>開放政府標案</title>
-                <meta name="description"
-                content="開放政府標案目的是為了讓公民能更容易關心繳納的稅金，如何被分配與使用，持續監督政商之利害關係。提供各種統計數據與最新趨勢案件
-                "/>
-            </Head>
+            <SeoHead
+                title="開放政府標案"
+                description="開放政府標案目的是為了讓公民能更容易關心繳納的稅金如何被分配與使用，持續監督政商之利害關係，提供各種統計數據與最新趨勢案件。"
+                image="/static/landing.jpg"
+            />
             <div className="container landing mx-auto">
                 <div className="intro-header">
                     <div className="w-3/4 mx-auto">
@@ -198,10 +197,11 @@ export default class extends React.Component {
                                 <h2 className ="section-heading"><a href="/stats">單位經費比例</a></h2>
                                 <p className ="lead">檢視單月份各單位的標案預算的分配比例，可點擊檢視該單位詳細分配。</p>
                             </div>
-                            <div className="col-lg-5 col-sm-pull-6  col-sm-6">
-                                <img className="img-responsive" src="/static/pie.png" alt="" />
+                            <div className="col-lg-5 col-lg-offset-2 col-sm-6">
+                                <img style={{"padding":"50px 0"}} className="img-responsive" src="/static/pie.png" alt="" />
                             </div>
                         </div>
+
                     </div>
 
                 </div>
@@ -210,62 +210,36 @@ export default class extends React.Component {
                         <div className="row">
                             <div className="col-lg-5 col-sm-6">
                                 <hr className="section-heading-spacer" />
-                                <div className="clearfix"></div>
-                                <h2 className="section-heading">得標廠商</h2>
-                                <p className="lead">
-                                    瀏覽各參與標案<a href="/merchants">投標廠商</a>得標案件情況，
-                                    與<a href="units">機關</a>間的利益關係。依照年度統計的<a href="/rank/partner">得標關係排行榜</a>
-                                </p>
+                                <div className ="clearfix"></div>
+                                <h2 className ="section-heading"><a href="/rank/units">最高得標經費單位排行</a></h2>
+                                <p className ="lead">進一步探究哪些單位取得最多標案預算。</p>
+                            </div>
+                            <div className="col-lg-5 col-lg-offset-2 col-sm-6">
+                                <img style={{"padding":"50px 0"}} className="img-responsive" src="/static/unit.png" alt="" />
+                            </div>
                         </div>
-                        <div className="col-lg-5 col-lg-offset-2 col-sm-6">
-                            <img className="img-responsive" src="/static/unit.png" alt="" />
-                        </div>
+
                     </div>
 
                 </div>
+                <div className="content-section-b">
+                    <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
+                        <div className="row">
+                            <div className="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
+                                <hr className="section-heading-spacer" />
+                                <div className ="clearfix"></div>
+                                <h2 className ="section-heading"><a href="/rank/merchants">最高得標經費廠商排行</a></h2>
+                                <p className ="lead">檢視哪些廠商取得最多政府標案。</p>
+                            </div>
+                            <div className="col-lg-5 col-lg-offset-2 col-sm-6">
+                                <img style={{"padding":"50px 0"}} className="img-responsive" src="/static/rank.png" alt="" />
+                            </div>
+                        </div>
 
-            </div>
-            <div className="content-section-b">
-                <div className="min-w-6xl max-w-screen-lg px-4 mx-auto">
-                    <div className="row">
-                        <div className="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
-                            <hr className="section-heading-spacer" />
-                            <div className ="clearfix"></div>
-                            <h2 className ="section-heading">各式排行榜</h2>
-                            <p className ="lead">依照月份統計，各重大建設的<a href="/rank/tender">招標情形</a>，與政府有重大金錢往來的<a href="/rank/merchant">得標廠商</a></p>
-                        </div>
-                        <div className="col-lg-5 col-sm-pull-6  col-sm-6">
-                            <img className="img-responsive" src="/static/rank.png" alt="" />
-                        </div>
                     </div>
-                </div>
 
-            </div>
-            <div className="row">
-                <div className="col-lg-12 text-center">
-                    <h2 className="section-heading">About</h2>
-                    <h3 className="section-subheading text-muted"></h3>
                 </div>
             </div>
-            <div className="col-lg-12">
-                <ul className="timeline">
-                    <li>
-                        <div className="timeline-image">
-                            <img className="img-circle img-responsive" src="https://secure.gravatar.com/avatar/0b57b8c75cfe984475b94fe0847f7665?s=200" alt="mlwmlw" />
-                        </div>
-                        <div className="timeline-panel">
-                            <div className="timeline-heading">
-                                <h4>mlwmlw</h4>
-                                <h4 className="subheading"><a href="https://mlwmlw.org/">http://mlwmlw.org</a></h4>
-                            </div>
-                            <div className="timeline-body">
-                                <p className="text-muted">會對電腦講話的貓</p>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
         </>
     }
 }
