@@ -20,9 +20,13 @@ client = mongodb.MongoClient uri, {
 err <- client.connect
 db = client.db('pcc')
 count = 0;
-total = 500
+batch_size = 100
+total = 5000
+
+
 #err, rows <- db.collection 'merchants' .find {address: "分公司所在地"} .limit total .toArray
-err, rows <- db.collection 'merchants' .find {name: {$exists: true}, error: {$exists: false}, _id: /\d{8}/, owner: {$exists: 0}} .limit total .toArray
+err, rows <- db.collection 'merchants' .find {name: {$exists: true}, error: {$exists: false}, _id: /\d{8}/, $or: [{owner: null}, {owner: {$exists: false}}]} .limit total .toArray
+#err, rows <- db.collection 'merchants' .find {name: {$exists: true}, error: {$exists: false}, _id: "12515799", owner: {$exists: 0}} .limit total .toArray
 #err, rows <- db.collection 'merchants' .find {_id: /^\d{8}$/, error: true, address: {$exists: 0}, org: '公司登記'} .limit total .toArray
 total = rows.length
 bulk = db.collection 'merchants' .initializeUnorderedBulkOp!
@@ -89,10 +93,14 @@ for row in rows
 			}
 		count++
 		bulk.find {_id: id} .update {$set: data}
-		if count == total
+		if (count % batch_size == 0) || (count == total)
 			bulk.execute (err, res) ->
-				console.log err
-				console.log 'Done'
-				client.close!
-
-
+				if err
+					console.log err
+				console.log "Executed bulk for #{count} items"
+				if count == total
+					console.log 'Done'
+					client.close!
+				else
+					# Re-initialize bulk for the next batch
+					bulk = db.collection 'merchants' .initializeUnorderedBulkOp!

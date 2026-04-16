@@ -1,6 +1,6 @@
 const mongodb = require('mongodb')
 const moment = require('moment')
-const ch = require('./clickhouse').default.ch
+const ch = require('./clickhouse').ch
 const client = mongodb.MongoClient
 
 const queries = [
@@ -77,4 +77,3 @@ client.connect(require('./database'), function(err, client) {
       await ch.close()
     });
 });
-
