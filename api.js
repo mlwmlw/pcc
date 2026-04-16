@@ -15,7 +15,8 @@ const https = require('https');
 const cors = require('cors');
 const isbot = require('isbot');
 const nodejieba = require("nodejieba");
-const { ch } = require('./clickhouse'); // Assuming clickhouse.js exports ch
+const { ch } = require('./clickhouse');
+
 
 const corsOptions = {
     origin: 'http://pcc.mlwmlw.org:3000',
@@ -166,18 +167,50 @@ async function startServer() {
             if (!req.params.keyword) {
                 return res.send('failed');
             }
-            const tags = nodejieba.cut(req.params.keyword, true).filter(str => str.trim());
+						var keyword = req.params.keyword;
+            const tags = nodejieba.cut(keyword, true).filter(str => str.trim());
 
-            const query = `SELECT job_number, max(name) as name, max(unit) as unit, max(unit_id) as unit_id, toDate(min(publish)) as publish, max(merchants) as merchants 
-                           FROM pcc 
-                           WHERE NOT(has(multiSearchAllPositionsCaseInsensitiveUTF8(concat(pcc.name, ' ', pcc.unit, ' ', arrayStringConcat(pcc.merchants)), ['${tags.join("','")}']), 0)) 
-                           GROUP BY job_number 
-                           ORDER BY publish DESC 
-                           LIMIT 1000`;
+            const query = `WITH {tokens:Array(String)} AS q,
+  1.5 AS k1,
+  0.75 AS b,
+  (SELECT avg(length(tokens)) FROM pcc.pcc) AS avgdl,
+  (SELECT count() FROM pcc.pcc) AS N,
+  result_meta AS (
+    SELECT _id, token, countEqual(tokens, token) AS tf, length(tokens) AS dl
+    FROM pcc.pcc
+    ARRAY JOIN tokens AS token
+    WHERE (token IN q or multiSearchAny(unit, [{keyword:String}])) and pcc.publish >= addMonths(today(), -18)
+    order by publish desc limit 300
+  ), score as (
+  select _id, sum(
+    log((N - df + 0.5) / (df + 0.5)) *
+    (tf * (k1 + 1)) /
+    (tf + k1 * (1 - b + b * dl / avgdl))
+  ) AS bm25 from result_meta
+  ANY LEFT JOIN pcc.token_df USING (token)
+  GROUP BY 1
+)
+
+SELECT
+  job_number,
+  anyHeavy(name) as name,
+  anyHeavy(unit) as unit,
+  anyHeavy(unit_id) as unit_id,
+  toDate(min(publish)) as publish,
+  anyHeavy(merchants) as merchants,
+  max(bm25) bm25
+FROM pcc.pcc
+join score using(_id)
+GROUP BY job_number
+ORDER BY bm25 desc`
             
             try {
                 const resultSet = await ch.query({
                     query: query,
+										query_params: {
+   									 tokens: tags,
+										 keyword: '%' + keyword + '%'
+										},
                     format: 'JSON'
                 });
                 const rows = await resultSet.json();
@@ -198,7 +231,12 @@ async function startServer() {
 
         app.get('/keywords', (req, res) => {
             db.collection('search_log').aggregate([
-                { $match: { ts: { $gt: dayjs().subtract(7, 'day').toDate() }, keyword: { $ne: "undefined" } } },
+                { $match: { 
+									ts: { $gt: dayjs().subtract(7, 'day').toDate() }, 
+									keyword: { $ne: "undefined" },
+									$expr: { $lte: [{ $strLenCP: '$keyword' }, 7]}
+								} },
+                { $match: { keyword: { $ne: "undefined" } } },
                 { $group: { _id: "$keyword", count: { $sum: 1 } } },
                 { $sort: { count: -1 } },
                 { $limit: 30 },
@@ -250,7 +288,15 @@ async function startServer() {
         app.get('/month', async (req, res) => {
             try {
                 const resultSet = await ch.query({
-                    query: "SELECT toYear(publish) as year, toMonth(publish) as month FROM pcc GROUP BY 1, 2 ORDER BY year DESC, month DESC",
+                    query: `SELECT
+															toInt32(substr(partition, 1, 4)) AS year,
+															toInt32(substr(partition, 5, 2)) AS month
+													FROM system.parts
+													WHERE database = 'pcc'
+														AND table = 'pcc'
+														AND active
+													GROUP BY year, month
+													ORDER BY year DESC, month DESC;`,
                     format: 'JSON'
                 });
                 const rows = await resultSet.json();
@@ -265,7 +311,7 @@ async function startServer() {
         });
 
         app.get('/dates', async (req, res) => {
-            let start = dayjs().subtract(365 * 2, 'day').toDate();
+            let start = dayjs().subtract(365 * 5, 'day').toDate();
             let end = dayjs("20300101 00:00:00", 'YYYYMMDD HH:mm:ss').toDate();
             const year = req.query.year;
             let month = req.query.month;
@@ -281,10 +327,9 @@ async function startServer() {
                 end = dayjs(`${year}1231 23:59:59`, 'YYYYMMDD HH:mm:ss').toDate();
             }
             
-            const query = `SELECT formatDateTime(publish, '%Y-%m-%d') as date, count(distinct _id) as count 
-                           FROM pcc 
-                           WHERE publish >= '${start.toISOString().slice(0, 10)}' AND publish < '${end.toISOString().slice(0, 10)}'
-                           GROUP BY 1 
+            const query = `SELECT date, count 
+                           FROM pcc_daily_count 
+                           WHERE date >= '${start.toISOString().slice(0, 10)}' AND date < '${end.toISOString().slice(0, 10)}'
                            ORDER BY date DESC`;
             try {
                 const resultSet = await ch.query({
@@ -888,11 +933,11 @@ async function startServer() {
                     { $lookup: { as: 'tender', from: 'pcc', localField: "_id", foreignField: "_id" } }, // Assuming _id in pcc is the tender ID
                     { $unwind: "$tender" },
                     { $project: { _id: 1, name: "$tender.name", count: 1, unit: "$tender.unit", job_number: "$tender.job_number" } },
-                    // { $sample: { size: 10 } } // Sample after limit might not be what's intended. Usually sample from a larger set.
+                    { $limit: 10 } // Sample after limit might not be what's intended. Usually sample from a larger set.
                 ]).toArray();
                  // If sampling is desired from the top 20, apply it here:
                 const sampledDocs = docs.length > 10 ? _.sampleSize(docs, 10) : docs;
-                res.send(sampledDocs);
+                res.send(docs);
             } catch (err) {
                 console.error("/hot/tenders error:", err);
                 res.status(500).send("Error processing request");
@@ -910,10 +955,10 @@ async function startServer() {
                     { $lookup: { as: 'unit_doc', from: 'unit', localField: "_id", foreignField: "_id" } }, // Renamed
                     { $unwind: "$unit_doc" },
                     { $project: { _id: 1, name: "$unit_doc.name", count: 1 /*, unit: "$unit_doc._id"*/ } }, // unit field was redundant
-                    // { $sample: { size: 10 } }
+                    { $limit: 10 }
                 ]).toArray();
                 const sampledDocs = docs.length > 10 ? _.sampleSize(docs, 10) : docs;
-                res.send(sampledDocs);
+                res.send(docs);
             } catch (err) {
                 console.error("/hot/unit error:", err);
                 res.status(500).send("Error processing request");
@@ -931,10 +976,10 @@ async function startServer() {
                     { $lookup: { as: 'merchant_doc', from: 'merchants', localField: "_id", foreignField: "_id" } }, // Renamed
                     { $unwind: "$merchant_doc" },
                     { $project: { _id: 1, name: "$merchant_doc.name", count: 1 , merchant: "$merchant_doc._id" } },
-                    // { $sample: { size: 10 } }
+                    { $limit: 10 }
                 ]).toArray();
                 const sampledDocs = docs.length > 10 ? _.sampleSize(docs, 10) : docs;
-                res.send(sampledDocs);
+                res.send(docs);
             } catch (err) {
                 console.error("/hot/merchant error:", err);
                 res.status(500).send("Error processing request");
