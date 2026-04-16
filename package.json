@@ -54,7 +54,7 @@
     "fetch": "^1.1.0",
     "framer-motion": "^11.18.2",
     "isbot": "^3.0.21",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "moment": "^2.22.2",
     "mongodb": "^3.7.3",
     "next": "^14.2.35",
@@ -67,7 +67,7 @@
     "postcss-nesting": "^12.0.3",
     "progress": "^1.1.8",
     "q": "~1.0.1",
-    "qs": "^6.14.1",
+    "qs": "^6.14.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.11.0",
@@ -88,7 +88,7 @@
     "autoprefixer": "^10.4.17",
     "css-loader": "^6.10.0",
     "http-proxy-middleware": "^2.0.1",
-    "webpack": "^5.90.2",
+    "webpack": "^5.105.0",
     "webpack-dev-server": "^4.3.1"
   }
 }
