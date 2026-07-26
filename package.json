@@ -50,7 +50,7 @@
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.1.0",
     "dayjs": "^1.7.7",
-    "express": "^4.16.4",
+    "express": "^4.22.2",
     "fetch": "^1.1.0",
     "framer-motion": "^11.18.2",
     "isbot": "^3.0.21",
