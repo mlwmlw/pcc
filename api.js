@@ -162,54 +162,96 @@ async function startServer() {
             });
             res.send(true);
         });
+        function normalizeKeyword(input) {
+            let value = String(input ?? '').trim();
 
+            for (let i = 0; i < 8; i++) {
+                if (!/%(?:25|[CE][0-9A-F])/i.test(value)) break;
+
+                try {
+                    const decoded = decodeURIComponent(value);
+                    if (decoded === value) break;
+                    value = decoded;
+                } catch {
+                    break;
+                }
+            }
+
+            return value;
+        }
         app.get('/keyword/:keyword', async (req, res) => {
             if (!req.params.keyword) {
                 return res.send('failed');
             }
-						var keyword = req.params.keyword;
+            //var keyword = req.params.keyword;
+            const keyword = normalizeKeyword(req.params.keyword);
+
             const tags = nodejieba.cut(keyword, true).filter(str => str.trim());
 
             const query = `WITH {tokens:Array(String)} AS q,
-  1.5 AS k1,
-  0.75 AS b,
-  (SELECT avg(length(tokens)) FROM pcc.pcc) AS avgdl,
-  (SELECT count() FROM pcc.pcc) AS N,
-  result_meta AS (
-    SELECT _id, token, countEqual(tokens, token) AS tf, length(tokens) AS dl
-    FROM pcc.pcc
-    ARRAY JOIN tokens AS token
-    WHERE (token IN q or multiSearchAny(unit, [{keyword:String}])) and pcc.publish >= addMonths(today(), -18)
-    order by publish desc limit 300
-  ), score as (
-  select _id, sum(
-    log((N - df + 0.5) / (df + 0.5)) *
-    (tf * (k1 + 1)) /
-    (tf + k1 * (1 - b + b * dl / avgdl))
-  ) AS bm25 from result_meta
-  ANY LEFT JOIN pcc.token_df USING (token)
-  GROUP BY 1
-)
+            {keyword:String} AS keyword,
+            1.5 AS k1,
+            0.75 AS b,
+            14.89 as avgdl,-- (SELECT avg(length(tokens)) FROM pcc.pcc) AS avgdl,
+            2070487 as N, -- (SELECT count() FROM pcc.pcc) AS N,
+            candidate AS (
+                SELECT
+                  _id, job_number, name, unit, unit_id, publish, merchants, tokens,
+                  hasAny(tokens, q) AS token_match,
+                  multiSearchAny(unit, [keyword]) AS unit_match
+                FROM pcc.pcc
+                WHERE publish >= addMonths(today(), -18)
+                AND (hasAny(tokens, q) OR multiSearchAny(unit, [keyword]))
+                ORDER BY publish DESC
+                LIMIT 300
+                ),
 
-SELECT
-  job_number,
-  anyHeavy(name) as name,
-  anyHeavy(unit) as unit,
-  anyHeavy(unit_id) as unit_id,
-  toDate(min(publish)) as publish,
-  anyHeavy(merchants) as merchants,
-  max(bm25) bm25
-FROM pcc.pcc
-join score using(_id)
-GROUP BY job_number
-ORDER BY bm25 desc`
-            
+            matched_tokens AS (
+                SELECT
+                  _id,
+                  token,
+                  countEqual(tokens, token) AS tf,
+                  length(tokens) AS dl
+                FROM candidate
+                ARRAY JOIN arrayFilter(x -> has(q, x), tokens) AS token
+                ),
+
+            score AS (
+                SELECT
+                _id,
+                sum(
+                  log((N - coalesce(df, 0) + 0.5) / (coalesce(df, 0) + 0.5))
+                  * (tf * (k1 + 1))
+                  / (tf + k1 * (1 - b + b * dl / avgdl))
+                  ) AS bm25
+                FROM matched_tokens
+                ANY LEFT JOIN (
+                  SELECT token, df
+                  FROM pcc.token_df
+                  WHERE token IN q
+                  ) AS token_stats USING (token)
+                GROUP BY _id
+                )
+
+              SELECT
+                candidate.job_number,
+                anyHeavy(candidate.name) AS name,
+                anyHeavy(candidate.unit) AS unit,
+                anyHeavy(candidate.unit_id) AS unit_id,
+                toDate(min(candidate.publish)) AS publish,
+                anyHeavy(candidate.merchants) AS merchants,
+                max(coalesce(score.bm25, 0)) AS bm25
+              FROM candidate
+              LEFT JOIN score USING (_id)
+              GROUP BY candidate.job_number
+              ORDER BY bm25 DESC;`
+
             try {
                 const resultSet = await ch.query({
                     query: query,
 										query_params: {
    									 tokens: tags,
-										 keyword: '%' + keyword + '%'
+										 keyword: keyword 
 										},
                     format: 'JSON'
                 });
@@ -720,7 +762,7 @@ ORDER BY bm25 desc`
                 docs.sort((a, b) => new Date(b.publish) - new Date(a.publish));
                 res.send(docs);
             } catch (dbErr) {
-                console.error("/unit/:unit/:month? MongoDB query error:", dbErr);
+                console.error("/unit/:unit/:month? query error:", dbErr);
                 res.status(500).send("Error processing request");
             }
 
