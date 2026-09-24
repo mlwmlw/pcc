@@ -3,8 +3,6 @@ _ = require \lodash
 uri = require \./database
 start = new Date!
 client = mongodb.MongoClient
-#client = client.connect "mongodb://node:1qazxsw2!@oceanic.mongohq.com:10024/pcc", (err, db) ->
-#client = client.connect "mongodb://user:1qazxsw2!@ds052827.mongolab.com:52827/pcc", (err, db) ->
 client = client.connect uri, (err, db) ->
 	
 	console.log +new Date! - +start

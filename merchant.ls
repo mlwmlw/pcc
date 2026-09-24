@@ -1,4 +1,4 @@
-require! <[http querystring request cheerio q string moment mongodb]>
+require! <[http querystring request cheerio q moment mongodb]>
 
 base = \http://company.g0v.ronny.tw/api/show/
 request = request.defaults {
