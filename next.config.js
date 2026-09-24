@@ -40,9 +40,6 @@ module.exports = {
 
     // 加入或修改以下配置
     reactStrictMode: true, // 建議開啟 React嚴格模式 (如果尚未開啟)
-    experimental: {
-        esmExternals: "loose", // 這個選項有助於處理 ESM 依賴
-    },
     transpilePackages: [
         // Nivo 相關套件
         '@nivo/core',

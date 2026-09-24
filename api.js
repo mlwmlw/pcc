@@ -25,6 +25,9 @@ const corsOptions = {
 const qs = require('qs');
 const uri = require('./database'); // Assuming database.js exports the URI
 
+// /merchants?filter= 允許查詢的欄位白名單
+const MERCHANT_FILTER_FIELDS = ['name', 'address', 'phone', 'org'];
+
 const app = express();
 app.use(express.static(__dirname + '/public'));
 app.set('views', __dirname + '/views');
@@ -81,10 +84,13 @@ const getAll = () => {
     return pccDataPromise;
 };
 async function getUnitsByName(name) {
-    const query = `SELECT distinct name FROM unit WHERE _id LIKE '${name}%' OR parent_name LIKE '${name}%' OR parent_id LIKE '${name}%' LIMIT 1000`;
+    const query = `SELECT distinct name FROM unit WHERE _id LIKE {prefix:String} OR parent_name LIKE {prefix:String} OR parent_id LIKE {prefix:String} LIMIT 1000`;
+    // 跳脫 LIKE 萬用字元，避免使用者輸入被當成 pattern
+    const prefix = String(name).replace(/[\\%_]/g, '\\$&') + '%';
     try {
         const resultSet = await ch.query({
             query: query,
+            query_params: { prefix: prefix },
             format: 'JSON'
         });
         const rows = await resultSet.json();
@@ -458,7 +464,12 @@ ORDER BY bm25 desc`
         app.get('/merchants/:id?', async (req, res) => {
             try {
                 const id = req.params.id;
-                const queryParams = req.query.filter ? JSON.parse(req.query.filter) : [];
+                let queryParams;
+                try {
+                    queryParams = req.query.filter ? JSON.parse(req.query.filter) : [];
+                } catch (e) {
+                    return res.status(400).send("Invalid filter");
+                }
                 let filter = { name: { $exists: true } };
 
                 if (id) {
@@ -469,8 +480,14 @@ ORDER BY bm25 desc`
                     }
                 }
                 
+                if (!Array.isArray(queryParams)) {
+                    return res.status(400).send("Invalid filter");
+                }
                 for (const item of queryParams) {
-                    filter[item.id] = new RegExp(item.value);
+                    if (!item || !MERCHANT_FILTER_FIELDS.includes(item.id) || typeof item.value !== 'string') {
+                        return res.status(400).send("Invalid filter");
+                    }
+                    filter[item.id] = new RegExp(_.escapeRegExp(item.value));
                 }
 
                 if (req.query.count) {
@@ -551,7 +568,7 @@ ORDER BY bm25 desc`
                                           // Original LS: filter = {id: id}
                                           // If it's job_number, it should be {job_number: id}
                 if (unit) {
-                    filter['$or'] = [{ unit: new RegExp(unit.replace(/\s+/g, '')) }, { unit_id: unit }];
+                    filter['$or'] = [{ unit: new RegExp(_.escapeRegExp(unit.replace(/\s+/g, ''))) }, { unit_id: unit }];
                 }
                 
                 let tenders = await db.collection('pcc').find(filter).sort({ publish: -1 }).toArray();

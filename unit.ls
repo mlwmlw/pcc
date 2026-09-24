@@ -1,4 +1,4 @@
-require! <[http querystring request cheerio q string moment mongodb]>
+require! <[http querystring request cheerio q moment mongodb]>
 
 base = \http://web.pcc.gov.tw/tps/main/pss/pblm/tender/basic/search/mainListCommon.jsp
 request.defaults {
